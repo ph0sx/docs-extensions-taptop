@@ -59,10 +59,6 @@
     // Если cookie "cookieAgreement" не установлено, показываем баннер
     if (Cookies.get("cookieAgreement") === undefined && consentBanner) {
       consentBanner.style.display = "flex";
-      // Устанавливаем display для всех дочерних элементов
-      Array.from(consentBanner.children).forEach((child) => {
-        child.style.display = "flex";
-      });
 
       // Обработчики для закрытия баннера (кнопка закрытия и клик по оверлею)
       const closeBtn = consentBanner.querySelector(
