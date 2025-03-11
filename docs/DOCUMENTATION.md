@@ -58,7 +58,7 @@
         <ol>
           <li>Откройте настройки страницы.</li>
           <li>В блоке <strong>"Перед тегом body"</strong> вставьте сгенерированный код</li>
-          <img src="page-settings.png" width="300" height="150">
+          <img src="./images/cookie/page-settings.png" width="300" height="150">
           <li>Сохраните изменения на странице.</li>
         </ol>
       </div>
@@ -482,7 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </ol>
 
 <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="page-settings.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+<img src="./images/cookie/page-settings.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
 </div>
 
 <p>Сохраните изменения на странице.</p>
@@ -510,7 +510,7 @@ document.addEventListener("DOMContentLoaded", () => {
 4. Проверьте его значение: "true" для согласия или "false" для отказа
 
 <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="cookie-check.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+<img src="./images/cookie/cookie-check.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
 <p style="margin-top: 10px; font-style: italic; color: #666;">Пример проверки cookie в инспекторе браузера</p>
 </div>
 
