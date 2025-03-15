@@ -388,7 +388,8 @@
 })();
 <\/script>`;
 
-      this.copyToClipboard(finalCode);
+      const minifiedCode = minifyCode(finalCode);
+      this.copyToClipboard(minifiedCode);
       this.elements.modal.style.display = "flex";
     }
 
