@@ -19,7 +19,7 @@
   <div class="form-grid">
     <div class="form-group">
       <label for="expiry-days">Срок хранения выбора пользователя (дни):</label>
-      <input type="number" id="expiry-days" value="7" min="1">
+      <input type="number" id="expiry-days" value="30" min="1">
       <div class="helper-text">Определяет, как долго будет храниться выбор пользователя в браузере</div>
     </div>
     
