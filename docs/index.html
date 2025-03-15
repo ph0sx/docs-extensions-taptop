@@ -16,12 +16,6 @@
     />
     <link rel="stylesheet" href="./pages/cookie/cookie.css" />
     <link rel="stylesheet" href="./pages/smooth-scroll/smooth-scroll.css" />
-
-    <style>
-      :root {
-        --theme-color: #3290ff;
-      }
-    </style>
   </head>
   <body>
     <div id="app"></div>
@@ -34,7 +28,11 @@
           "/.*/_sidebar.md": "/_sidebar.md",
         },
         /*         executeScript: true, */
-        homepage: "./DOCUMENTATION.md",
+        homepage: "./guide.md",
+        subMaxLevel: 2,
+        name: "taptop",
+        themeColor: "#3290ff",
+        auto2top: true,
       };
     </script>
     <!-- Docsify v4 -->
