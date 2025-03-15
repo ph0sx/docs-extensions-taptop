@@ -437,6 +437,8 @@
     );
   }
 
+  window.initSmoothScrollGenerator = initSmoothScrollGenerator;
+
   if (window.$docsify) {
     window.$docsify.plugins = window.$docsify.plugins || [];
     window.$docsify.plugins.push((hook) => {
