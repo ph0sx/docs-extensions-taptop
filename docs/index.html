@@ -14,6 +14,9 @@
       rel="stylesheet"
       href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css"
     />
+    <link rel="stylesheet" href="./pages/cookie/cookie.css" />
+    <link rel="stylesheet" href="./pages/smooth-scroll/smooth-scroll.css" />
+
     <style>
       :root {
         --theme-color: #3290ff;
@@ -27,11 +30,31 @@
         name: "",
         repo: "",
         loadSidebar: true,
-        executeScript: true,
+        /*         executeScript: true, */
         homepage: "./DOCUMENTATION.md",
       };
     </script>
     <!-- Docsify v4 -->
     <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+
+    <script src="js/utils/minifyCode.js"></script>
+    <script src="./pages/cookie/cookie-generator.js"></script>
+    <script src="./pages/smooth-scroll/smooth-scroll-generator.js"></script>
+
+    <!-- Docsify-плагин, который будет запускать инициализацию после каждого рендера -->
+    <script>
+      if (window.$docsify) {
+        window.$docsify.plugins = window.$docsify.plugins || [];
+        window.$docsify.plugins.push(function (hook) {
+          // doneEach вызывается после загрузки/рендера каждой страницы
+          hook.doneEach(function () {
+            // Делаем небольшой таймаут, чтобы Docsify успел «вклеить» контент
+            setTimeout(function () {
+              initSmoothScrollGenerator();
+            }, 200);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

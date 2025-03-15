@@ -1,2 +1,3 @@
 - [Обзор](/)
-- [Куки](/pages/cookie.md)
+- [Куки](/pages/cookie/cookie.md)
+- [Плавный скролл](/pages/smooth-scroll/smooth-scroll.md)
