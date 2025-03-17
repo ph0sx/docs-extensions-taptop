@@ -1,3 +1,4 @@
 - [Обзор](/)
 - [Куки](/pages/cookie/cookie.md)
 - [Плавный скролл](/pages/smooth-scroll/smooth-scroll.md)
+- [UTM/IP](/pages/dynamic-content/dynamic-content.md)

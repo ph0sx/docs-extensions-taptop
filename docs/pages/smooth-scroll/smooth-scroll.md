@@ -40,7 +40,7 @@
           <div class="setting-group">
             <label for="speed-select">Скорость прокрутки:</label>
             <div class="slider-container">
-              <input type="range" id="speed-select" min="0" max="100" value="60" class="slider">
+              <input type="range" id="speed-select" min="1" max="100" value="60" class="slider">
               <div class="slider-labels">
                 <span>Медленно</span>
                 <span>Быстро</span>
@@ -56,7 +56,7 @@
           <div class="setting-group">
             <label for="smoothness-select">Плавность анимации:</label>
             <div class="slider-container">
-              <input type="range" id="smoothness-select" min="0" max="100" value="70" class="slider">
+              <input type="range" id="smoothness-select" min="1" max="100" value="70" class="slider">
               <div class="slider-labels">
                 <span>Линейная</span>
                 <span>Максимальная</span>

@@ -1,0 +1,810 @@
+/* Изолированные стили для DynamicContentManager */
+.dcm-container {
+  /* Этот префикс "dcm-" (dynamic content manager) будет использоваться для всех классов */
+  all: initial; /* Сбрасываем все наследуемые стили */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.dcm-container *,
+.dcm-container *::before,
+.dcm-container *::after {
+  box-sizing: border-box;
+}
+
+/* Основные стили генератора */
+.dcm-generator-container {
+  background: linear-gradient(to bottom, #f8f9fa, #f0f3f7);
+  padding: 30px;
+  border-radius: 16px;
+  margin: 20px 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Arial, sans-serif;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  max-width: 1000px;
+  color: #333;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dcm-generator-header {
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.dcm-generator-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #2d3748;
+  letter-spacing: -0.02em;
+}
+
+.dcm-generator-subtitle {
+  font-size: 16px;
+  color: #5a6778;
+  line-height: 1.5;
+}
+
+/* Улучшенный дизайн верхних табов */
+.dcm-tabs {
+  display: flex;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 0; /* Убираем отступы между табами */
+}
+
+.dcm-tab-button {
+  padding: 14px 28px;
+  background-color: #f8fafc;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: #5a6778;
+  transition: all 0.25s ease;
+  border-bottom: 3px solid transparent;
+  position: relative;
+  margin: 0;
+  outline: none;
+}
+
+/* Активная вкладка */
+.dcm-tab-button.active {
+  background-color: white;
+  color: #4483f5;
+  border-bottom: 3px solid #4483f5;
+  font-weight: 600;
+  position: relative;
+}
+
+/* Добавляем индикатор активной вкладки */
+.dcm-tab-button.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: white;
+}
+
+/* Эффект при наведении */
+.dcm-tab-button:hover:not(.active) {
+  background-color: #edf2fd;
+  color: #5e6ffd;
+}
+
+/* Добавляем разделитель между табами */
+.dcm-tab-button:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 25%;
+  height: 50%;
+  width: 1px;
+  background-color: #e2e8f0;
+}
+
+/* Секции */
+.dcm-tab-content {
+  display: none;
+  animation: dcm-fadeIn 0.3s ease;
+}
+
+@keyframes dcm-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dcm-tab-content.active {
+  display: block;
+}
+
+/* Обновленные общие стили для всех типов заголовков секций */
+.dcm-section-header,
+.dcm-region-rule-header,
+.dcm-replacements-header,
+.dcm-utm-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  background-color: #f5f8ff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  position: relative;
+  /* Удаляем border-bottom */
+  border-bottom: none;
+}
+
+/* Стили для иконок в заголовках */
+.dcm-section-header svg,
+.dcm-region-rule-header svg,
+.dcm-replacements-header svg,
+.dcm-utm-header svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  flex-shrink: 0;
+  color: #4483f5;
+  display: inline-block; /* Показываем иконки, если они есть */
+}
+
+/* Стили для текста заголовков */
+.dcm-section-header-text,
+.dcm-region-rule-header-text,
+.dcm-replacements-header-text,
+.dcm-utm-header-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+  letter-spacing: 0.01em;
+}
+
+/* Специфические стили для заголовка UTM правил */
+.dcm-utm-header {
+  background-color: #f1f7ff;
+}
+
+/* Специфические стили для заголовка замены текста */
+.dcm-replacements-header {
+  background-color: #f1f7ff;
+}
+
+/* Специфические стили для заголовка правил региона */
+.dcm-region-rule-header {
+  background-color: #f1f7ff;
+}
+
+/* Можно добавить тонкую верхнюю границу вместо левой */
+.dcm-section-header,
+.dcm-utm-header {
+  border-top: 2px solid rgba(68, 131, 245, 0.2);
+}
+
+.dcm-replacements-header {
+  border-top: 2px solid rgba(52, 168, 83, 0.2);
+}
+
+.dcm-region-rule-header {
+  border-top: 2px solid rgba(234, 67, 53, 0.2);
+}
+
+/* Карточки */
+.dcm-card {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #f0f0f0;
+  transition: box-shadow 0.3s ease;
+  position: relative;
+}
+
+.dcm-card:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* Заголовки в карточках */
+.dcm-card h3 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #3c4257;
+  padding-left: 12px;
+  border-left: 3px solid #4483f5;
+}
+
+.dcm-card h4 {
+  margin-top: 20px;
+  margin-bottom: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+/* Стили для улучшенной кнопки удаления */
+.dcm-remove-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a0aec0;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.dcm-remove-button:hover {
+  background-color: #fee2e2;
+  color: #e53e3e;
+  opacity: 1;
+}
+
+.dcm-remove-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Обновляем стиль карточек для позиционирования кнопки удаления */
+.dcm-rule,
+.dcm-card.text-replacement,
+.dcm-card.block-rule,
+.dcm-card.ip-rule {
+  position: relative;
+}
+
+/* Поля ввода */
+.dcm-container input,
+.dcm-container select,
+.dcm-container textarea {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s;
+  font-size: 15px;
+  background-color: #fff;
+}
+
+.dcm-container input:focus,
+.dcm-container select:focus,
+.dcm-container textarea:focus {
+  outline: none;
+  border-color: #4483f5;
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.15);
+}
+
+.dcm-container select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+}
+
+.dcm-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 15px;
+  color: #3c4257;
+}
+
+.dcm-hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: -10px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+/* Стиль для строки "Важно:" */
+.dcm-hint strong {
+  color: #e53935;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Кнопки */
+.dcm-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  margin-right: 8px;
+  transition: all 0.2s ease;
+}
+
+.dcm-btn-primary {
+  background-color: #4483f5;
+  color: white;
+  box-shadow: 0 4px 12px rgba(68, 131, 245, 0.2);
+}
+
+.dcm-btn-primary:hover {
+  background-color: #3a70d1;
+  box-shadow: 0 6px 15px rgba(68, 131, 245, 0.3);
+  transform: translateY(-1px);
+}
+
+.dcm-btn-success {
+  background-color: #34a853;
+  color: white;
+  box-shadow: 0 4px 12px rgba(52, 168, 83, 0.2);
+}
+
+.dcm-btn-success:hover {
+  background-color: #2d9249;
+  box-shadow: 0 6px 15px rgba(52, 168, 83, 0.3);
+  transform: translateY(-1px);
+}
+
+.dcm-btn-danger {
+  background-color: #ea4335;
+  color: white;
+  box-shadow: 0 4px 12px rgba(234, 67, 53, 0.2);
+}
+
+.dcm-btn-danger:hover {
+  background-color: #d33426;
+  box-shadow: 0 6px 15px rgba(234, 67, 53, 0.3);
+  transform: translateY(-1px);
+}
+
+.dcm-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Новая кнопка для генерации кода */
+.dcm-generate-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(90deg, #4483f5 0%, #5e6ffd 100%);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(68, 131, 245, 0.3);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dcm-generate-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.dcm-generate-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(68, 131, 245, 0.4);
+}
+
+.dcm-generate-button:hover::before {
+  left: 100%;
+}
+
+.dcm-generate-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(68, 131, 245, 0.3);
+}
+
+.dcm-generate-button svg {
+  flex-shrink: 0;
+}
+
+/* Сетка */
+.dcm-row {
+  display: flex;
+  margin: 0 -10px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dcm-col {
+  padding: 0 10px;
+  flex: 1;
+  min-width: 180px;
+}
+
+@media (max-width: 768px) {
+  .dcm-row {
+    flex-direction: column;
+  }
+  .dcm-col {
+    min-width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+/* Правила */
+.dcm-rule {
+  background-color: #fafbff;
+  padding: 16px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  border: 1px solid #e9effd;
+  position: relative;
+}
+
+/* Контейнер для кода */
+.dcm-code-container {
+  background-color: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+  position: relative;
+  border: 1px solid #e2e8f0;
+}
+
+.dcm-code {
+  max-height: 400px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+  padding: 0;
+  margin: 0;
+}
+
+.dcm-copy-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Модальное окно */
+.dcm-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(15, 23, 42, 0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+}
+
+.dcm-modal-content {
+  background-color: white;
+  padding: 35px;
+  border-radius: 16px;
+  max-width: 520px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.dcm-close-modal {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  font-size: 22px;
+  font-weight: bold;
+  color: #a0aec0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.dcm-close-modal:hover {
+  background-color: #f7fafc;
+  color: #4a5568;
+}
+
+.dcm-modal-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.dcm-success-icon {
+  width: 64px;
+  height: 64px;
+  background-color: #4caf50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 32px;
+  margin: 0 auto 18px;
+  box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
+}
+
+.dcm-modal-content h3 {
+  margin: 0 0 10px;
+  color: #2d3748;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.dcm-instruction-block {
+  background-color: #f8fafc;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid #e9effd;
+}
+
+.dcm-instruction-block h4 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #3c4257;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.dcm-instruction-block ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.dcm-instruction-block li {
+  margin-bottom: 12px;
+  line-height: 1.6;
+  color: #4a5568;
+}
+
+.dcm-instruction-block li:last-child {
+  margin-bottom: 0;
+}
+
+.dcm-instruction-block strong {
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.dcm-close-button {
+  display: block;
+  margin: 0 auto;
+  background: linear-gradient(90deg, #4483f5 0%, #5e6ffd 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(68, 131, 245, 0.3);
+}
+
+.dcm-close-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(68, 131, 245, 0.4);
+}
+
+.dcm-close-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(68, 131, 245, 0.3);
+}
+
+/* Контейнер для кнопки генерации кода */
+.dcm-generate-code-container {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Улучшения для работы с пользовательскими полями */
+.dcm-custom-param-container {
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
+}
+
+/* Стили для настроек по умолчанию */
+.dcm-card.text-replacement,
+.dcm-card.block-rule,
+.dcm-card.ip-rule {
+  border-left: 3px solid #4483f5;
+}
+
+/* Стили для страны/города/региона в правилах IP */
+.dcm-country-hint a {
+  color: #4483f5;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.dcm-country-hint a:hover {
+  text-decoration: underline;
+}
+
+/* Улучшенная кнопка закрытия (крестик) для лучшей видимости */
+.dcm-remove-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.9;
+  z-index: 5;
+}
+
+.dcm-remove-button:hover {
+  background-color: #fee2e2;
+  color: #e53e3e;
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.dcm-remove-button svg {
+  width: 16px;
+  height: 16px;
+  display: block; /* Убеждаемся, что SVG всегда отображается */
+  stroke-width: 2.5px; /* Делаем линии крестика толще */
+}
+
+/* Специальные стили для кнопки закрытия в правилах региона */
+.dcm-card.ip-rule .dcm-remove-button {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .dcm-generator-container {
+    padding: 20px;
+  }
+
+  .dcm-tabs {
+    flex-wrap: wrap;
+  }
+
+  .dcm-tab-button {
+    padding: 10px 15px;
+    font-size: 14px;
+    margin-bottom: 5px;
+    flex-grow: 1;
+  }
+
+  .dcm-card {
+    padding: 20px;
+  }
+
+  .dcm-rule {
+    padding: 14px;
+  }
+
+  .dcm-generate-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dcm-modal-content {
+    padding: 25px;
+  }
+
+  .dcm-section-header,
+  .dcm-region-rule-header,
+  .dcm-replacements-header,
+  .dcm-utm-header {
+    padding: 12px 14px;
+  }
+
+  .dcm-section-header svg,
+  .dcm-region-rule-header svg,
+  .dcm-replacements-header svg,
+  .dcm-utm-header svg {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+  }
+
+  .dcm-section-header-text,
+  .dcm-region-rule-header-text,
+  .dcm-replacements-header-text,
+  .dcm-utm-header-text {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dcm-generator-container {
+    padding: 15px;
+  }
+
+  .dcm-generator-title {
+    font-size: 20px;
+  }
+
+  .dcm-generator-subtitle {
+    font-size: 14px;
+  }
+
+  .dcm-tab-button {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .dcm-card {
+    padding: 16px;
+  }
+
+  .dcm-container input,
+  .dcm-container select,
+  .dcm-container textarea {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .dcm-btn {
+    padding: 8px 15px;
+    font-size: 14px;
+  }
+
+  .dcm-generate-button {
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+}
