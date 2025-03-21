@@ -1,11 +1,12 @@
 import { BaseGenerator } from "./baseGenerator.js";
-import { ModalUtils } from "../utils/modal.js";
 
+/**
+ * Генератор динамического контента для мульти-лендинга (UTM + IP).
+ * Это "конструктор" с UI (вкладки, кнопки добавления правил и т.д.).
+ */
 export class DynamicContentGenerator extends BaseGenerator {
   constructor() {
     super();
-
-    // Конфигурация по умолчанию
     this.config = {
       textReplacements: [
         {
@@ -50,59 +51,25 @@ export class DynamicContentGenerator extends BaseGenerator {
       ],
     };
 
-    this.tabs = [
-      { id: "text", label: "Замена текста" },
-      { id: "blocks", label: "Управление блоками" },
-      { id: "ip", label: "Правила по IP" },
-    ];
-
     this.activeTab = "text";
     this.templates = {};
+    this.parseCommaList = (str) =>
+      str
+        ? str
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : [];
 
-    // Вспомогательные утилиты
-    this.utils = {
-      parseCommaList: (str) =>
-        !str
-          ? []
-          : str
-              .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean),
-
-      findElementsWithKeyword: (keyword) => {
-        const elements = [];
-        const pattern = new RegExp(`%%${keyword}%%`);
-        const searchNode = (node) => {
-          if (node.nodeType === Node.TEXT_NODE) {
-            if (pattern.test(node.textContent)) {
-              const parent = node.parentElement;
-              if (parent && !elements.includes(parent)) {
-                elements.push(parent);
-              }
-            }
-          } else if (node.nodeType === Node.ELEMENT_NODE) {
-            if (pattern.test(node.innerHTML)) {
-              if (!elements.includes(node)) {
-                elements.push(node);
-              }
-            }
-            node.childNodes.forEach(searchNode);
-          }
-        };
-        searchNode(document.body);
-        return elements;
-      },
-    };
-
-    // Привязка обработчика закрытия модального окна для стран
     this.handleCountriesModalEscape =
       this.handleCountriesModalEscape.bind(this);
   }
 
+  /* ------------------------------------------
+   * 1) Поиск элементов
+   * ------------------------------------------ */
   findElements() {
     super.findElements();
-
-    // Находим контейнеры для всех типов правил
     this.elements = {
       ...this.elements,
       textReplacementsContainer: document.getElementById(
@@ -114,7 +81,6 @@ export class DynamicContentGenerator extends BaseGenerator {
       ipRulesContainer: document.getElementById("ip-rules-container"),
       defaultShowBlocks: document.getElementById("default-show-blocks"),
       defaultHideBlocks: document.getElementById("default-hide-blocks"),
-      // Обновлены селекторы для соответствия новой структуре HTML
       tabButtons: document.querySelectorAll(".tab-button"),
       tabContents: document.querySelectorAll(".tab-content"),
       addTextReplacementBtn: document.getElementById("add-text-replacement"),
@@ -123,12 +89,6 @@ export class DynamicContentGenerator extends BaseGenerator {
       generateButton: document.getElementById("generate-btn"),
     };
 
-    // Находим шаблоны для динамического создания элементов
-    this.findTemplates();
-  }
-
-  findTemplates() {
-    // Получаем все шаблоны
     this.templates = {
       textReplacement: document.getElementById("text-replacement-template"),
       utmRule: document.getElementById("utm-rule-template"),
@@ -138,71 +98,50 @@ export class DynamicContentGenerator extends BaseGenerator {
         "ip-text-replacement-template"
       ),
     };
-
-    // Проверяем, что все шаблоны найдены
-    let allTemplatesFound = true;
-    Object.entries(this.templates).forEach(([key, template]) => {
-      if (!template) {
-        console.error(`Шаблон ${key} не найден!`);
-        allTemplatesFound = false;
-      }
-    });
-
-    return allTemplatesFound;
   }
 
+  /* ------------------------------------------
+   * 2) Привязка событий
+   * ------------------------------------------ */
   bindEvents() {
     super.bindEvents();
 
-    // Обработчики вкладок
+    // Tabs
     this.elements.tabButtons?.forEach((button) => {
       button.addEventListener("click", () => {
         this.switchTab(button.getAttribute("data-tab"));
       });
     });
 
-    // Добавление новых правил
-    if (this.elements.addTextReplacementBtn) {
-      this.elements.addTextReplacementBtn.addEventListener("click", () => {
-        this.addTextReplacement();
-      });
-    }
+    // Кнопки "Добавить" правило
+    this.elements.addTextReplacementBtn?.addEventListener("click", () => {
+      this.addTextReplacement();
+    });
+    this.elements.addBlockRuleBtn?.addEventListener("click", () => {
+      this.addBlockRule();
+    });
+    this.elements.addIpRuleBtn?.addEventListener("click", () => {
+      this.addIpRule();
+    });
 
-    if (this.elements.addBlockRuleBtn) {
-      this.elements.addBlockRuleBtn.addEventListener("click", () => {
-        this.addBlockRule();
-      });
-    }
-
-    if (this.elements.addIpRuleBtn) {
-      this.elements.addIpRuleBtn.addEventListener("click", () => {
-        this.addIpRule();
-      });
-    }
-
-    // Настройки блоков по умолчанию
-    if (this.elements.defaultShowBlocks) {
-      this.elements.defaultShowBlocks.addEventListener("change", (e) => {
-        this.config.defaultBlockVisibility.showBlocks =
-          this.utils.parseCommaList(e.target.value);
-      });
-    }
-
-    if (this.elements.defaultHideBlocks) {
-      this.elements.defaultHideBlocks.addEventListener("change", (e) => {
-        this.config.defaultBlockVisibility.hideBlocks =
-          this.utils.parseCommaList(e.target.value);
-      });
-    }
-
-    // Кнопка генерации кода - используем generateAndCopyCode
-    if (this.elements.generateButton) {
-      this.elements.generateButton.addEventListener("click", () =>
-        this.generateAndCopyCode()
+    // Default block visibility
+    this.elements.defaultShowBlocks?.addEventListener("change", (e) => {
+      this.config.defaultBlockVisibility.showBlocks = this.parseCommaList(
+        e.target.value
       );
-    }
+    });
+    this.elements.defaultHideBlocks?.addEventListener("change", (e) => {
+      this.config.defaultBlockVisibility.hideBlocks = this.parseCommaList(
+        e.target.value
+      );
+    });
 
-    // Обработчики для модального окна
+    // Кнопка генерации кода
+    this.elements.generateButton?.addEventListener("click", () => {
+      this.generateAndCopyCode();
+    });
+
+    // Закрытие общего модала
     this.elements.closeModal?.forEach((btn) =>
       btn.addEventListener("click", () => this.closeModal())
     );
@@ -219,66 +158,45 @@ export class DynamicContentGenerator extends BaseGenerator {
     });
   }
 
+  /* ------------------------------------------
+   * 3) Начальное состояние
+   * ------------------------------------------ */
   setInitialState() {
-    // Устанавливаем значения полей блоков по умолчанию
+    // Подставляем значения в поля "defaultShowBlocks"/"defaultHideBlocks"
     if (this.elements.defaultShowBlocks) {
       this.elements.defaultShowBlocks.value =
         this.config.defaultBlockVisibility.showBlocks.join(", ");
     }
-
     if (this.elements.defaultHideBlocks) {
       this.elements.defaultHideBlocks.value =
         this.config.defaultBlockVisibility.hideBlocks.join(", ");
     }
-
-    // Отрисовываем все данные
+    // Рендерим все UI-блоки
     this.renderTextReplacements();
     this.renderBlockVisibility();
     this.renderIpRules();
-
-    // Переключаемся на первую вкладку
     this.switchTab(this.activeTab);
   }
 
+  /* ------------------------------------------
+   * Переключение вкладок
+   * ------------------------------------------ */
   switchTab(tabId) {
     this.activeTab = tabId;
-
-    // Деактивируем все вкладки
     this.elements.tabContents?.forEach((tab) => tab.classList.remove("active"));
     this.elements.tabButtons?.forEach((btn) => btn.classList.remove("active"));
 
-    // Активируем нужную вкладку
     const tabContent = document.getElementById(`${tabId}-tab`);
     const tabButton = document.querySelector(
       `.tab-button[data-tab="${tabId}"]`
     );
-
     if (tabContent) tabContent.classList.add("active");
     if (tabButton) tabButton.classList.add("active");
   }
 
-  // Функция для управления видимостью заголовка UTM правил
-  updateUtmRulesHeaders() {
-    // Находим все контейнеры с заменами текста
-    document.querySelectorAll(".text-replacement").forEach((container) => {
-      // Получаем контейнер с UTM правилами
-      const utmContainer = container.querySelector(".utm-rules-container");
-      const utmHeader = container.querySelector(".section-divider");
-
-      // Проверяем количество правил в контейнере
-      if (utmContainer && utmHeader) {
-        const utmRules = utmContainer.querySelectorAll(".utm-rule");
-        if (utmRules.length === 0) {
-          utmHeader.style.display = "none";
-        } else {
-          utmHeader.style.display = "flex";
-        }
-      }
-    });
-  }
-
-  // МЕТОДЫ УПРАВЛЕНИЯ СОСТОЯНИЕМ
-
+  /* ------------------------------------------
+   * Добавление правил
+   * ------------------------------------------ */
   addTextReplacement() {
     this.config.textReplacements.push({
       keyword: "",
@@ -310,484 +228,295 @@ export class DynamicContentGenerator extends BaseGenerator {
     this.renderIpRules();
   }
 
-  // МЕТОДЫ ДЛЯ ОТРИСОВКИ UI ЭЛЕМЕНТОВ
-
+  /* ------------------------------------------
+   * Рендер Text Replacements
+   * ------------------------------------------ */
   renderTextReplacements() {
     const container = this.elements.textReplacementsContainer;
     if (!container) return;
-
     container.innerHTML = "";
 
-    this.config.textReplacements.forEach((replacement, index) => {
+    this.config.textReplacements.forEach((item, index) => {
       if (!this.templates.textReplacement) return;
-
       const clone = document.importNode(
         this.templates.textReplacement.content,
         true
       );
 
-      // Обновляем индекс правила
-      const ruleIndex = clone.querySelector(".rule-index");
-      if (ruleIndex) {
-        ruleIndex.textContent = index + 1;
-      }
+      // Индекс
+      clone.querySelector(".rule-index").textContent = index + 1;
 
-      // Настраиваем кнопку удаления в правом верхнем углу
-      const removeBtn = clone.querySelector(
-        ".dcm-remove-button.remove-text-replacement"
-      );
-      if (removeBtn) {
-        removeBtn.dataset.index = index;
-        removeBtn.addEventListener("click", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.textReplacements.splice(idx, 1);
+      // Удалить
+      clone
+        .querySelector(".remove-text-replacement")
+        .addEventListener("click", () => {
+          this.config.textReplacements.splice(index, 1);
           this.renderTextReplacements();
         });
-      }
 
-      // Находим и изменяем заголовок UTM правил - скрываем если правил нет
-      const utmRulesHeader = clone.querySelector(".section-divider");
-      if (utmRulesHeader) {
-        if (!replacement.utmRules || replacement.utmRules.length === 0) {
-          utmRulesHeader.style.display = "none";
-        }
-      }
-
+      // keyword
       const keywordInput = clone.querySelector(".keyword-input");
-      if (keywordInput) {
-        keywordInput.value = replacement.keyword;
-        keywordInput.dataset.index = index;
-        keywordInput.addEventListener("change", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.textReplacements[idx].keyword = e.currentTarget.value;
-        });
-      }
+      keywordInput.value = item.keyword;
+      keywordInput.addEventListener("change", (e) => {
+        item.keyword = e.target.value;
+      });
 
+      // defaultValue
       const defaultValueInput = clone.querySelector(".default-value-input");
-      if (defaultValueInput) {
-        defaultValueInput.value = replacement.defaultValue;
-        defaultValueInput.dataset.index = index;
-        defaultValueInput.addEventListener("change", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.textReplacements[idx].defaultValue =
-            e.currentTarget.value;
-        });
-      }
+      defaultValueInput.value = item.defaultValue;
+      defaultValueInput.addEventListener("change", (e) => {
+        item.defaultValue = e.target.value;
+      });
 
+      // UTM rules
       const utmContainer = clone.querySelector(".utm-rules-container");
-      if (utmContainer && replacement.utmRules) {
-        replacement.utmRules.forEach((rule, ruleIndex) => {
-          this.addUtmRuleToContainer(utmContainer, rule, index, ruleIndex);
-        });
-      }
+      item.utmRules.forEach((utmRule, ruleIndex) => {
+        this.addUtmRuleToContainer(utmContainer, item, utmRule, ruleIndex);
+      });
 
       const addUtmButton = clone.querySelector(".add-utm-rule");
-      if (addUtmButton) {
-        addUtmButton.dataset.index = index;
-        addUtmButton.addEventListener("click", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.textReplacements[idx].utmRules.push({
-            paramName: "utm_content",
-            paramValue: "",
-            replacementValue: "",
-          });
-          const ruleIndex =
-            this.config.textReplacements[idx].utmRules.length - 1;
-          const rule = this.config.textReplacements[idx].utmRules[ruleIndex];
-          const utmContainerEl = e.currentTarget.previousElementSibling;
-          if (utmContainerEl) {
-            this.addUtmRuleToContainer(utmContainerEl, rule, idx, ruleIndex);
-          }
-          // Показываем заголовок UTM правил
-          const utmHeader = e.currentTarget
-            .closest(".text-replacement")
-            .querySelector(".section-divider");
-          if (utmHeader) {
-            utmHeader.style.display = "flex";
-          }
+      addUtmButton.addEventListener("click", () => {
+        item.utmRules.push({
+          paramName: "utm_content",
+          paramValue: "",
+          replacementValue: "",
         });
+        this.renderTextReplacements();
+      });
+
+      // Заголовок UTM скрываем, если нет правил
+      const utmHeader = clone.querySelector(".section-divider");
+      if (utmHeader) {
+        utmHeader.style.display = item.utmRules.length ? "flex" : "none";
       }
 
       container.appendChild(clone);
     });
-
-    // Обновляем заголовки UTM правил после рендеринга
-    this.updateUtmRulesHeaders();
   }
 
-  addUtmRuleToContainer(container, rule, replacementIndex, ruleIndex) {
-    if (!container) return;
-    if (!this.templates.utmRule) return;
-
+  addUtmRuleToContainer(container, parentItem, utmRule, ruleIndex) {
+    if (!container || !this.templates.utmRule) return;
     const clone = document.importNode(this.templates.utmRule.content, true);
 
-    // Обновляем индекс UTM правила
-    const utmRuleIndex = clone.querySelector(".utm-rule-index");
-    if (utmRuleIndex) {
-      utmRuleIndex.textContent = ruleIndex + 1;
-    }
+    clone.querySelector(".utm-rule-index").textContent = ruleIndex + 1;
 
-    // Настраиваем кнопку удаления в правом верхнем углу
-    const removeBtn = clone.querySelector(".dcm-remove-button.remove-utm-rule");
-    if (removeBtn) {
-      removeBtn.dataset.replacementIndex = replacementIndex;
-      removeBtn.dataset.ruleIndex = ruleIndex;
-      removeBtn.addEventListener("click", (e) => {
-        const repIdx = parseInt(e.currentTarget.dataset.replacementIndex);
-        const rIdx = parseInt(e.currentTarget.dataset.ruleIndex);
-        this.config.textReplacements[repIdx].utmRules.splice(rIdx, 1);
-        this.renderTextReplacements();
-      });
-    }
+    // Удаление
+    clone.querySelector(".remove-utm-rule").addEventListener("click", () => {
+      parentItem.utmRules.splice(ruleIndex, 1);
+      this.renderTextReplacements();
+    });
 
+    // paramName
     const paramNameSelect = clone.querySelector(".param-name-select");
-    if (paramNameSelect) {
-      paramNameSelect.value = rule.paramName;
-      paramNameSelect.dataset.replacementIndex = replacementIndex;
-      paramNameSelect.dataset.ruleIndex = ruleIndex;
-      paramNameSelect.addEventListener("change", (e) => {
-        const repIdx = parseInt(e.currentTarget.dataset.replacementIndex);
-        const rIdx = parseInt(e.currentTarget.dataset.ruleIndex);
-        const customContainer = e.currentTarget
-          .closest(".dcm-rule.utm-rule")
-          .querySelector(".dcm-custom-param-container");
+    const customContainer = clone.querySelector(".dcm-custom-param-container");
+    const customInput = customContainer.querySelector(".custom-param-input");
 
-        if (e.currentTarget.value === "custom") {
-          customContainer.style.display = "block";
-          const customInput = customContainer.querySelector(
-            ".custom-param-input"
-          );
-          this.config.textReplacements[repIdx].utmRules[rIdx].paramName =
-            customInput.value || "my_param";
-          customInput.addEventListener("change", (ev) => {
-            this.config.textReplacements[repIdx].utmRules[rIdx].paramName =
-              ev.currentTarget.value;
-          });
-        } else {
-          customContainer.style.display = "none";
-          this.config.textReplacements[repIdx].utmRules[rIdx].paramName =
-            e.currentTarget.value;
-        }
-      });
+    const toggleCustom = (value) => {
+      const isCustom = ![
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_content",
+        "utm_term",
+      ].includes(value);
+      customContainer.style.display = isCustom ? "block" : "none";
+      if (isCustom && customInput.value) {
+        utmRule.paramName = customInput.value;
+      }
+    };
 
-      // Устанавливаем правильное начальное состояние для пользовательских параметров
-      if (
-        ![
+    paramNameSelect.value = utmRule.paramName;
+    toggleCustom(utmRule.paramName);
+
+    paramNameSelect.addEventListener("change", (e) => {
+      if (e.target.value === "custom") {
+        customContainer.style.display = "block";
+        utmRule.paramName = customInput.value || "my_param";
+      } else {
+        customContainer.style.display = "none";
+        utmRule.paramName = e.target.value;
+      }
+    });
+
+    customInput.addEventListener("change", (e) => {
+      utmRule.paramName = e.target.value;
+    });
+
+    // paramValue
+    const paramValueInput = clone.querySelector(".param-value-input");
+    paramValueInput.value = utmRule.paramValue;
+    paramValueInput.addEventListener("change", (e) => {
+      utmRule.paramValue = e.target.value;
+    });
+
+    // replacementValue
+    const replacementValueInput = clone.querySelector(
+      ".replacement-value-input"
+    );
+    replacementValueInput.value = utmRule.replacementValue;
+    replacementValueInput.addEventListener("change", (e) => {
+      utmRule.replacementValue = e.target.value;
+    });
+
+    container.appendChild(clone);
+  }
+
+  /* ------------------------------------------
+   * Рендер Block Visibility
+   * ------------------------------------------ */
+  renderBlockVisibility() {
+    const container = this.elements.blockVisibilityContainer;
+    if (!container || !this.templates.blockRule) return;
+    container.innerHTML = "";
+
+    this.config.blockVisibility.forEach((rule, index) => {
+      const clone = document.importNode(this.templates.blockRule.content, true);
+      clone.querySelector(".rule-index").textContent = index + 1;
+
+      // Удалить
+      clone
+        .querySelector(".remove-block-rule")
+        .addEventListener("click", () => {
+          this.config.blockVisibility.splice(index, 1);
+          this.renderBlockVisibility();
+        });
+
+      // paramName + custom
+      const paramNameSelect = clone.querySelector(".param-name-select");
+      const customContainer = clone.querySelector(
+        ".dcm-custom-param-container"
+      );
+      const customInput = customContainer.querySelector(".custom-param-input");
+
+      const toggleCustom = (value) => {
+        const isCustom = ![
           "utm_source",
           "utm_medium",
           "utm_campaign",
           "utm_content",
           "utm_term",
-        ].includes(rule.paramName)
-      ) {
-        paramNameSelect.value = "custom";
-        const customContainer = clone.querySelector(
-          ".dcm-custom-param-container"
-        );
-        if (customContainer) {
+        ].includes(value);
+        customContainer.style.display = isCustom ? "block" : "none";
+        if (isCustom && customInput.value) {
+          rule.paramName = customInput.value;
+        }
+      };
+
+      paramNameSelect.value = rule.paramName;
+      toggleCustom(rule.paramName);
+
+      paramNameSelect.addEventListener("change", (e) => {
+        if (e.target.value === "custom") {
           customContainer.style.display = "block";
-          const customInput = customContainer.querySelector(
-            ".custom-param-input"
-          );
-          if (customInput) {
-            customInput.value = rule.paramName;
-          }
+          rule.paramName = customInput.value || "my_param";
+        } else {
+          customContainer.style.display = "none";
+          rule.paramName = e.target.value;
         }
-      }
-    }
-
-    const paramValueInput = clone.querySelector(".param-value-input");
-    if (paramValueInput) {
-      paramValueInput.value = rule.paramValue;
-      paramValueInput.dataset.replacementIndex = replacementIndex;
-      paramValueInput.dataset.ruleIndex = ruleIndex;
-      paramValueInput.addEventListener("change", (e) => {
-        const repIdx = parseInt(e.currentTarget.dataset.replacementIndex);
-        const rIdx = parseInt(e.currentTarget.dataset.ruleIndex);
-        this.config.textReplacements[repIdx].utmRules[rIdx].paramValue =
-          e.currentTarget.value;
       });
-    }
 
-    const replacementValueInput = clone.querySelector(
-      ".replacement-value-input"
-    );
-    if (replacementValueInput) {
-      replacementValueInput.value = rule.replacementValue;
-      replacementValueInput.dataset.replacementIndex = replacementIndex;
-      replacementValueInput.dataset.ruleIndex = ruleIndex;
-      replacementValueInput.addEventListener("change", (e) => {
-        const repIdx = parseInt(e.currentTarget.dataset.replacementIndex);
-        const rIdx = parseInt(e.currentTarget.dataset.ruleIndex);
-        this.config.textReplacements[repIdx].utmRules[rIdx].replacementValue =
-          e.currentTarget.value;
+      customInput.addEventListener("change", (e) => {
+        rule.paramName = e.target.value;
       });
-    }
 
-    const customContainer = clone.querySelector(".dcm-custom-param-container");
-    if (customContainer) {
-      const hint = document.createElement("p");
-      hint.className = "helper-text";
-      hint.textContent = "Система автоматически отследит ваш параметр в URL";
-      customContainer.appendChild(hint);
-    }
-
-    container.appendChild(clone);
-  }
-
-  renderBlockVisibility() {
-    const container = this.elements.blockVisibilityContainer;
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    // Настройки по умолчанию (должны быть уже установлены в setInitialState)
-
-    this.config.blockVisibility.forEach((rule, index) => {
-      if (!this.templates.blockRule) return;
-
-      const clone = document.importNode(this.templates.blockRule.content, true);
-
-      // Обновляем индекс правила блока
-      const ruleIndex = clone.querySelector(".rule-index");
-      if (ruleIndex) {
-        ruleIndex.textContent = index + 1;
-      }
-
-      // Настраиваем кнопку удаления в правом верхнем углу
-      const removeBtn = clone.querySelector(
-        ".dcm-remove-button.remove-block-rule"
-      );
-      if (removeBtn) {
-        removeBtn.dataset.index = index;
-        removeBtn.addEventListener("click", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.blockVisibility.splice(idx, 1);
-          this.renderBlockVisibility();
-        });
-      }
-
-      const paramNameSelect = clone.querySelector(".param-name-select");
-      if (paramNameSelect) {
-        paramNameSelect.value = rule.paramName;
-        paramNameSelect.dataset.index = index;
-        paramNameSelect.addEventListener("change", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          const customContainer = e.currentTarget
-            .closest(".dcm-card.block-rule")
-            .querySelector(".dcm-custom-param-container");
-
-          if (e.currentTarget.value === "custom") {
-            customContainer.style.display = "block";
-            const customInput = customContainer.querySelector(
-              ".custom-param-input"
-            );
-            this.config.blockVisibility[idx].paramName =
-              customInput.value || "my_param";
-            customInput.addEventListener("change", (ev) => {
-              this.config.blockVisibility[idx].paramName =
-                ev.currentTarget.value;
-            });
-          } else {
-            customContainer.style.display = "none";
-            this.config.blockVisibility[idx].paramName = e.currentTarget.value;
-          }
-        });
-
-        // Устанавливаем правильное начальное состояние для пользовательских параметров
-        if (
-          ![
-            "utm_source",
-            "utm_medium",
-            "utm_campaign",
-            "utm_content",
-            "utm_term",
-          ].includes(rule.paramName)
-        ) {
-          paramNameSelect.value = "custom";
-          const customContainer = clone.querySelector(
-            ".dcm-custom-param-container"
-          );
-          if (customContainer) {
-            customContainer.style.display = "block";
-            const customInput = customContainer.querySelector(
-              ".custom-param-input"
-            );
-            if (customInput) {
-              customInput.value = rule.paramName;
-              customInput.addEventListener("change", (ev) => {
-                const idx = parseInt(paramNameSelect.dataset.index);
-                this.config.blockVisibility[idx].paramName =
-                  ev.currentTarget.value;
-              });
-            }
-          }
-        }
-      }
-
+      // paramValue
       const paramValueInput = clone.querySelector(".param-value-input");
-      if (paramValueInput) {
-        paramValueInput.value = rule.paramValue;
-        paramValueInput.dataset.index = index;
-        paramValueInput.addEventListener("change", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.blockVisibility[idx].paramValue = e.currentTarget.value;
-        });
-      }
+      paramValueInput.value = rule.paramValue;
+      paramValueInput.addEventListener("change", (e) => {
+        rule.paramValue = e.target.value;
+      });
 
+      // showBlocks
       const showBlocksInput = clone.querySelector(".show-blocks-input");
-      if (showBlocksInput) {
-        showBlocksInput.value = rule.showBlocks.join(", ");
-        showBlocksInput.dataset.index = index;
-        showBlocksInput.addEventListener("change", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.blockVisibility[idx].showBlocks =
-            this.utils.parseCommaList(e.currentTarget.value);
-        });
-      }
+      showBlocksInput.value = rule.showBlocks.join(", ");
+      showBlocksInput.addEventListener("change", (e) => {
+        rule.showBlocks = this.parseCommaList(e.target.value);
+      });
 
+      // hideBlocks
       const hideBlocksInput = clone.querySelector(".hide-blocks-input");
-      if (hideBlocksInput) {
-        hideBlocksInput.value = rule.hideBlocks.join(", ");
-        hideBlocksInput.dataset.index = index;
-        hideBlocksInput.addEventListener("change", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.blockVisibility[idx].hideBlocks =
-            this.utils.parseCommaList(e.currentTarget.value);
-        });
-      }
-
-      const customContainer = clone.querySelector(
-        ".dcm-custom-param-container"
-      );
-      if (customContainer) {
-        const hint = document.createElement("p");
-        hint.className = "helper-text";
-        hint.textContent = "Система автоматически отследит ваш параметр в URL";
-        customContainer.appendChild(hint);
-      }
+      hideBlocksInput.value = rule.hideBlocks.join(", ");
+      hideBlocksInput.addEventListener("change", (e) => {
+        rule.hideBlocks = this.parseCommaList(e.target.value);
+      });
 
       container.appendChild(clone);
     });
   }
 
+  /* ------------------------------------------
+   * Рендер IP Rules
+   * ------------------------------------------ */
   renderIpRules() {
     const container = this.elements.ipRulesContainer;
-    if (!container) return;
-
+    if (!container || !this.templates.ipRule) return;
     container.innerHTML = "";
 
     this.config.ipRules.forEach((rule, index) => {
-      if (!this.templates.ipRule) return;
-
       const clone = document.importNode(this.templates.ipRule.content, true);
+      clone.querySelector(".rule-index").textContent = index + 1;
 
-      // Обновляем индекс правила IP
-      const ruleIndex = clone.querySelector(".rule-index");
-      if (ruleIndex) {
-        ruleIndex.textContent = index + 1;
-      }
+      // Удалить
+      clone.querySelector(".remove-ip-rule").addEventListener("click", () => {
+        this.config.ipRules.splice(index, 1);
+        this.renderIpRules();
+      });
 
-      // Настраиваем кнопку удаления в правом верхнем углу
-      const removeBtn = clone.querySelector(
-        ".dcm-remove-button.remove-ip-rule"
-      );
-      if (removeBtn) {
-        removeBtn.dataset.index = index;
-        removeBtn.addEventListener("click", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.ipRules.splice(idx, 1);
-          this.renderIpRules();
-        });
-      }
-
+      // Страна/Город/Регион
       const countryInput = clone.querySelector(".country-input");
-      if (countryInput) {
-        countryInput.value = rule.country;
-        countryInput.dataset.index = index;
-        countryInput.addEventListener("change", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.ipRules[idx].country = e.currentTarget.value;
-        });
-      }
+      countryInput.value = rule.country;
+      countryInput.addEventListener("change", (e) => {
+        rule.country = e.target.value;
+      });
 
       const cityInput = clone.querySelector(".city-input");
-      if (cityInput) {
-        cityInput.value = rule.city;
-        cityInput.dataset.index = index;
-        cityInput.addEventListener("change", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.ipRules[idx].city = e.currentTarget.value;
-        });
-      }
+      cityInput.value = rule.city;
+      cityInput.addEventListener("change", (e) => {
+        rule.city = e.target.value;
+      });
 
       const regionInput = clone.querySelector(".region-input");
-      if (regionInput) {
-        regionInput.value = rule.region;
-        regionInput.dataset.index = index;
-        regionInput.addEventListener("change", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.ipRules[idx].region = e.currentTarget.value;
-        });
-      }
+      regionInput.value = rule.region;
+      regionInput.addEventListener("change", (e) => {
+        rule.region = e.target.value;
+      });
 
+      // IP text replacements
       const textContainer = clone.querySelector(
         ".ip-text-replacements-container"
       );
-      if (textContainer && rule.textReplacements) {
-        rule.textReplacements.forEach((rep, repIndex) => {
-          this.addIpTextReplacementToContainer(
-            textContainer,
-            rep,
-            index,
-            repIndex
-          );
-        });
-      }
+      rule.textReplacements?.forEach((rep, repIndex) => {
+        this.addIpTextReplacement(textContainer, rule, rep, repIndex);
+      });
 
-      const addTextBtn = clone.querySelector(".add-ip-text-replacement");
-      if (addTextBtn) {
-        addTextBtn.dataset.index = index;
-        addTextBtn.addEventListener("click", (e) => {
-          this.addNewIpTextReplacement(e.currentTarget);
+      clone
+        .querySelector(".add-ip-text-replacement")
+        .addEventListener("click", () => {
+          rule.textReplacements.push({
+            keyword: "",
+            defaultValue: "",
+            replacementValue: "",
+          });
+          this.renderIpRules();
         });
-      }
 
+      // show/hide blocks
       const showBlocksInput = clone.querySelector(".show-blocks-input");
-      if (showBlocksInput) {
-        showBlocksInput.value = rule.showBlocks
-          ? rule.showBlocks.join(", ")
-          : "";
-        showBlocksInput.dataset.index = index;
-        showBlocksInput.addEventListener("change", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.ipRules[idx].showBlocks = this.utils.parseCommaList(
-            e.currentTarget.value
-          );
-        });
-      }
+      showBlocksInput.value = (rule.showBlocks || []).join(", ");
+      showBlocksInput.addEventListener("change", (e) => {
+        rule.showBlocks = this.parseCommaList(e.target.value);
+      });
 
       const hideBlocksInput = clone.querySelector(".hide-blocks-input");
-      if (hideBlocksInput) {
-        hideBlocksInput.value = rule.hideBlocks
-          ? rule.hideBlocks.join(", ")
-          : "";
-        hideBlocksInput.dataset.index = index;
-        hideBlocksInput.addEventListener("change", (e) => {
-          const idx = parseInt(e.currentTarget.dataset.index);
-          this.config.ipRules[idx].hideBlocks = this.utils.parseCommaList(
-            e.currentTarget.value
-          );
-        });
-      }
+      hideBlocksInput.value = (rule.hideBlocks || []).join(", ");
+      hideBlocksInput.addEventListener("change", (e) => {
+        rule.hideBlocks = this.parseCommaList(e.target.value);
+      });
 
-      // Настраиваем обработчики для кнопки показа списка стран
-      const showCountriesButtons = clone.querySelectorAll(
-        ".show-countries-list"
-      );
-      showCountriesButtons.forEach((button) => {
-        button.addEventListener("click", (e) => {
-          e.preventDefault();
+      // Кнопка "показать страны"
+      clone.querySelectorAll(".show-countries-list").forEach((btn) => {
+        btn.addEventListener("click", (evt) => {
+          evt.preventDefault();
           this.showCountriesList();
         });
       });
@@ -796,120 +525,57 @@ export class DynamicContentGenerator extends BaseGenerator {
     });
   }
 
-  addIpTextReplacementToContainer(
-    container,
-    replacement,
-    ipRuleIndex,
-    replacementIndex
-  ) {
-    if (!container) return;
-    if (!this.templates.ipTextReplacement) return;
-
+  addIpTextReplacement(container, rule, rep, repIndex) {
+    if (!this.templates.ipTextReplacement || !container) return;
     const clone = document.importNode(
       this.templates.ipTextReplacement.content,
       true
     );
 
-    // Обновляем индекс замены IP
-    const replacementIndexEl = clone.querySelector(".ip-replacement-index");
-    if (replacementIndexEl) {
-      replacementIndexEl.textContent = replacementIndex + 1;
-    }
+    clone.querySelector(".ip-replacement-index").textContent = repIndex + 1;
 
-    // Настраиваем кнопку удаления в правом верхнем углу
-    const removeBtn = clone.querySelector(
-      ".dcm-remove-button.remove-ip-text-replacement"
-    );
-    if (removeBtn) {
-      removeBtn.dataset.ipRuleIndex = ipRuleIndex;
-      removeBtn.dataset.replacementIndex = replacementIndex;
-      removeBtn.addEventListener("click", (e) => {
-        const ipIdx = parseInt(e.currentTarget.dataset.ipRuleIndex);
-        const repIdx = parseInt(e.currentTarget.dataset.replacementIndex);
-        this.config.ipRules[ipIdx].textReplacements.splice(repIdx, 1);
+    // Удалить
+    clone
+      .querySelector(".remove-ip-text-replacement")
+      .addEventListener("click", () => {
+        rule.textReplacements.splice(repIndex, 1);
         this.renderIpRules();
       });
-    }
 
+    // keyword
     const keywordInput = clone.querySelector(".keyword-input");
-    if (keywordInput) {
-      keywordInput.value = replacement.keyword;
-      keywordInput.dataset.ipRuleIndex = ipRuleIndex;
-      keywordInput.dataset.replacementIndex = replacementIndex;
-      keywordInput.addEventListener("change", (e) => {
-        const ipIdx = parseInt(e.currentTarget.dataset.ipRuleIndex);
-        const repIdx = parseInt(e.currentTarget.dataset.replacementIndex);
-        this.config.ipRules[ipIdx].textReplacements[repIdx].keyword =
-          e.currentTarget.value;
-      });
-    }
+    keywordInput.value = rep.keyword;
+    keywordInput.addEventListener("change", (e) => {
+      rep.keyword = e.target.value;
+    });
 
+    // defaultValue
     const defaultValueInput = clone.querySelector(".default-value-input");
-    if (defaultValueInput) {
-      defaultValueInput.value = replacement.defaultValue || "";
-      defaultValueInput.dataset.ipRuleIndex = ipRuleIndex;
-      defaultValueInput.dataset.replacementIndex = replacementIndex;
-      defaultValueInput.addEventListener("change", (e) => {
-        const ipIdx = parseInt(e.currentTarget.dataset.ipRuleIndex);
-        const repIdx = parseInt(e.currentTarget.dataset.replacementIndex);
-        this.config.ipRules[ipIdx].textReplacements[repIdx].defaultValue =
-          e.currentTarget.value;
-      });
-    }
+    defaultValueInput.value = rep.defaultValue;
+    defaultValueInput.addEventListener("change", (e) => {
+      rep.defaultValue = e.target.value;
+    });
 
+    // replacementValue
     const replacementValueInput = clone.querySelector(
       ".replacement-value-input"
     );
-    if (replacementValueInput) {
-      replacementValueInput.value = replacement.replacementValue || "";
-      replacementValueInput.dataset.ipRuleIndex = ipRuleIndex;
-      replacementValueInput.dataset.replacementIndex = replacementIndex;
-      replacementValueInput.addEventListener("change", (e) => {
-        const ipIdx = parseInt(e.currentTarget.dataset.ipRuleIndex);
-        const repIdx = parseInt(e.currentTarget.dataset.replacementIndex);
-        this.config.ipRules[ipIdx].textReplacements[repIdx].replacementValue =
-          e.currentTarget.value;
-      });
-    }
+    replacementValueInput.value = rep.replacementValue;
+    replacementValueInput.addEventListener("change", (e) => {
+      rep.replacementValue = e.target.value;
+    });
 
     container.appendChild(clone);
   }
 
-  addNewIpTextReplacement(buttonElement) {
-    if (!buttonElement) return;
-
-    const idx = parseInt(buttonElement.dataset.index);
-    if (!this.config.ipRules[idx].textReplacements) {
-      this.config.ipRules[idx].textReplacements = [];
-    }
-
-    this.config.ipRules[idx].textReplacements.push({
-      keyword: "",
-      defaultValue: "",
-      replacementValue: "",
-    });
-
-    const repIndex = this.config.ipRules[idx].textReplacements.length - 1;
-    const replacement = this.config.ipRules[idx].textReplacements[repIndex];
-    const textContainer = buttonElement.previousElementSibling;
-
-    if (textContainer) {
-      this.addIpTextReplacementToContainer(
-        textContainer,
-        replacement,
-        idx,
-        repIndex
-      );
-    }
-  }
-
-  // Функция показа модального окна со списком стран
+  /* ------------------------------------------
+   * Модальное окно со странами
+   * ------------------------------------------ */
   showCountriesList() {
-    // Создаем модальное окно
     const modal = document.createElement("div");
+    modal.id = "countries-modal";
     modal.className = "modal";
     modal.style.display = "flex";
-    modal.id = "countries-modal";
 
     const modalContent = document.createElement("div");
     modalContent.className = "modal-content";
@@ -927,7 +593,7 @@ export class DynamicContentGenerator extends BaseGenerator {
 
     const description = document.createElement("p");
     description.textContent =
-      "Используйте полное название страны на английском языке. Ниже приведены примеры наиболее распространенных стран:";
+      "Используйте полное название страны (англ.). Ниже – распространённые варианты:";
 
     const table = document.createElement("table");
     table.style.width = "100%";
@@ -936,18 +602,10 @@ export class DynamicContentGenerator extends BaseGenerator {
 
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
-
     const thCountry = document.createElement("th");
-    thCountry.textContent = "Полное название (использовать)";
-    thCountry.style.padding = "8px";
-    thCountry.style.textAlign = "left";
-    thCountry.style.borderBottom = "2px solid #ddd";
-
+    thCountry.textContent = "Название";
     const thCode = document.createElement("th");
-    thCode.textContent = "Код ISO (НЕ использовать)";
-    thCode.style.padding = "8px";
-    thCode.style.textAlign = "left";
-    thCode.style.borderBottom = "2px solid #ddd";
+    thCode.textContent = "ISO";
 
     headerRow.appendChild(thCountry);
     headerRow.appendChild(thCode);
@@ -960,59 +618,34 @@ export class DynamicContentGenerator extends BaseGenerator {
       { name: "Belarus", code: "BY" },
       { name: "Kazakhstan", code: "KZ" },
       { name: "Ukraine", code: "UA" },
-      { name: "Armenia", code: "AM" },
-      { name: "Azerbaijan", code: "AZ" },
-      { name: "Moldova", code: "MD" },
-      { name: "Uzbekistan", code: "UZ" },
-      { name: "Tajikistan", code: "TJ" },
-      { name: "Kyrgyzstan", code: "KG" },
-      { name: "Turkmenistan", code: "TM" },
-      { name: "Georgia", code: "GE" },
-      { name: "Estonia", code: "EE" },
-      { name: "Latvia", code: "LV" },
-      { name: "Lithuania", code: "LT" },
       { name: "United States", code: "US" },
       { name: "Germany", code: "DE" },
       { name: "France", code: "FR" },
-      { name: "United Kingdom", code: "GB" },
       { name: "China", code: "CN" },
-      { name: "Japan", code: "JP" },
-      { name: "Canada", code: "CA" },
-      { name: "Australia", code: "AU" },
-      { name: "Brazil", code: "BR" },
-      { name: "India", code: "IN" },
-      { name: "Spain", code: "ES" },
-      { name: "Italy", code: "IT" },
-      { name: "Mexico", code: "MX" },
-      { name: "South Korea", code: "KR" },
     ];
 
-    countries.forEach((country, index) => {
+    countries.forEach((c, idx) => {
       const row = document.createElement("tr");
-      row.style.backgroundColor = index % 2 === 0 ? "#f9f9f9" : "white";
+      row.style.backgroundColor = idx % 2 === 0 ? "#f9f9f9" : "#fff";
 
       const tdCountry = document.createElement("td");
-      tdCountry.textContent = country.name;
+      tdCountry.textContent = c.name;
       tdCountry.style.padding = "8px";
-      tdCountry.style.borderBottom = "1px solid #ddd";
-      tdCountry.style.cursor = "pointer";
-      tdCountry.title = "Нажмите, чтобы использовать это название";
-
+      tdCountry.title = "Нажмите, чтобы вставить";
       tdCountry.addEventListener("click", () => {
         const activeInput = Array.from(
           document.querySelectorAll(".country-input")
         ).find((input) => document.activeElement === input);
         if (activeInput) {
-          activeInput.value = country.name;
+          activeInput.value = c.name;
           activeInput.dispatchEvent(new Event("change", { bubbles: true }));
         }
         this.closeCountriesModal();
       });
 
       const tdCode = document.createElement("td");
-      tdCode.textContent = country.code;
+      tdCode.textContent = c.code;
       tdCode.style.padding = "8px";
-      tdCode.style.borderBottom = "1px solid #ddd";
 
       row.appendChild(tdCountry);
       row.appendChild(tdCode);
@@ -1021,15 +654,13 @@ export class DynamicContentGenerator extends BaseGenerator {
     table.appendChild(tbody);
 
     const note = document.createElement("p");
-    note.textContent =
-      'Примечание: Для обозначения любой страны используйте символ "*". Нажмите на название страны, чтобы использовать его.';
+    note.textContent = 'Для "любой" страны используйте "*".';
     note.style.marginTop = "15px";
     note.style.fontStyle = "italic";
 
     const closeBtnBottom = document.createElement("button");
     closeBtnBottom.className = "btn btn-primary";
     closeBtnBottom.textContent = "Закрыть";
-    closeBtnBottom.style.marginTop = "15px";
     closeBtnBottom.style.display = "block";
     closeBtnBottom.style.margin = "15px auto 0";
     closeBtnBottom.addEventListener("click", () => this.closeCountriesModal());
@@ -1045,139 +676,98 @@ export class DynamicContentGenerator extends BaseGenerator {
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
 
-    modal.addEventListener("click", (event) => {
-      if (event.target === modal) this.closeCountriesModal();
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) this.closeCountriesModal();
     });
-
     document.addEventListener("keydown", this.handleCountriesModalEscape);
   }
 
   closeCountriesModal() {
     const modal = document.getElementById("countries-modal");
     if (modal) {
-      document.body.removeChild(modal);
+      modal.remove();
       document.removeEventListener("keydown", this.handleCountriesModalEscape);
     }
   }
 
   handleCountriesModalEscape(event) {
-    if (event.key === "Escape") {
-      this.closeCountriesModal();
-    }
+    if (event.key === "Escape") this.closeCountriesModal();
   }
 
-  // Собираем пользовательские параметры из конфигурации
-  collectCustomParameters() {
-    const customParams = new Set();
-
-    this.config.textReplacements.forEach((replacement) => {
-      replacement.utmRules?.forEach((rule) => {
-        if (rule.paramName && !rule.paramName.startsWith("utm_")) {
-          customParams.add(rule.paramName);
-        }
-      });
-    });
-
-    this.config.blockVisibility.forEach((rule) => {
-      if (rule.paramName && !rule.paramName.startsWith("utm_")) {
-        customParams.add(rule.paramName);
-      }
-    });
-
-    return Array.from(customParams);
-  }
-
-  // Генерация и копирование кода
+  /* ------------------------------------------
+   * Генерация кода + копирование
+   * ------------------------------------------ */
   generateAndCopyCode() {
     const code = this.generateCode();
     this.copyAndNotify(code);
   }
 
-  // Генерация итогового кода
   generateCode() {
-    console.log("Начинаем генерацию кода...");
-
-    // Делаем копию конфига, чтобы не мутировать исходный
+    // 1) Копируем config, чтобы не мутировать оригинал
     const cleanConfig = JSON.parse(JSON.stringify(this.config));
 
-    // Очистка и нормализация данных
-    cleanConfig.textReplacements.forEach((replacement) => {
-      replacement.utmRules?.forEach((rule) => {
-        if (!rule.paramName) rule.paramName = "my_param";
-      });
-    });
-    cleanConfig.blockVisibility.forEach((rule) => {
-      if (!rule.paramName) rule.paramName = "my_param";
+    // 2) Устанавливаем "my_param" если paramName пуст
+    cleanConfig.textReplacements.forEach((r) =>
+      r.utmRules?.forEach((u) => {
+        if (!u.paramName) u.paramName = "my_param";
+      })
+    );
+    cleanConfig.blockVisibility.forEach((b) => {
+      if (!b.paramName) b.paramName = "my_param";
     });
 
-    // Собираем дополнительные параметры (те, что не начинаются с utm_)
+    // 3) Собираем кастомные UTM
     cleanConfig.additionalParams = this.collectCustomParameters();
 
-    // Превращаем конфиг в JSON-строку (с отступами для красоты)
+    // 4) Превращаем в JSON
     const configJson = JSON.stringify(cleanConfig, null, 2);
 
-    // Ниже итоговый скрипт с ключевыми изменениями в init():
-    const code = `<!-- UTM/IP расширение -->
-  <script>
-  // Скрываем страницу до полного применения дефолтных замен (чтобы не светить %%ключи%%)
-  document.documentElement.style.visibility = 'hidden';
+    // 5) Возвращаем готовый "боевой" скрипт,
+    //    который скрывает страницу и подменяет %%region%% уже после IP
+    return `<!-- UTM/IP расширение -->
+<script>
+document.documentElement.style.visibility = 'hidden';
 
-  class TaptopContentChanger {
-    constructor(config) {
-      try {
-        this.config = config || { textReplacements: [], blockVisibility: [], ipRules: [] };
-        this.utmParams = this.getUTMParams();
-        this.ipInfo = null;
-  
-        // Если есть IP-правила, пытаемся определить локацию
-        if (this.config.ipRules && this.config.ipRules.length > 0) {
-          this.detectLocation();
-        }
-      } catch (error) {
-        console.error('Ошибка при инициализации расширения UTM/IP:', error);
-      }
+class TaptopContentChanger {
+  constructor(config) {
+    this.config = config || { textReplacements: [], blockVisibility: [], ipRules: [] };
+    this.utmParams = this.getUTMParams();
+    this.ipInfo = null;
+
+    // Сразу делаем замену по UTM, чтобы убрать %%service%%, %%...%%
+    this.replaceText();
+    // И блоки по UTM
+    this.toggleBlocksVisibility();
+
+    if (this.config.ipRules?.length) {
+      this.detectLocation().finally(() => {
+        this.applyIPRules();
+        document.documentElement.style.visibility = '';
+      });
+    } else {
+      document.documentElement.style.visibility = '';
     }
-  
-    getUTMParams() {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const utm = {};
-  
-        // Проверяем наличие стандартных UTM в URL
-        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(param => {
-          if (urlParams.has(param)) {
-            utm[param] = urlParams.get(param);
-          }
-        });
-  
-        // Проверка дополнительных (кастомных) параметров
-        if (this.config.additionalParams && this.config.additionalParams.length > 0) {
-          this.config.additionalParams.forEach(param => {
-            if (urlParams.has(param)) {
-              utm[param] = urlParams.get(param);
-            }
-          });
-        }
-  
-        if (Object.keys(utm).length === 0) {
-          console.log('UTM-параметры не найдены в URL');
-        }
-  
-        return utm;
-      } catch (error) {
-        console.error('Ошибка при получении UTM параметров:', error);
-        return {};
-      }
+  }
+
+  getUTMParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const utm = {};
+    ["utm_source","utm_medium","utm_campaign","utm_term","utm_content"].forEach(p => {
+      if (urlParams.has(p)) utm[p] = urlParams.get(p);
+    });
+    if (this.config.additionalParams?.length) {
+      this.config.additionalParams.forEach((p) => {
+        if (urlParams.has(p)) utm[p] = urlParams.get(p);
+      });
     }
-  
-    async detectLocation() {
-      try {
-        const response = await fetch('https://get.geojs.io/v1/ip/geo.json');
-        const data = await response.json();
-        if (!data || !data.country) {
-          console.error('Ошибка определения геолокации: некорректный ответ');
-          return;
-        }
+    return utm;
+  }
+
+  async detectLocation() {
+    try {
+      const res = await fetch("https://get.geojs.io/v1/ip/geo.json");
+      const data = await res.json();
+      if (data?.country) {
         this.ipInfo = {
           country_name: data.country,
           country_code: data.country_code,
@@ -1185,284 +775,163 @@ export class DynamicContentGenerator extends BaseGenerator {
           region: data.region,
           city: data.city
         };
+      }
+    } catch(e){
+      console.error("Geo detect error:", e);
+    }
+  }
 
-        // Применяем IP-правила (асинхронно, когда данные уже получены)
-        this.applyIPRules();
-      } catch (error) {
-        console.error('Ошибка при определении геолокации:', error);
+  applyIPRules() {
+    if (!this.ipInfo || !this.config.ipRules?.length) return;
+    const norm = {
+      country: this.ipInfo.country_name?.toLowerCase().trim(),
+      code: this.ipInfo.country_code?.toLowerCase().trim(),
+      code3: this.ipInfo.country_code3?.toLowerCase().trim(),
+      region: this.ipInfo.region?.toLowerCase().trim(),
+      city: this.ipInfo.city?.toLowerCase().trim(),
+    };
+    let matched = null;
+    for (const rule of this.config.ipRules) {
+      const c = rule.country?.toLowerCase().trim();
+      const ci = rule.city?.toLowerCase().trim();
+      const r = rule.region?.toLowerCase().trim();
+      const countryOk = c === "*" || c === norm.country || c === norm.code || c === norm.code3;
+      const cityOk = ci === "*" || ci === norm.city;
+      const regionOk = r === "*" || r === norm.region;
+      if (countryOk && cityOk && regionOk) {
+        matched = rule;
+        break;
       }
     }
-  
-    // Обрабатываем значения по умолчанию сразу, чтобы не светились %%ключ%%
-    applyDefaultIPTextReplacements() {
-      try {
-        if (!this.config.ipRules || !this.config.ipRules.length) return;
-
-        const defaults = {};
-        this.config.ipRules.forEach(rule => {
-          if (rule.textReplacements) {
-            rule.textReplacements.forEach(rep => {
-              if (rep.keyword && rep.defaultValue) {
-                // Сохраняем дефолтное значение для этого ключа
-                defaults[rep.keyword] = rep.defaultValue;
-              }
-            });
-          }
+    if (matched) {
+      // Заменяем %%region%% и пр. на replacementValue
+      matched.textReplacements?.forEach((rep) => {
+        this.replaceAll(rep.keyword, rep.replacementValue);
+      });
+      this.applyVisibilityRules(matched.showBlocks, matched.hideBlocks);
+    } else {
+      // Иначе для всех ipRules подставляем defaultValue 
+      // (чтобы %%ключ%% не оставался)
+      this.config.ipRules.forEach((rule) => {
+        rule.textReplacements?.forEach((rep) => {
+          this.replaceAll(rep.keyword, rep.defaultValue);
         });
-  
-        // Заменяем все %%ключ%% на эти дефолтные значения
-        for (const [keyword, defValue] of Object.entries(defaults)) {
-          const elements = this.findElementsWithText(keyword);
-          elements.forEach(element => {
-            const original = element.innerHTML;
-            const pattern = new RegExp(\`%%\${keyword}%%\`, 'g');
-            const newContent = original.replace(pattern, defValue);
-            if (original !== newContent) {
-              element.innerHTML = newContent;
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Ошибка при применении значений текста по умолчанию из IP-правил:', error);
-      }
-    }
-  
-    replaceText() {
-      try {
-        if (!this.config.textReplacements || !this.config.textReplacements.length) {
-          return;
-        }
-  
-        this.config.textReplacements.forEach((rule, index) => {
-          const elements = this.findElementsWithText(rule.keyword);
-  
-          let replacementValue = rule.defaultValue;
-  
-          if (rule.utmRules && rule.utmRules.length) {
-            const matchedRule = rule.utmRules.find(utmRule => {
-              const hasParam = this.utmParams[utmRule.paramName];
-              const matchesValue = this.utmParams[utmRule.paramName] === utmRule.paramValue || utmRule.paramValue === '*';
-              return hasParam && matchesValue;
-            });
-            if (matchedRule) {
-              replacementValue = matchedRule.replacementValue;
-            }
-          }
-  
-          elements.forEach(element => {
-            const original = element.innerHTML;
-            const pattern = new RegExp(\`%%\${rule.keyword}%%\`, 'g');
-            const newContent = original.replace(pattern, replacementValue);
-            if (original !== newContent) {
-              element.innerHTML = newContent;
-            } else {
-            }
-          });
-        });
-      } catch (error) {
-        console.error('Ошибка при замене текста:', error);
-      }
-    }
-  
-    toggleBlocksVisibility() {
-      try {
-        if (!this.config.blockVisibility || !this.config.blockVisibility.length) {
-          return;
-        }
-  
-        let matchedRule = null;
-        for (const rule of this.config.blockVisibility) {
-          const hasParam = this.utmParams[rule.paramName];
-          const matchesValue = this.utmParams[rule.paramName] === rule.paramValue || rule.paramValue === '*';
-  
-          if (hasParam && matchesValue) {
-            matchedRule = rule;
-            break;
-          }
-        }
-  
-        if (matchedRule) {
-          this.applyVisibilityRules(matchedRule.showBlocks, matchedRule.hideBlocks);
-        } else if (this.config.defaultBlockVisibility) {
-          this.applyVisibilityRules(
-            this.config.defaultBlockVisibility.showBlocks,
-            this.config.defaultBlockVisibility.hideBlocks
-          );
-        }
-      } catch (error) {
-        console.error('Ошибка при управлении видимостью блоков:', error);
-      }
-    }
-  
-    applyIPRules() {
-      try {
-        if (!this.ipInfo || !this.config.ipRules || !this.config.ipRules.length) {
-          return;
-        }
-        // Сейчас "дефолтные" IP-замены уже были применены при инициализации.
-        // Здесь мы ищем конкретное правило (страна/город/регион) и при совпадении снова заменяем текст.
-  
-        // Готовим нормализованные названия
-        const normalized = {
-          country: this.ipInfo.country_name?.toLowerCase().trim(),
-          country_code: this.ipInfo.country_code?.toLowerCase().trim(),
-          country_code3: this.ipInfo.country_code3?.toLowerCase().trim(),
-          city: this.ipInfo.city?.toLowerCase().trim(),
-          region: this.ipInfo.region?.toLowerCase().trim()
-        };
-  
-        let matchedRule = null;
-        for (const rule of this.config.ipRules) {
-          const ruleCountry = rule.country?.toLowerCase().trim();
-          const ruleCity = rule.city?.toLowerCase().trim();
-          const ruleRegion = rule.region?.toLowerCase().trim();
-  
-          const countryMatch = ruleCountry === '*' || ruleCountry === normalized.country
-            || ruleCountry === normalized.country_code || ruleCountry === normalized.country_code3;
-          const cityMatch = ruleCity === '*' || ruleCity === normalized.city;
-          const regionMatch = ruleRegion === '*' || ruleRegion === normalized.region;
-  
-
-          if (countryMatch && cityMatch && regionMatch) {
-            matchedRule = rule;
-            break;
-          }
-        }
-  
-        if (matchedRule) {
-          if (matchedRule.textReplacements && matchedRule.textReplacements.length) {
-            matchedRule.textReplacements.forEach(replacement => {
-              const elements = this.findElementsWithText(replacement.keyword);
-              elements.forEach(element => {
-                const original = element.innerHTML;
-                const pattern = new RegExp(\`%%\${replacement.keyword}%%\`, 'g');
-                const newContent = original.replace(pattern, replacement.replacementValue);
-                if (original !== newContent) {
-                  element.innerHTML = newContent;
-                }
-              });
-            });
-          }
-          this.applyVisibilityRules(matchedRule.showBlocks, matchedRule.hideBlocks);
-        } 
-      } catch (error) {
-        console.error('DynamicContentManager: Ошибка при применении IP-правил:', error);
-      }
-    }
-  
-    applyVisibilityRules(showBlocks, hideBlocks) {
-      try {
-        if (hideBlocks && hideBlocks.length) {
-          hideBlocks.forEach((id) => {
-            const selector = \`#\${id}, .\${id}, [data-block-id="\${id}"]\`;
-            const elements = Array.from(document.querySelectorAll(selector));
-            elements.forEach((el) => {
-              el.style.display = 'none';
-            });
-          });
-        }
-        if (showBlocks && showBlocks.length) {
-          showBlocks.forEach((id) => {
-            const selector = \`#\${id}, .\${id}, [data-block-id="\${id}"]\`;
-            const elements = Array.from(document.querySelectorAll(selector));
-            elements.forEach((el) => {
-              el.style.display = '';
-            });
-          });
-        }
-      } catch (error) {
-        console.error('Ошибка при применении правил видимости:', error);
-      }
-    }
-  
-    findElementsWithText(keyword) {
-      try {
-        const elements = [];
-        const pattern = new RegExp(\`%%\${keyword}%%\`);
-  
-        const search = (node) => {
-          if (!node) return;
-          if (node.nodeType === Node.TEXT_NODE) {
-            if (pattern.test(node.textContent)) {
-              const parent = node.parentElement;
-              if (parent && !elements.includes(parent)) elements.push(parent);
-            }
-          } else if (node.nodeType === Node.ELEMENT_NODE) {
-            if (pattern.test(node.innerHTML)) {
-              if (!elements.includes(node)) elements.push(node);
-            }
-            Array.from(node.childNodes).forEach(search);
-          }
-        };
-        search(document.body);
-        return elements;
-      } catch (error) {
-        return [];
-      }
-    }
-  
-    init() {
-      try {
-
-        // 1) Сразу подставляем дефолтные тексты для IP-ключей (чтобы не увидеть %%ключ%%)
-        this.applyDefaultIPTextReplacements();
-  
-        // 2) Подставляем UTM-замены
-        this.replaceText();
-  
-        // 3) Логика скрытия/показа блоков по UTM (и дефолту)
-        this.toggleBlocksVisibility();
-  
-        // 4) Показываем страницу
-        document.documentElement.style.visibility = '';
-  
-        // Добавляем скрытый блок для отладки
-        const debugInfo = document.createElement('div');
-        debugInfo.style.display = 'none';
-        debugInfo.id = 'dcm-debug-info';
-        debugInfo.setAttribute('data-loaded', 'true');
-        debugInfo.setAttribute('data-utms', JSON.stringify(this.utmParams));
-        document.body.appendChild(debugInfo);
-  
-      } catch (error) {
-        console.error('Ошибка при инициализации расширения UTM/IP:', error);
+      });
+      if (this.config.defaultBlockVisibility) {
+        this.applyVisibilityRules(
+          this.config.defaultBlockVisibility.showBlocks,
+          this.config.defaultBlockVisibility.hideBlocks
+        );
       }
     }
   }
-  
-  // Запускаем скрипт после полной загрузки DOM
-  document.addEventListener('DOMContentLoaded', function() {
-    try {
-      // Маркер, что наш скрипт подгрузился
-      const debugMarker = document.createElement('div');
-      debugMarker.id = 'dcm-script-loaded';
-      debugMarker.style.display = 'none';
-      document.body.appendChild(debugMarker);
-  
-      const contentChanger = new TaptopContentChanger(${configJson});
-      contentChanger.init();
-    } catch (error) {
-      console.error('Критическая ошибка при запуске скрипта:', error);
-    }
-  });
-  </script>`;
 
-    // Возвращаем готовый JS-код (скрипт) одной строкой
-    return code;
+  replaceText() {
+    this.config.textReplacements?.forEach((rule) => {
+      let replacementValue = rule.defaultValue;
+      const matched = rule.utmRules?.find((utmRule) => {
+        const val = this.utmParams[utmRule.paramName];
+        return val && (val === utmRule.paramValue || utmRule.paramValue === "*");
+      });
+      if (matched) replacementValue = matched.replacementValue;
+      this.replaceAll(rule.keyword, replacementValue);
+    });
+  }
+
+  replaceAll(keyword, newValue) {
+    if (!keyword) return;
+    const pattern = new RegExp(\`%%\${keyword}%%\`, "g");
+    const elements = [];
+    const search = (node) => {
+      if (!node) return;
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (pattern.test(node.textContent)) {
+          const p = node.parentElement;
+          if (p && !elements.includes(p)) elements.push(p);
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (pattern.test(node.innerHTML) && !elements.includes(node)) {
+          elements.push(node);
+        }
+        node.childNodes.forEach(search);
+      }
+    };
+    search(document.body);
+    elements.forEach((el) => {
+      el.innerHTML = el.innerHTML.replace(pattern, newValue);
+    });
+  }
+
+  toggleBlocksVisibility() {
+    if (!this.config.blockVisibility?.length) return;
+    let matched = null;
+    for (const rule of this.config.blockVisibility) {
+      const val = this.utmParams[rule.paramName];
+      if (val && (val === rule.paramValue || rule.paramValue === "*")) {
+        matched = rule;
+        break;
+      }
+    }
+    if (matched) {
+      this.applyVisibilityRules(matched.showBlocks, matched.hideBlocks);
+    } else if (this.config.defaultBlockVisibility) {
+      this.applyVisibilityRules(
+        this.config.defaultBlockVisibility.showBlocks,
+        this.config.defaultBlockVisibility.hideBlocks
+      );
+    }
+  }
+
+  applyVisibilityRules(showBlocks, hideBlocks) {
+    (hideBlocks||[]).forEach((id) => {
+      document.querySelectorAll(\`#\${id},.\${id},[data-block-id="\${id}"]\`)
+        .forEach(el => el.style.display="none");
+    });
+    (showBlocks||[]).forEach((id) => {
+      document.querySelectorAll(\`#\${id},.\${id},[data-block-id="\${id}"]\`)
+        .forEach(el => el.style.display="");
+    });
   }
 }
-// Инициализация генератора
+
+// Запуск на реальном лендинге
+document.addEventListener("DOMContentLoaded", () => {
+  const changer = new TaptopContentChanger(${configJson});
+});
+</script>`;
+  }
+
+  collectCustomParameters() {
+    const customParams = new Set();
+    this.config.textReplacements.forEach((r) => {
+      r.utmRules?.forEach((rule) => {
+        if (rule.paramName && !rule.paramName.startsWith("utm_")) {
+          customParams.add(rule.paramName);
+        }
+      });
+    });
+    this.config.blockVisibility.forEach((rule) => {
+      if (rule.paramName && !rule.paramName.startsWith("utm_")) {
+        customParams.add(rule.paramName);
+      }
+    });
+    return [...customParams];
+  }
+}
+
+/* Инициализация конструктора (UI) при загрузке */
 document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector(".dcm-container")) {
-    const dynamicContentGenerator = new DynamicContentGenerator();
-    dynamicContentGenerator.init();
+    const generator = new DynamicContentGenerator();
+    generator.init();
+    // <-- теперь кнопки будут работать,
+    //     т.к. мы не прячем страницу в init()
   }
 });
 
-// Экспортируем функцию инициализации для Docsify
 window.initDynamicContentGenerator = function () {
   if (document.querySelector(".dcm-container")) {
-    const dynamicContentGenerator = new DynamicContentGenerator();
-    dynamicContentGenerator.init();
+    const generator = new DynamicContentGenerator();
+    generator.init();
   }
 };

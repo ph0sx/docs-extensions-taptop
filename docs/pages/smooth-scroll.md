@@ -28,7 +28,7 @@
         <option value="slow">Медленный</option>
         <option value="reading">Для чтения</option>
       </select>
-      <div class="helper-text" id="preset-description">Универсальный вариант для большинства сайтов</div>
+      <div class="helper-text" id="preset-description">Универсальный — средний баланс скорости и плавности</div>
     </div>
     <div class="tabs-container">
       <div class="tab-buttons">
