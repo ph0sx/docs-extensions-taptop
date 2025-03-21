@@ -1,0 +1,32 @@
+/* Стили для генератора плавного скролла */
+.smooth-scroll-container {
+  max-width: 1000px;
+  margin: 20px auto;
+  background: var(--bg-gradient);
+  border-radius: var(--radius-lg);
+  padding: 25px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.preset-section {
+  margin-bottom: 20px;
+}
+
+.preset-section label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.preset-section .helper-text {
+  color: var(--text-medium);
+}
+
+.device-support {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 25px;
+}

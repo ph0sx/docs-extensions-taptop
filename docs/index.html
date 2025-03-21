@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
     <title>Документация</title>
@@ -14,21 +14,28 @@
       rel="stylesheet"
       href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css"
     />
-    <link rel="stylesheet" href="./pages/cookie/cookie.css" />
-    <link rel="stylesheet" href="./pages/smooth-scroll/smooth-scroll.css" />
-    <link rel="stylesheet" href="./pages/dynamic-content/dynamic-content.css" />
+
+    <!-- Общие стили -->
+    <link rel="stylesheet" href="./css/common/base.css" />
+    <link rel="stylesheet" href="./css/common/forms.css" />
+    <link rel="stylesheet" href="./css/common/modals.css" />
+    <link rel="stylesheet" href="./css/common/components.css" />
+
+    <!-- Стили для генераторов -->
+    <link rel="stylesheet" href="./css/generators/cookie.css" />
+    <link rel="stylesheet" href="./css/generators/smooth-scroll.css" />
+    <link rel="stylesheet" href="./css/generators/multilanding.css" />
   </head>
   <body>
     <div id="app"></div>
     <script>
       window.$docsify = {
-        name: "",
+        name: "f",
         repo: "",
         loadSidebar: true,
         alias: {
           "/.*/_sidebar.md": "/_sidebar.md",
         },
-        /*         executeScript: true, */
         homepage: "./guide.md",
         subMaxLevel: 2,
         name: "taptop",
@@ -39,25 +46,76 @@
     <!-- Docsify v4 -->
     <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
 
-    <script src="./js/utils/minifyCode.js"></script>
-    <script src="./pages/cookie/cookie-generator.js"></script>
-    <script src="./pages/smooth-scroll/smooth-scroll-generator.js"></script>
-    <script src="./pages/dynamic-content/dynamic-content-generator.js"></script>
+    <!-- Утилиты -->
+    <script type="module" src="./js/utils/minifyCode.js"></script>
+    <script type="module" src="./js/utils/copyToClipboard.js"></script>
+    <script type="module" src="./js/utils/modal.js"></script>
 
-    <!-- Docsify-плагин, который будет запускать инициализацию после каждого рендера -->
+    <!-- Базовый класс генератора -->
+    <script type="module" src="./js/generators/baseGenerator.js"></script>
+
+    <!-- Генераторы -->
+    <script type="module" src="./js/generators/cookieGenerator.js"></script>
+    <script
+      type="module"
+      src="./js/generators/smoothScrollGenerator.js"
+    ></script>
+    <script
+      type="module"
+      src="./js/generators/multilandingGenerator.js"
+    ></script>
+
+    <!-- Доксифай-плагин для инициализации после рендера -->
     <script>
       if (window.$docsify) {
         window.$docsify.plugins = window.$docsify.plugins || [];
         window.$docsify.plugins.push(function (hook) {
-          // doneEach вызывается после загрузки/рендера каждой страницы
           hook.doneEach(function () {
-            // Делаем небольшой таймаут, чтобы Docsify успел «вклеить» контент
             setTimeout(function () {
-              initSmoothScrollGenerator();
-            }, 200);
+              if (window.initGenerators) {
+                window.initGenerators();
+              }
+            }, 300);
           });
         });
       }
+    </script>
+
+    <script type="module">
+      import { CookieGenerator } from "./js/generators/cookieGenerator.js";
+      import { SmoothScrollGenerator } from "./js/generators/smoothScrollGenerator.js";
+      import { DynamicContentGenerator } from "./js/generators/multilandingGenerator.js";
+      import generatorsManager from "./js/generators/generatorsManager.js";
+
+      // Функция для запуска после загрузки DOM
+      function initializeGenerators() {
+        // Регистрируем генераторы
+        generatorsManager
+          .register("cookie", CookieGenerator, "#cookie-generator")
+          .register(
+            "smoothScroll",
+            SmoothScrollGenerator,
+            "#smooth-scroll-generator"
+          )
+          .register(
+            "dynamicContent",
+            DynamicContentGenerator,
+            ".dcm-container"
+          );
+
+        generatorsManager.initAll();
+      }
+
+      // Запускаем инициализацию
+      document.addEventListener("DOMContentLoaded", initializeGenerators);
+
+      // Переопределяем глобальный метод инициализации для Docsify
+      window.initGenerators = function () {
+        if (generatorsManager.initialized) {
+          generatorsManager.reset();
+        }
+        generatorsManager.initAll();
+      };
     </script>
   </body>
 </html>

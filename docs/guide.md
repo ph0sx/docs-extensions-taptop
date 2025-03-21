@@ -1,4 +1,5 @@
-В данной документации предоставлены расширения для конструктора сайтов **Taptop**.
+В данной документации предоставлены расширения для визуального редактора кода **Taptop**.
 
-- [Куки](/pages/cookie/cookie.md)
-- [Плавный скролл](/pages/smooth-scroll/smooth-scroll.md)
+- [Куки](/pages/cookie.md)
+- [Плавный скролл](/pages/smooth-scroll.md)
+- [Мультилендинг UTM/IP](/pages/multilanding.md)

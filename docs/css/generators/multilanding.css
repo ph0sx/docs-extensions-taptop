@@ -1,0 +1,649 @@
+.dcm-container {
+  font-family: var(--font-family);
+  color: var(--text-dark);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dcm-container .generator-container {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  /* 3 */
+  margin: 30px auto;
+}
+
+/* ==== Simplified Header ==== */
+.dcm-container .generator-header-simple {
+  background-color: #f8fafc;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  justify-content: center;
+  text-align: center;
+}
+
+.dcm-container .generator-text-simple {
+  max-width: 800px;
+}
+
+.dcm-container .generator-title-simple {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  color: var(--text-dark);
+}
+
+.dcm-container .generator-subtitle-simple {
+  font-size: 16px;
+  color: var(--text-medium);
+  margin: 0;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ==== Вкладки/табы ==== */
+.dcm-container .tab-buttons {
+  display: flex;
+  margin: 24px;
+  background: #f5f5f5;
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.dcm-container .tab-button {
+  flex: 1;
+  padding: 12px 15px;
+  border: none;
+  background: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-medium);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dcm-container .tab-button.active {
+  background: var(--primary-color);
+  color: white;
+  box-shadow: 0 2px 5px rgba(68, 131, 245, 0.3);
+}
+
+.dcm-container .tab-button:not(.active):hover {
+  background: rgba(68, 131, 245, 0.1);
+  color: var(--primary-hover);
+}
+
+/* ==== Контейнер вкладок ==== */
+.dcm-container .tabs-container {
+  padding: 0 40px;
+}
+
+.dcm-container .tab-content {
+  display: none;
+}
+
+.dcm-container .tab-content.active {
+  display: block;
+}
+
+/* ==== Intro для вкладки ==== */
+.dcm-container .tab-intro {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f8fafc;
+  border-radius: var(--radius-md);
+}
+
+.dcm-container .intro-text {
+  flex: 1;
+}
+
+.dcm-container .intro-text h2 {
+  font-size: 20px;
+  margin: 0 0 8px 0;
+  color: var(--text-dark);
+}
+
+.dcm-container .intro-text p {
+  margin: 0;
+  color: var(--text-medium);
+}
+
+/* ==== Всплывающие подсказки ==== */
+.dcm-container .tooltip-container {
+  position: relative;
+  margin-left: 16px;
+}
+
+.dcm-container .tooltip-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+  transition: var(--transition);
+  position: relative;
+}
+
+.dcm-container .tooltip-button:hover {
+  color: var(--primary-color);
+}
+
+.dcm-container .tooltip-content {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background-color: white;
+  width: 300px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+  visibility: hidden;
+  opacity: 0;
+  transition: var(--transition);
+  transform: translateY(10px);
+  pointer-events: none;
+  border: 1px solid var(--border-color);
+}
+
+.dcm-container .tooltip-content::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  transform: rotate(45deg);
+  border-top: 1px solid var(--border-color);
+  border-left: 1px solid var(--border-color);
+}
+
+.dcm-container .tooltip-content p {
+  margin: 0 0 12px 0;
+  color: var(--text-medium);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dcm-container .tooltip-content p:last-child {
+  margin-bottom: 0;
+}
+
+.dcm-container .tooltip-content code {
+  background-color: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--primary-color);
+}
+
+.dcm-container .tooltip-container:hover .tooltip-content {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ==== Карточки ==== */
+.dcm-container .cards-container {
+  margin-bottom: 30px;
+}
+
+.dcm-container .dcm-card {
+  background-color: white;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  margin-bottom: 24px;
+  transition: var(--transition);
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+
+.dcm-container .dcm-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: #d8e3fc;
+}
+
+.dcm-container .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dcm-container .card-index-label {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+/* Улучшенный UI для индексов правил */
+.dcm-container .rule-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #5e6ffd 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: 8px;
+  box-shadow: 0 2px 5px rgba(68, 131, 245, 0.3);
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.dcm-container .rule-index::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to right bottom,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  z-index: -1;
+}
+
+.dcm-container .settings-card {
+  background-color: white;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  margin-bottom: 24px;
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.dcm-container .settings-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: var(--text-dark);
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* ==== Формы ==== */
+.dcm-container .form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -10px;
+  padding: 16px 20px;
+}
+
+.dcm-container .form-group {
+  flex: 1;
+  min-width: 250px;
+  padding: 0 10px;
+  margin-bottom: 16px;
+}
+
+.dcm-container label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+.dcm-container .text-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  transition: var(--transition);
+  color: var(--text-dark);
+  background-color: white;
+}
+
+.dcm-container .text-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(68, 131, 245, 0.2);
+}
+
+.dcm-container .text-input::placeholder {
+  color: var(--text-light);
+}
+
+/* ==== Стили для работы с select ==== */
+.dcm-container .select-container {
+  position: relative;
+}
+
+.dcm-container .select-container::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--text-light);
+  border-bottom: 2px solid var(--text-light);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dcm-container .select-input {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 12px 16px;
+  padding-right: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  transition: var(--transition);
+  color: var(--text-dark);
+  background-color: white;
+  cursor: pointer;
+}
+
+/* Явное удаление стандартной стрелки в IE */
+.dcm-container .select-input::-ms-expand {
+  display: none;
+}
+
+.dcm-container .select-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(68, 131, 245, 0.2);
+}
+
+.dcm-container .input-with-icon {
+  position: relative;
+}
+
+.dcm-container .input-icon-button {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-light);
+  padding: 4px;
+  transition: var(--transition);
+}
+
+.dcm-container .input-icon-button:hover {
+  color: var(--primary-color);
+}
+
+.dcm-container .helper-text {
+  font-size: 12px;
+  color: var(--text-light);
+  margin: 4px 0 0 0;
+}
+
+.dcm-container code {
+  background-color: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--primary-color);
+}
+
+/* ==== Правила ==== */
+.dcm-container .dcm-rule {
+  background-color: #fafbff;
+  border: 1px solid #e9effd;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.dcm-container .dcm-rule:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.dcm-container .rule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f1f5f9;
+  border-bottom: 1px solid #e9effd;
+}
+
+.dcm-container .utm-index-badge {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-medium);
+}
+
+/* Улучшенные UTM и IP индексы */
+.dcm-container .utm-rule-index,
+.dcm-container .ip-replacement-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, #64748b, #475569);
+  color: white;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(100, 116, 139, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.dcm-container .utm-rule-index::before,
+.dcm-container .ip-replacement-index::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to right bottom,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  z-index: 0;
+}
+
+/* ==== Разделители секций ==== */
+.dcm-container .section-divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  padding: 0 20px;
+}
+
+.dcm-container .section-divider::before,
+.dcm-container .section-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+.dcm-container .section-divider span {
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-medium);
+}
+
+/* ==== Кнопки удаления ==== */
+.dcm-container .dcm-remove-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.05);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-light);
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.dcm-container .dcm-remove-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.dcm-container .dcm-remove-button:hover {
+  background-color: var(--error-color);
+  color: white;
+  transform: scale(1.1);
+}
+
+/* ==== Кнопки добавления карточек ==== */
+.dcm-container .add-card-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 16px;
+  background-color: rgba(68, 131, 245, 0.08);
+  border: 2px dashed rgba(68, 131, 245, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--primary-color);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 15px;
+}
+
+.dcm-container .add-card-button span {
+  display: flex;
+  align-items: center; /* Важно для выравнивания */
+  justify-content: center;
+}
+
+.dcm-container .add-card-button svg {
+  margin-right: 8px;
+  flex-shrink: 0; /* Предотвращает сжатие SVG */
+  position: relative;
+  top: -1px; /* Небольшая корректировка вертикального положения */
+}
+
+.dcm-container .add-card-button:hover {
+  background-color: rgba(68, 131, 245, 0.12);
+  border-color: rgba(68, 131, 245, 0.5);
+  transform: translateY(-2px);
+}
+
+/* ==== Кнопки добавления правил ==== */
+.dcm-container .add-rule-button {
+  display: flex;
+  align-items: center;
+  margin: 0 20px 20px 20px;
+  padding: 8px 16px;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-medium);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 14px;
+}
+
+.dcm-container .add-rule-button span {
+  display: flex;
+  align-items: center;
+}
+
+.dcm-container .add-rule-button svg {
+  margin-right: 8px;
+  flex-shrink: 0;
+  position: relative;
+  top: -1px;
+}
+
+.dcm-container .add-rule-button:hover {
+  background-color: #f8fafc;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* ==== Кнопка генерации ==== */
+.dcm-container .generate-button-container {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0 0 0;
+  padding: 0 40px;
+}
+
+/* Используем общие стили из common/components.css для кнопки генерации */
+.dcm-container #generate-btn {
+  /* Не переопределяем стили кнопки, используем глобальную */
+}
+
+/* ==== Адаптивность ==== */
+@media (max-width: 768px) {
+  .dcm-container .tabs-container,
+  .dcm-container .action-section {
+    padding-left: 20px;
+    padding-right: 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+
+  .dcm-container .form-group {
+    min-width: 100%;
+  }
+
+  .dcm-container .tab-intro {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dcm-container .generate-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .dcm-container .generator-title-simple {
+    font-size: 24px;
+  }
+
+}

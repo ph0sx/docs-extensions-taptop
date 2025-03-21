@@ -15,60 +15,70 @@
 
 ## Генератор кода
 
-<div id="cookie-generator">
-  <div class="form-grid">
-    <div class="form-group">
-      <label for="expiry-days">Срок хранения выбора пользователя (дни):</label>
-      <input type="number" id="expiry-days" value="30" min="1">
-      <div class="helper-text">Определяет, как долго будет храниться выбор пользователя в браузере</div>
-    </div>
-    
-    <div class="form-group">
-      <label for="popup-class">CSS-класс всплывающего окна:</label>
-      <input type="text" id="popup-class" value="popup-cookie">
-      <div class="helper-text">Класс блока с уведомлением о cookie</div>
-    </div>
-  </div>
-
-  <div class="form-grid">
-    <div class="form-group">
-      <label for="consent-btn-class">CSS-класс кнопки согласия:</label>
-      <input type="text" id="consent-btn-class" value="button-cookie">
-      <div class="helper-text">Класс кнопки "Принять" или "Согласен"</div>
-    </div>
-    
-    <div class="form-group">
-      <label for="reject-btn-class">CSS-класс кнопки отказа:</label>
-      <input type="text" id="reject-btn-class" value="button-no-cookie">
-      <div class="helper-text">Класс кнопки "Отклонить" или "Отказаться"</div>
-    </div>
+<div id="cookie-generator" class="generator-container">
+  <div class="generator-header">
+    <div class="generator-title">Настройте параметры согласия на cookie</div>
+    <div class="generator-subtitle">Создайте код для информирования пользователей о cookie на вашем сайте</div>
   </div>
   
-  <button id="generate-btn" class="primary-button">
-    <span class="button-text">Сгенерировать код</span>
-  </button>
+  <div class="cookie-form-grid">
+    <div class="cookie-settings-row settings-row">
+      <div class="cookie-setting-group setting-group">
+        <label for="expiry-days">Срок хранения выбора пользователя (дни):</label>
+        <input type="number" id="expiry-days" class="text-input" value="30" min="1">
+        <div class="helper-text">Определяет, как долго будет храниться выбор пользователя в браузере</div>
+      </div>
+      <div class="setting-group">
+        <label for="popup-class">CSS-класс всплывающего окна:</label>
+        <input type="text" id="popup-class" class="text-input" value="popup-cookie">
+        <div class="helper-text">Класс блока с уведомлением о cookie</div>
+      </div>
+    </div>
+    <div class="cookie-settings-row settings-row">
+      <div class="cookie-setting-group setting-group">
+        <label for="consent-btn-class">CSS-класс кнопки согласия:</label>
+        <input type="text" id="consent-btn-class" class="text-input" value="button-cookie">
+        <div class="helper-text">Класс кнопки "Принять" или "Согласен"</div>
+      </div>
+      <div class="setting-group">
+        <label for="reject-btn-class">CSS-класс кнопки отказа:</label>
+        <input type="text" id="reject-btn-class" class="text-input" value="button-no-cookie">
+        <div class="helper-text">Класс кнопки "Отклонить" или "Отказаться"</div>
+      </div>
+    </div>
+
+  </div>
+  
+  <div class="action-section">
+    <button id="generate-btn" class="generate-button">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M16 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M8 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+      <span class="button-text">Сгенерировать код</span>
+    </button>
+  </div>
 
   <!-- Скрытый элемент для хранения сгенерированного кода -->
   <div id="js-code" style="display: none;"></div>
   
   <!-- Модальное окно -->
-  <div id="success-modal" class="modal-overlay">
+  <div id="success-modal" class="modal">
     <div class="modal-content">
       <button class="close-modal">&times;</button>
-      
-      <div class="modal-icon">✓</div>
-      <h3>Код успешно скопирован!</h3>
-      
+      <div class="modal-header">
+        <div class="success-icon">✓</div>
+        <h3>Код успешно скопирован!</h3>
+      </div>
       <div class="instruction-block">
         <h4>Инструкция по подключению:</h4>
         <ol>
-          <li>Откройте настройки страницы в конструкторе</li>
+          <li>Откройте настройки страницы в Taptop</li>
           <li>В блоке <strong>"Внутри тега body"</strong> вставьте сгенерированный код</li>
           <li>Сохраните изменения на странице</li>
         </ol>
       </div>
-      
-      <button class="primary-button close-btn">Понятно</button>
+      <button class="close-button">Понятно</button>
     </div>
   </div>
 </div>
@@ -78,7 +88,7 @@
 <div class="step-box">
 <h3>Шаг 1: Назначьте CSS-классы элементам попапа</h3>
 
-<p>В интерфейсе конструктора <strong>Taptop</strong> задайте следующие классы:</p>
+<p>В интерфейсе <strong>Taptop</strong> задайте следующие классы:</p>
 
 <ul>
 <li><strong>Всплывающее окно:</strong> <code>popup-cookie</code></li>
@@ -110,7 +120,7 @@
 <h3>Шаг 4: Вставьте код на сайт</h3>
 
 <ol>
-<li>Откройте настройки страницы в конструкторе Taptop</li>
+<li>Откройте настройки страницы в Taptop</li>
 <li>В блоке <strong>"Внутри тега body"</strong> вставьте сгенерированный код</li>
 </ol>
 
