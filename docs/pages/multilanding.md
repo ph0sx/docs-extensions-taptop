@@ -25,8 +25,8 @@
     <!-- Header section -->
     <div class="generator-header-simple">
       <div class="generator-text-simple">
-        <h3 class="generator-title-simple">Мультилендинг UTM/IP</h3>
-        <p class="generator-subtitle-simple">Настройте правила для изменения контента вашего сайта в зависимости от UTM-параметров и географии посетителя</p>
+        <div class="generator-title">Мультилендинг UTM/IP</div>
+        <div class="generator-subtitle">Настройте правила для изменения контента вашего сайта в зависимости от UTM-параметров и географии посетителя</div>
       </div>
     </div>
     <!-- Обновленные вкладки в стиле обычных табов -->
