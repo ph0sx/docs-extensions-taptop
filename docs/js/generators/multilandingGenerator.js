@@ -60,12 +60,23 @@ export class DynamicContentGenerator extends BaseGenerator {
             .filter(Boolean)
         : [];
 
+    // Простейший парсер списков
+    this.parseCommaList = (str) =>
+      str
+        ? str
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : [];
+
+    // Хендлер для закрытия модалки со списком стран
+
     this.handleCountriesModalEscape =
       this.handleCountriesModalEscape.bind(this);
   }
 
   /* ------------------------------------------
-   * 1) Поиск элементов
+   * 1) Поиск элементов и шаблонов
    * ------------------------------------------ */
   findElements() {
     super.findElements();
@@ -112,7 +123,7 @@ export class DynamicContentGenerator extends BaseGenerator {
       });
     });
 
-    // Кнопки "Добавить" правило
+    // Добавить правила
     this.elements.addTextReplacementBtn?.addEventListener("click", () => {
       this.addTextReplacement();
     });
@@ -140,7 +151,7 @@ export class DynamicContentGenerator extends BaseGenerator {
       this.generateAndCopyCode();
     });
 
-    // Закрытие общего модала
+    // Закрытие общего модального окна
     this.elements.closeModal?.forEach((btn) =>
       btn.addEventListener("click", () => this.closeModal())
     );
@@ -170,7 +181,7 @@ export class DynamicContentGenerator extends BaseGenerator {
       this.elements.defaultHideBlocks.value =
         this.config.defaultBlockVisibility.hideBlocks.join(", ");
     }
-    // Рендерим все UI-блоки
+    // Рендер UI
     this.renderTextReplacements();
     this.renderBlockVisibility();
     this.renderIpRules();
@@ -194,7 +205,7 @@ export class DynamicContentGenerator extends BaseGenerator {
   }
 
   /* ------------------------------------------
-   * Добавление правил
+   * Добавление правил в config
    * ------------------------------------------ */
   addTextReplacement() {
     this.config.textReplacements.push({
@@ -488,6 +499,7 @@ export class DynamicContentGenerator extends BaseGenerator {
         this.addIpTextReplacement(textContainer, rule, rep, repIndex);
       });
 
+      // Добавить IP Text Replacement
       clone
         .querySelector(".add-ip-text-replacement")
         .addEventListener("click", () => {
@@ -612,6 +624,8 @@ export class DynamicContentGenerator extends BaseGenerator {
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");
+
+    // Полная таблица стран (как в изначальном коде)
     const countries = [
       { name: "Russia", code: "RU" },
       { name: "Belarus", code: "BY" },
@@ -653,7 +667,8 @@ export class DynamicContentGenerator extends BaseGenerator {
     table.appendChild(tbody);
 
     const note = document.createElement("p");
-    note.textContent = 'Для "любой" страны используйте "*".';
+    note.textContent =
+      'Примечание: Для обозначения любой страны используйте символ "*"';
     note.style.marginTop = "15px";
     note.style.fontStyle = "italic";
 
@@ -722,7 +737,7 @@ export class DynamicContentGenerator extends BaseGenerator {
     const configJson = JSON.stringify(cleanConfig, null, 2);
 
     // 5) Возвращаем готовый "боевой" скрипт,
-    //    который скрывает страницу и подменяет %%region%% уже после IP
+    //    который прячет страницу, ждёт IP, затем подставляет нужные значения
     return `<!-- UTM/IP расширение -->
 <script>
 document.documentElement.style.visibility = 'hidden';
@@ -733,7 +748,7 @@ class TaptopContentChanger {
     this.utmParams = this.getUTMParams();
     this.ipInfo = null;
 
-    // Сразу делаем замену по UTM, чтобы убрать %%service%%, %%...%%
+    // Сразу делаем замену по UTM
     this.replaceText();
     // И блоки по UTM
     this.toggleBlocksVisibility();
@@ -803,7 +818,7 @@ class TaptopContentChanger {
       }
     }
     if (matched) {
-      // Заменяем %%region%% и пр. на replacementValue
+      // Заменяем все IP-ключи на replacementValue
       matched.textReplacements?.forEach((rep) => {
         this.replaceAll(rep.keyword, rep.replacementValue);
       });
@@ -828,6 +843,7 @@ class TaptopContentChanger {
   replaceText() {
     this.config.textReplacements?.forEach((rule) => {
       let replacementValue = rule.defaultValue;
+      // Ищем UTM-совпадение
       const matched = rule.utmRules?.find((utmRule) => {
         const val = this.utmParams[utmRule.paramName];
         return val && (val === utmRule.paramValue || utmRule.paramValue === "*");
@@ -893,7 +909,6 @@ class TaptopContentChanger {
   }
 }
 
-// Запуск на реальном лендинге
 document.addEventListener("DOMContentLoaded", () => {
   const changer = new TaptopContentChanger(${configJson});
 });
@@ -918,7 +933,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 }
 
-/* Инициализация конструктора (UI) при загрузке */
+/* Инициализация генератора (UI) на странице конструктора */
+
 document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector(".dcm-container")) {
     const generator = new DynamicContentGenerator();
