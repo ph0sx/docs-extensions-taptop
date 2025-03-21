@@ -52,6 +52,8 @@ export class DynamicContentGenerator extends BaseGenerator {
 
     this.activeTab = "text";
     this.templates = {};
+
+    // Простейший парсер списков
     this.parseCommaList = (str) =>
       str
         ? str
@@ -60,12 +62,13 @@ export class DynamicContentGenerator extends BaseGenerator {
             .filter(Boolean)
         : [];
 
+    // Хендлер для закрытия модалки со списком стран
     this.handleCountriesModalEscape =
       this.handleCountriesModalEscape.bind(this);
   }
 
   /* ------------------------------------------
-   * 1) Поиск элементов
+   * 1) Поиск элементов и шаблонов
    * ------------------------------------------ */
   findElements() {
     super.findElements();
@@ -112,7 +115,7 @@ export class DynamicContentGenerator extends BaseGenerator {
       });
     });
 
-    // Кнопки "Добавить" правило
+    // Добавить правила
     this.elements.addTextReplacementBtn?.addEventListener("click", () => {
       this.addTextReplacement();
     });
@@ -140,7 +143,7 @@ export class DynamicContentGenerator extends BaseGenerator {
       this.generateAndCopyCode();
     });
 
-    // Закрытие общего модала
+    // Закрытие общего модального окна
     this.elements.closeModal?.forEach((btn) =>
       btn.addEventListener("click", () => this.closeModal())
     );
@@ -161,7 +164,6 @@ export class DynamicContentGenerator extends BaseGenerator {
    * 3) Начальное состояние
    * ------------------------------------------ */
   setInitialState() {
-    // Подставляем значения в поля "defaultShowBlocks"/"defaultHideBlocks"
     if (this.elements.defaultShowBlocks) {
       this.elements.defaultShowBlocks.value =
         this.config.defaultBlockVisibility.showBlocks.join(", ");
@@ -170,7 +172,7 @@ export class DynamicContentGenerator extends BaseGenerator {
       this.elements.defaultHideBlocks.value =
         this.config.defaultBlockVisibility.hideBlocks.join(", ");
     }
-    // Рендерим все UI-блоки
+    // Рендер UI
     this.renderTextReplacements();
     this.renderBlockVisibility();
     this.renderIpRules();
@@ -194,7 +196,7 @@ export class DynamicContentGenerator extends BaseGenerator {
   }
 
   /* ------------------------------------------
-   * Добавление правил
+   * Добавление правил в config
    * ------------------------------------------ */
   addTextReplacement() {
     this.config.textReplacements.push({
@@ -488,6 +490,7 @@ export class DynamicContentGenerator extends BaseGenerator {
         this.addIpTextReplacement(textContainer, rule, rep, repIndex);
       });
 
+      // Добавить IP Text Replacement
       clone
         .querySelector(".add-ip-text-replacement")
         .addEventListener("click", () => {
@@ -568,7 +571,7 @@ export class DynamicContentGenerator extends BaseGenerator {
   }
 
   /* ------------------------------------------
-   * Модальное окно со странами
+   * Модальное окно со странами (полная таблица)
    * ------------------------------------------ */
   showCountriesList() {
     const modal = document.createElement("div");
@@ -592,7 +595,7 @@ export class DynamicContentGenerator extends BaseGenerator {
 
     const description = document.createElement("p");
     description.textContent =
-      "Используйте полное название страны (англ.). Ниже – распространённые варианты:";
+      "Используйте полное название страны на английском языке. Ниже приведены примеры наиболее распространенных стран:";
 
     const table = document.createElement("table");
     table.style.width = "100%";
@@ -601,10 +604,18 @@ export class DynamicContentGenerator extends BaseGenerator {
 
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
+
     const thCountry = document.createElement("th");
-    thCountry.textContent = "Название";
+    thCountry.textContent = "Полное название (использовать)";
+    thCountry.style.padding = "8px";
+    thCountry.style.textAlign = "left";
+    thCountry.style.borderBottom = "2px solid #ddd";
+
     const thCode = document.createElement("th");
-    thCode.textContent = "ISO";
+    thCode.textContent = "Код ISO (НЕ использовать)";
+    thCode.style.padding = "8px";
+    thCode.style.textAlign = "left";
+    thCode.style.borderBottom = "2px solid #ddd";
 
     headerRow.appendChild(thCountry);
     headerRow.appendChild(thCode);
@@ -612,39 +623,66 @@ export class DynamicContentGenerator extends BaseGenerator {
     table.appendChild(thead);
 
     const tbody = document.createElement("tbody");
+
+    // Полная таблица стран (как в изначальном коде)
     const countries = [
       { name: "Russia", code: "RU" },
       { name: "Belarus", code: "BY" },
       { name: "Kazakhstan", code: "KZ" },
       { name: "Ukraine", code: "UA" },
+      { name: "Armenia", code: "AM" },
+      { name: "Azerbaijan", code: "AZ" },
+      { name: "Moldova", code: "MD" },
+      { name: "Uzbekistan", code: "UZ" },
+      { name: "Tajikistan", code: "TJ" },
+      { name: "Kyrgyzstan", code: "KG" },
+      { name: "Turkmenistan", code: "TM" },
+      { name: "Georgia", code: "GE" },
+      { name: "Estonia", code: "EE" },
+      { name: "Latvia", code: "LV" },
+      { name: "Lithuania", code: "LT" },
       { name: "United States", code: "US" },
       { name: "Germany", code: "DE" },
       { name: "France", code: "FR" },
+      { name: "United Kingdom", code: "GB" },
       { name: "China", code: "CN" },
+      { name: "Japan", code: "JP" },
+      { name: "Canada", code: "CA" },
+      { name: "Australia", code: "AU" },
+      { name: "Brazil", code: "BR" },
+      { name: "India", code: "IN" },
+      { name: "Spain", code: "ES" },
+      { name: "Italy", code: "IT" },
+      { name: "Mexico", code: "MX" },
+      { name: "South Korea", code: "KR" },
     ];
 
-    countries.forEach((c, idx) => {
+    countries.forEach((country, index) => {
       const row = document.createElement("tr");
-      row.style.backgroundColor = idx % 2 === 0 ? "#f9f9f9" : "#fff";
+      row.style.backgroundColor = index % 2 === 0 ? "#f9f9f9" : "white";
 
       const tdCountry = document.createElement("td");
-      tdCountry.textContent = c.name;
+      tdCountry.textContent = country.name;
       tdCountry.style.padding = "8px";
-      tdCountry.title = "Нажмите, чтобы вставить";
+      tdCountry.style.borderBottom = "1px solid #ddd";
+      tdCountry.style.cursor = "pointer";
+      tdCountry.title = "Нажмите, чтобы использовать это название";
+
       tdCountry.addEventListener("click", () => {
         const activeInput = Array.from(
           document.querySelectorAll(".country-input")
         ).find((input) => document.activeElement === input);
         if (activeInput) {
-          activeInput.value = c.name;
+          activeInput.value = country.name;
           activeInput.dispatchEvent(new Event("change", { bubbles: true }));
         }
         this.closeCountriesModal();
       });
 
       const tdCode = document.createElement("td");
-      tdCode.textContent = c.code;
+      tdCode.textContent = country.code;
       tdCode.style.padding = "8px";
+      tdCode.style.borderBottom = "1px solid #ddd";
 
       row.appendChild(tdCountry);
       row.appendChild(tdCode);
@@ -653,13 +691,15 @@ export class DynamicContentGenerator extends BaseGenerator {
     table.appendChild(tbody);
 
     const note = document.createElement("p");
-    note.textContent = 'Для "любой" страны используйте "*".';
+    note.textContent =
+      'Примечание: Для обозначения любой страны используйте символ "*"';
     note.style.marginTop = "15px";
     note.style.fontStyle = "italic";
 
     const closeBtnBottom = document.createElement("button");
     closeBtnBottom.className = "btn btn-primary";
     closeBtnBottom.textContent = "Закрыть";
+    closeBtnBottom.style.marginTop = "15px";
     closeBtnBottom.style.display = "block";
     closeBtnBottom.style.margin = "15px auto 0";
     closeBtnBottom.addEventListener("click", () => this.closeCountriesModal());
@@ -675,8 +715,8 @@ export class DynamicContentGenerator extends BaseGenerator {
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
 
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) this.closeCountriesModal();
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) this.closeCountriesModal();
     });
     document.addEventListener("keydown", this.handleCountriesModalEscape);
   }
@@ -722,7 +762,7 @@ export class DynamicContentGenerator extends BaseGenerator {
     const configJson = JSON.stringify(cleanConfig, null, 2);
 
     // 5) Возвращаем готовый "боевой" скрипт,
-    //    который скрывает страницу и подменяет %%region%% уже после IP
+    //    который прячет страницу, ждёт IP, затем подставляет нужные значения
     return `<!-- UTM/IP расширение -->
 <script>
 document.documentElement.style.visibility = 'hidden';
@@ -733,7 +773,7 @@ class TaptopContentChanger {
     this.utmParams = this.getUTMParams();
     this.ipInfo = null;
 
-    // Сразу делаем замену по UTM, чтобы убрать %%service%%, %%...%%
+    // Сразу делаем замену по UTM
     this.replaceText();
     // И блоки по UTM
     this.toggleBlocksVisibility();
@@ -803,14 +843,13 @@ class TaptopContentChanger {
       }
     }
     if (matched) {
-      // Заменяем %%region%% и пр. на replacementValue
+      // Заменяем все IP-ключи на replacementValue
       matched.textReplacements?.forEach((rep) => {
         this.replaceAll(rep.keyword, rep.replacementValue);
       });
       this.applyVisibilityRules(matched.showBlocks, matched.hideBlocks);
     } else {
-      // Иначе для всех ipRules подставляем defaultValue 
-      // (чтобы %%ключ%% не оставался)
+      // Иначе — defaultValue для всех ipRules
       this.config.ipRules.forEach((rule) => {
         rule.textReplacements?.forEach((rep) => {
           this.replaceAll(rep.keyword, rep.defaultValue);
@@ -828,6 +867,7 @@ class TaptopContentChanger {
   replaceText() {
     this.config.textReplacements?.forEach((rule) => {
       let replacementValue = rule.defaultValue;
+      // Ищем UTM-совпадение
       const matched = rule.utmRules?.find((utmRule) => {
         const val = this.utmParams[utmRule.paramName];
         return val && (val === utmRule.paramValue || utmRule.paramValue === "*");
@@ -893,7 +933,6 @@ class TaptopContentChanger {
   }
 }
 
-// Запуск на реальном лендинге
 document.addEventListener("DOMContentLoaded", () => {
   const changer = new TaptopContentChanger(${configJson});
 });
@@ -918,14 +957,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 }
 
-/* Инициализация конструктора (UI) при загрузке */
+/* Инициализация генератора (UI) на странице конструктора */
 document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector(".dcm-container")) {
     const generator = new DynamicContentGenerator();
     generator.init();
+    // Здесь страница не прячется: UI доступен, кнопки работают
   }
 });
 
+// Для Docsify или других систем
 window.initDynamicContentGenerator = function () {
   if (document.querySelector(".dcm-container")) {
     const generator = new DynamicContentGenerator();
