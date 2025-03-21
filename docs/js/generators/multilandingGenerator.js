@@ -52,6 +52,13 @@ export class DynamicContentGenerator extends BaseGenerator {
 
     this.activeTab = "text";
     this.templates = {};
+    this.parseCommaList = (str) =>
+      str
+        ? str
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : [];
 
     // Простейший парсер списков
     this.parseCommaList = (str) =>
@@ -63,6 +70,7 @@ export class DynamicContentGenerator extends BaseGenerator {
         : [];
 
     // Хендлер для закрытия модалки со списком стран
+
     this.handleCountriesModalEscape =
       this.handleCountriesModalEscape.bind(this);
   }
@@ -164,6 +172,7 @@ export class DynamicContentGenerator extends BaseGenerator {
    * 3) Начальное состояние
    * ------------------------------------------ */
   setInitialState() {
+    // Подставляем значения в поля "defaultShowBlocks"/"defaultHideBlocks"
     if (this.elements.defaultShowBlocks) {
       this.elements.defaultShowBlocks.value =
         this.config.defaultBlockVisibility.showBlocks.join(", ");
@@ -571,7 +580,7 @@ export class DynamicContentGenerator extends BaseGenerator {
   }
 
   /* ------------------------------------------
-   * Модальное окно со странами (полная таблица)
+   * Модальное окно со странами
    * ------------------------------------------ */
   showCountriesList() {
     const modal = document.createElement("div");
@@ -595,7 +604,7 @@ export class DynamicContentGenerator extends BaseGenerator {
 
     const description = document.createElement("p");
     description.textContent =
-      "Используйте полное название страны на английском языке. Ниже приведены примеры наиболее распространенных стран:";
+      "Используйте полное название страны (англ.). Ниже – распространённые варианты:";
 
     const table = document.createElement("table");
     table.style.width = "100%";
@@ -604,18 +613,10 @@ export class DynamicContentGenerator extends BaseGenerator {
 
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
-
     const thCountry = document.createElement("th");
-    thCountry.textContent = "Полное название (использовать)";
-    thCountry.style.padding = "8px";
-    thCountry.style.textAlign = "left";
-    thCountry.style.borderBottom = "2px solid #ddd";
-
+    thCountry.textContent = "Название";
     const thCode = document.createElement("th");
-    thCode.textContent = "Код ISO (НЕ использовать)";
-    thCode.style.padding = "8px";
-    thCode.style.textAlign = "left";
-    thCode.style.borderBottom = "2px solid #ddd";
+    thCode.textContent = "ISO";
 
     headerRow.appendChild(thCountry);
     headerRow.appendChild(thCode);
@@ -630,59 +631,34 @@ export class DynamicContentGenerator extends BaseGenerator {
       { name: "Belarus", code: "BY" },
       { name: "Kazakhstan", code: "KZ" },
       { name: "Ukraine", code: "UA" },
-      { name: "Armenia", code: "AM" },
-      { name: "Azerbaijan", code: "AZ" },
-      { name: "Moldova", code: "MD" },
-      { name: "Uzbekistan", code: "UZ" },
-      { name: "Tajikistan", code: "TJ" },
-      { name: "Kyrgyzstan", code: "KG" },
-      { name: "Turkmenistan", code: "TM" },
-      { name: "Georgia", code: "GE" },
-      { name: "Estonia", code: "EE" },
-      { name: "Latvia", code: "LV" },
-      { name: "Lithuania", code: "LT" },
       { name: "United States", code: "US" },
       { name: "Germany", code: "DE" },
       { name: "France", code: "FR" },
-      { name: "United Kingdom", code: "GB" },
       { name: "China", code: "CN" },
-      { name: "Japan", code: "JP" },
-      { name: "Canada", code: "CA" },
-      { name: "Australia", code: "AU" },
-      { name: "Brazil", code: "BR" },
-      { name: "India", code: "IN" },
-      { name: "Spain", code: "ES" },
-      { name: "Italy", code: "IT" },
-      { name: "Mexico", code: "MX" },
-      { name: "South Korea", code: "KR" },
     ];
 
-    countries.forEach((country, index) => {
+    countries.forEach((c, idx) => {
       const row = document.createElement("tr");
-      row.style.backgroundColor = index % 2 === 0 ? "#f9f9f9" : "white";
+      row.style.backgroundColor = idx % 2 === 0 ? "#f9f9f9" : "#fff";
 
       const tdCountry = document.createElement("td");
-      tdCountry.textContent = country.name;
+      tdCountry.textContent = c.name;
       tdCountry.style.padding = "8px";
-      tdCountry.style.borderBottom = "1px solid #ddd";
-      tdCountry.style.cursor = "pointer";
-      tdCountry.title = "Нажмите, чтобы использовать это название";
-
+      tdCountry.title = "Нажмите, чтобы вставить";
       tdCountry.addEventListener("click", () => {
         const activeInput = Array.from(
           document.querySelectorAll(".country-input")
         ).find((input) => document.activeElement === input);
         if (activeInput) {
-          activeInput.value = country.name;
+          activeInput.value = c.name;
           activeInput.dispatchEvent(new Event("change", { bubbles: true }));
         }
         this.closeCountriesModal();
       });
 
       const tdCode = document.createElement("td");
-      tdCode.textContent = country.code;
+      tdCode.textContent = c.code;
       tdCode.style.padding = "8px";
-      tdCode.style.borderBottom = "1px solid #ddd";
 
       row.appendChild(tdCountry);
       row.appendChild(tdCode);
@@ -699,7 +675,6 @@ export class DynamicContentGenerator extends BaseGenerator {
     const closeBtnBottom = document.createElement("button");
     closeBtnBottom.className = "btn btn-primary";
     closeBtnBottom.textContent = "Закрыть";
-    closeBtnBottom.style.marginTop = "15px";
     closeBtnBottom.style.display = "block";
     closeBtnBottom.style.margin = "15px auto 0";
     closeBtnBottom.addEventListener("click", () => this.closeCountriesModal());
@@ -715,8 +690,8 @@ export class DynamicContentGenerator extends BaseGenerator {
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
 
-    modal.addEventListener("click", (event) => {
-      if (event.target === modal) this.closeCountriesModal();
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) this.closeCountriesModal();
     });
     document.addEventListener("keydown", this.handleCountriesModalEscape);
   }
@@ -849,7 +824,8 @@ class TaptopContentChanger {
       });
       this.applyVisibilityRules(matched.showBlocks, matched.hideBlocks);
     } else {
-      // Иначе — defaultValue для всех ipRules
+      // Иначе для всех ipRules подставляем defaultValue 
+      // (чтобы %%ключ%% не оставался)
       this.config.ipRules.forEach((rule) => {
         rule.textReplacements?.forEach((rep) => {
           this.replaceAll(rep.keyword, rep.defaultValue);
@@ -958,15 +934,14 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 
 /* Инициализация генератора (UI) на странице конструктора */
+
 document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector(".dcm-container")) {
     const generator = new DynamicContentGenerator();
     generator.init();
-    // Здесь страница не прячется: UI доступен, кнопки работают
   }
 });
 
-// Для Docsify или других систем
 window.initDynamicContentGenerator = function () {
   if (document.querySelector(".dcm-container")) {
     const generator = new DynamicContentGenerator();
