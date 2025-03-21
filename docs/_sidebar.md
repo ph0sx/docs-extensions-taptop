@@ -1,4 +1,4 @@
 - [Обзор](/)
 - [Куки](/pages/cookie.md)
 - [Плавный скролл](/pages/smooth-scroll.md)
-- [UTM/IP](/pages/multilanding.md)
+- [Мультилендинг UTM/IP](/pages/multilanding.md)
