@@ -2,7 +2,6 @@ import { BaseGenerator } from "./baseGenerator.js";
 
 /**
  * Генератор динамического контента для мульти-лендинга (UTM + IP).
- * Это "конструктор" с UI (вкладки, кнопки добавления правил и т.д.).
  */
 export class DynamicContentGenerator extends BaseGenerator {
   constructor() {
@@ -924,8 +923,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector(".dcm-container")) {
     const generator = new DynamicContentGenerator();
     generator.init();
-    // <-- теперь кнопки будут работать,
-    //     т.к. мы не прячем страницу в init()
   }
 });
 
