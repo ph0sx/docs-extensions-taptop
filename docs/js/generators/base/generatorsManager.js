@@ -181,17 +181,23 @@ const generatorsManager = new GeneratorsManager(false);
 export async function initAllGenerators() {
   try {
     // Асинхронно импортируем все модули генераторов
-    const [cookieModule, smoothScrollModule, multilandingModule] =
-      await Promise.all([
-        import("../cookieGenerator.js"),
-        import("../smoothScrollGenerator.js"),
-        import("../multilandingGenerator.js"),
-      ]);
+    const [
+      cookieModule,
+      smoothScrollModule,
+      multilandingModule,
+      timeVisibilityModule,
+    ] = await Promise.all([
+      import("../cookieGenerator.js"),
+      import("../smoothScrollGenerator.js"),
+      import("../multilandingGenerator.js"),
+      import("../timeVisibilityGenerator.js"),
+    ]);
 
     // Извлекаем классы из модулей
     const { CookieGenerator } = cookieModule;
     const { SmoothScrollGenerator } = smoothScrollModule;
     const { MultilandingGenerator } = multilandingModule;
+    const { TimeVisibilityGenerator } = timeVisibilityModule;
 
     // Регистрируем генераторы с соответствующими селекторами
     generatorsManager
@@ -201,7 +207,12 @@ export async function initAllGenerators() {
         SmoothScrollGenerator,
         "#smooth-scroll-generator"
       )
-      .register("dynamicContent", MultilandingGenerator, ".dcm-container");
+      .register("dynamicContent", MultilandingGenerator, ".dcm-container")
+      .register(
+        "timeVisibility",
+        TimeVisibilityGenerator,
+        "#time-visibility-generator"
+      );
 
     // Инициализируем все генераторы
     generatorsManager.initAll();
