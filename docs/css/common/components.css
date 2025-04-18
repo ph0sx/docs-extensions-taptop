@@ -310,7 +310,6 @@
 }
 
 .important-note strong {
-  display: block;
   margin-bottom: 10px;
   color: var(--text-dark);
 }

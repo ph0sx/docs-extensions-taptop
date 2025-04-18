@@ -90,3 +90,7 @@
     padding: 15px;
   }
 }
+
+.markdown-section {
+  max-width: 60%;
+}

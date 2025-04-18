@@ -3,3 +3,4 @@
 - [Плавный скролл](/pages/smooth-scroll.md)
 - [Мультилендинг UTM/IP](/pages/multilanding.md)
 - [Показ блоков по времени](/pages/time-visibility.md)
+- [Динамическая фильтрация коллекций](/pages/collection-filter.md)

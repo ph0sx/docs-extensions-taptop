@@ -186,11 +186,13 @@ export async function initAllGenerators() {
       smoothScrollModule,
       multilandingModule,
       timeVisibilityModule,
+      collectionFilterModule,
     ] = await Promise.all([
       import("../cookieGenerator.js"),
       import("../smoothScrollGenerator.js"),
       import("../multilandingGenerator.js"),
       import("../timeVisibilityGenerator.js"),
+      import("../collectionFilterGenerator.js"),
     ]);
 
     // Извлекаем классы из модулей
@@ -198,6 +200,7 @@ export async function initAllGenerators() {
     const { SmoothScrollGenerator } = smoothScrollModule;
     const { MultilandingGenerator } = multilandingModule;
     const { TimeVisibilityGenerator } = timeVisibilityModule;
+    const { CollectionFilterGenerator } = collectionFilterModule;
 
     // Регистрируем генераторы с соответствующими селекторами
     generatorsManager
@@ -212,6 +215,11 @@ export async function initAllGenerators() {
         "timeVisibility",
         TimeVisibilityGenerator,
         "#time-visibility-generator"
+      )
+      .register(
+        "collectionFilter",
+        CollectionFilterGenerator,
+        "#collection-filter-generator"
       );
 
     // Инициализируем все генераторы
