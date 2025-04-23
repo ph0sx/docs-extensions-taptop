@@ -34,7 +34,7 @@
   font-family: var(--font-family);
   box-shadow: var(--shadow-md);
   border: 1px solid rgba(0, 0, 0, 0.05);
-  max-width: 1000px;
+  /* max-width: 1000px; */
   color: var(--text-dark);
 }
 

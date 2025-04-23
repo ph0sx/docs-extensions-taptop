@@ -187,12 +187,14 @@ export async function initAllGenerators() {
       multilandingModule,
       timeVisibilityModule,
       collectionFilterModule,
+      countdownTimerModule,
     ] = await Promise.all([
       import("../cookieGenerator.js"),
       import("../smoothScrollGenerator.js"),
       import("../multilandingGenerator.js"),
       import("../timeVisibilityGenerator.js"),
       import("../collectionFilterGenerator.js"),
+      import("../countdownTimerGenerator.js"),
     ]);
 
     // Извлекаем классы из модулей
@@ -201,6 +203,7 @@ export async function initAllGenerators() {
     const { MultilandingGenerator } = multilandingModule;
     const { TimeVisibilityGenerator } = timeVisibilityModule;
     const { CollectionFilterGenerator } = collectionFilterModule;
+    const { CountdownTimerGenerator } = countdownTimerModule;
 
     // Регистрируем генераторы с соответствующими селекторами
     generatorsManager
@@ -220,6 +223,11 @@ export async function initAllGenerators() {
         "collectionFilter",
         CollectionFilterGenerator,
         "#collection-filter-generator"
+      )
+      .register(
+        "countdownTimer",
+        CountdownTimerGenerator,
+        "#countdown-timer-generator"
       );
 
     // Инициализируем все генераторы
