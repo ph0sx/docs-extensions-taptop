@@ -6,3 +6,4 @@
 - [Показ блоков по дате/времени](/pages/time-visibility.md)
 - [Динамическая фильтрация коллекций](/pages/collection-filter.md)
 - [Таймер обратного отсчёта](/pages/countdown-timer.md)
+- [Слайдер до/после](/pages/before-after-slider.md)

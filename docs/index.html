@@ -15,6 +15,15 @@
       rel="stylesheet"
       href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css"
     />
+
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/img-comparison-slider@8/dist/index.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/img-comparison-slider@8/dist/styles.css"
+    />
     <!-- Общие стили -->
     <link rel="stylesheet" href="./css/common/base.css" />
     <link rel="stylesheet" href="./css/common/forms.css" />
@@ -28,9 +37,9 @@
     <link rel="stylesheet" href="./css/generators/collection-filter.css" />
     <link rel="stylesheet" href="./css/generators/time-visibility.css" />
     <link rel="stylesheet" href="./css/generators/countdown-timer.css" />
+    <link rel="stylesheet" href="./css/generators/before-after-slider.css" />
   </head>
   <body>
-    <!-- Корневой элемент -->
     <div id="app"></div>
 
     <!-- Конфиг Docsify -->
@@ -111,17 +120,17 @@
       }
 
       // Инициализация при открытии страницы без Docsify (просто index.html)
-      document.addEventListener("DOMContentLoaded", () => {
-        if (!window.$docsify || !generatorsManager.initialized) {
-          initAllGenerators();
-        }
-      });
+      //document.addEventListener("DOMContentLoaded", () => {
+      // if (!window.$docsify || !generatorsManager.initialized) {
+      //   initAllGenerators();
+      //  }
+      //});
 
       // Глобальная функция для внешних вызовов
-      window.initGenerators = function () {
-        generatorsManager.reset();
-        initAllGenerators();
-      };
+      //window.initGenerators = function () {
+      // generatorsManager.reset();
+      // initAllGenerators();
+      //};
     </script>
   </body>
 </html>

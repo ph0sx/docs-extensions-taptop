@@ -188,13 +188,36 @@ export async function initAllGenerators() {
       timeVisibilityModule,
       collectionFilterModule,
       countdownTimerModule,
+      beforeAfterSliderModule,
     ] = await Promise.all([
-      import("../cookieGenerator.js"),
-      import("../smoothScrollGenerator.js"),
-      import("../multilandingGenerator.js"),
-      import("../timeVisibilityGenerator.js"),
-      import("../collectionFilterGenerator.js"),
-      import("../countdownTimerGenerator.js"),
+      import("../cookieGenerator.js").catch((e) => {
+        console.error("Ошибка загрузки cookieGenerator:", e);
+        return null;
+      }),
+      import("../smoothScrollGenerator.js").catch((e) => {
+        console.error("Ошибка загрузки smoothScrollGenerator:", e);
+        return null;
+      }),
+      import("../multilandingGenerator.js").catch((e) => {
+        console.error("Ошибка загрузки multilandingGenerator:", e);
+        return null;
+      }),
+      import("../timeVisibilityGenerator.js").catch((e) => {
+        console.error("Ошибка загрузки timeVisibilityGenerator:", e);
+        return null;
+      }),
+      import("../collectionFilterGenerator.js").catch((e) => {
+        console.error("Ошибка загрузки collectionFilterGenerator:", e);
+        return null;
+      }),
+      import("../countdownTimerGenerator.js").catch((e) => {
+        console.error("Ошибка загрузки countdownTimerGenerator:", e);
+        return null;
+      }),
+      import("../beforeAfterSliderGenerator.js").catch((e) => {
+        console.error("Ошибка загрузки beforeAfterSliderGenerator:", e);
+        return null;
+      }),
     ]);
 
     // Извлекаем классы из модулей
@@ -205,30 +228,63 @@ export async function initAllGenerators() {
     const { CollectionFilterGenerator } = collectionFilterModule;
     const { CountdownTimerGenerator } = countdownTimerModule;
 
-    // Регистрируем генераторы с соответствующими селекторами
-    generatorsManager
-      .register("cookie", CookieGenerator, "#cookie-generator")
-      .register(
+    // Регистрируем генераторы
+    if (cookieModule) {
+      const { CookieGenerator } = cookieModule;
+      generatorsManager.register(
+        "cookie",
+        CookieGenerator,
+        "#cookie-generator"
+      );
+    }
+    if (smoothScrollModule) {
+      const { SmoothScrollGenerator } = smoothScrollModule;
+      generatorsManager.register(
         "smoothScroll",
         SmoothScrollGenerator,
         "#smooth-scroll-generator"
-      )
-      .register("dynamicContent", MultilandingGenerator, ".dcm-container")
-      .register(
+      );
+    }
+    if (multilandingModule) {
+      const { MultilandingGenerator } = multilandingModule;
+      generatorsManager.register(
+        "dynamicContent",
+        MultilandingGenerator,
+        ".dcm-container"
+      );
+    }
+    if (timeVisibilityModule) {
+      const { TimeVisibilityGenerator } = timeVisibilityModule;
+      generatorsManager.register(
         "timeVisibility",
         TimeVisibilityGenerator,
         "#time-visibility-generator"
-      )
-      .register(
+      );
+    }
+    if (collectionFilterModule) {
+      const { CollectionFilterGenerator } = collectionFilterModule;
+      generatorsManager.register(
         "collectionFilter",
         CollectionFilterGenerator,
         "#collection-filter-generator"
-      )
-      .register(
+      );
+    }
+    if (countdownTimerModule) {
+      const { CountdownTimerGenerator } = countdownTimerModule;
+      generatorsManager.register(
         "countdownTimer",
         CountdownTimerGenerator,
         "#countdown-timer-generator"
       );
+    }
+    if (beforeAfterSliderModule) {
+      const { BeforeAfterSliderGenerator } = beforeAfterSliderModule;
+      generatorsManager.register(
+        "beforeAfterSlider",
+        BeforeAfterSliderGenerator,
+        "#before-after-slider-generator"
+      );
+    }
 
     // Инициализируем все генераторы
     generatorsManager.initAll();
