@@ -8,10 +8,6 @@ const FILTER_TYPES = {
   NOT_CONTAINS: "FILTER_NOT_CONTAINS",
   IS_SET: "FILTER_IS_SET",
   IS_NOT_SET: "FILTER_IS_NOT_SET",
-  // Убраны LESS, GREATER, BETWEEN, т.к. нет UI для даты
-  // LESS: "FILTER_LESS",
-  // GREATER: "FILTER_GREATER",
-  // BETWEEN: "FILTER_BETWEEN",
   COLLECTION_TEXT: "FILTER_COLLECTION_TEXT",
 };
 
@@ -48,8 +44,8 @@ export class CollectionFilterGenerator extends BaseGenerator {
       resetButtonSelector: "filter-reset-button", // Единое имя по умолчанию
     };
 
-    const defaultColor = "#4483f5"; // ++ Цвет по умолчанию
-    const previewPath = "assets/preset-previews/"; // ++ Путь к превью
+    const defaultColor = "#4483f5"; 
+    const previewPath = "assets/preset-previews/"; // Путь к превью
 
     // --- Обновленные пресеты ---
     this.presets = {
@@ -249,7 +245,6 @@ export class CollectionFilterGenerator extends BaseGenerator {
         paginationType: "numbers",
         showLoader: true,
         primaryColor: defaultColor,
-        // ++ Добавляем две картинки ++
         previewImages: {
           default: `${previewPath}Фильтр по тегам.png`,
           active: `${previewPath}Фильтр по тегам Активный.png`,
@@ -273,7 +268,6 @@ export class CollectionFilterGenerator extends BaseGenerator {
             firstIsAll: true,
             clearButtonSelector: null,
           },
-          // ++ Добавлен фильтр по категориям ++
           {
             uniqueId: "psc_cat",
             fieldId: "категория",
@@ -317,7 +311,6 @@ export class CollectionFilterGenerator extends BaseGenerator {
         paginationType: "none",
         showLoader: true,
         primaryColor: defaultColor,
-        // ++ Добавляем две картинки ++
         previewImages: {
           default: `${previewPath}Фильтр в Наличии.png`,
           active: `${previewPath}Фильтр в Наличии активный.png`,
@@ -410,7 +403,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
     this._boundContainerListener = this._handleContainerEvents.bind(this);
     this._boundHandlePaginationTypeChange =
       this._handlePaginationTypeChange.bind(this);
-    this._boundHandleColorChange = this._handleColorChange.bind(this); // ++ Обработчик цвета
+    this._boundHandleColorChange = this._handleColorChange.bind(this); //
   }
 
   // --- Поиск элементов интерфейса ---
@@ -422,7 +415,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
       presetDescription: document.getElementById("preset-description"),
       presetPreviewContainer: document.getElementById(
         "preset-preview-container"
-      ), // ++ Контейнер превью
+      ), 
       collectionIdInput: document.getElementById("collection-id"),
       targetSelectorInput: document.getElementById("target-selector"),
       applyButtonSelectorInput: document.getElementById(
@@ -437,8 +430,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
       itemsPerPageInput: document.getElementById("items-per-page"),
       paginationTypeSelect: document.getElementById("pagination-type"),
       showLoaderCheckbox: document.getElementById("show-loader"),
-      primaryColorInput: document.getElementById("primary-color"), // ++ Инпут цвета
-      // ++ Убедимся, что BaseGenerator находит кнопку по правильному ID ++
+      primaryColorInput: document.getElementById("primary-color"), // 
       generateButton: document.getElementById("generate-code-button"), // Используем ID из MD
     };
   }
@@ -462,7 +454,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
     this.elements.primaryColorInput?.addEventListener(
       "input",
       this._boundHandleColorChange
-    ); // ++ Листенер для цвета
+    ); //  Листенер для цвета
 
     // --- Единый слушатель контейнера для делегирования событий ---
     this.elements.filterFieldsContainer?.addEventListener(
@@ -497,7 +489,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
       this.elements.itemsPerPageInput,
       this.elements.paginationTypeSelect,
       this.elements.showLoaderCheckbox,
-      this.elements.primaryColorInput, // ++ Добавляем цвет
+      this.elements.primaryColorInput, 
     ];
 
     elementsToResetPreset.forEach((el) =>
@@ -524,7 +516,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
     this.elements.primaryColorInput?.removeEventListener(
       "input",
       this._boundHandleColorChange
-    ); // ++ Снимаем листенер
+    ); 
 
     // --- Снятие единого слушателя ---
     this.elements.filterFieldsContainer?.removeEventListener(
@@ -559,7 +551,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
       this.elements.itemsPerPageInput,
       this.elements.paginationTypeSelect,
       this.elements.showLoaderCheckbox,
-      this.elements.primaryColorInput, // ++ Добавляем цвет
+      this.elements.primaryColorInput, 
     ];
 
     elementsToResetPreset.forEach((el) =>
@@ -567,13 +559,13 @@ export class CollectionFilterGenerator extends BaseGenerator {
     );
   }
 
-  // +++ Новый обработчик для select пагинации +++
+  // + Новый обработчик для select пагинации +
   _handlePaginationTypeChange(event) {
     this.config.paginationType = event.target.value;
     this._resetPresetSelection(); // Сбрасываем пресет при изменении
   }
 
-  // ++ Новый обработчик для изменения цвета ++
+  //  Новый обработчик для изменения цвета 
   _handleColorChange(event) {
     this.config.primaryColor = event.target.value;
     this._resetPresetSelection();
@@ -626,7 +618,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
           this._updateOutputTypeVisibility(fieldCard);
         }
 
-        // ++ Live update label ++
+        //  Live update label 
         if (configName === "fieldId") {
           this._updateFieldLabel(fieldCard, fieldConf, value);
         }
@@ -636,7 +628,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
       return;
     }
 
-    // ++ Обработка Enter для поля ID/Имени (для сохранения label) ++
+    //  Обработка Enter для поля ID/Имени (для сохранения label) 
     if (
       event.type === "keydown" &&
       target.classList.contains("filter-field-id") &&
@@ -648,7 +640,6 @@ export class CollectionFilterGenerator extends BaseGenerator {
     }
   }
 
-  // ++ Новый метод для обновления label ++
   _updateFieldLabel(fieldCard, fieldConf, newFieldId) {
     if (!fieldCard || !fieldConf) return;
     const labelTextElement = fieldCard.querySelector(".field-label-text");
@@ -664,14 +655,14 @@ export class CollectionFilterGenerator extends BaseGenerator {
     const initialPresetId = this.elements.presetSelect?.value || "custom";
     this._applyPreset(initialPresetId, false); // Применяем пресет для установки config
     this._renderAllFieldCardsDOM(); // Рендерим карточки на основе config
-    this._updatePresetPreview(initialPresetId); // ++ Вызов обновления превью
+    this._updatePresetPreview(initialPresetId); //  Вызов обновления превью
   }
 
   _handlePresetChange(event) {
     const presetId = event.target.value;
     this._applyPreset(presetId, true); // Сбрасываем ID коллекции
     this._renderAllFieldCardsDOM(); // Перерисовываем карточки
-    this._updatePresetPreview(presetId); // ++ Вызов обновления превью
+    this._updatePresetPreview(presetId); //  Вызов обновления превью
   }
 
   _applyPreset(presetId, resetCollectionId = true) {
@@ -694,7 +685,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
       this.config.fields.forEach((field, index) => {
         field.uniqueId =
           field.uniqueId || `preset_${presetId}_f${index + 1}_${Date.now()}`;
-        // ++ Установка instantFilter по умолчанию для input при применении пресета ++
+        //  Установка instantFilter по умолчанию для input при применении пресета 
         if (!("instantFilter" in field)) {
           // Если в пресете не указано явно
           field.instantFilter = field.uiType !== UI_TYPES.INPUT; // false для input, true для остальных
@@ -702,22 +693,22 @@ export class CollectionFilterGenerator extends BaseGenerator {
       });
     }
 
-    // ++ Добавляем paginationType из пресета, если его нет в config ++
+    //  Добавляем paginationType из пресета, если его нет в config 
     this.config.paginationType =
       this.config.paginationType || preset.paginationType || "none";
 
-    // ++ Добавляем showLoader из пресета ++
+    //  Добавляем showLoader из пресета 
     this.config.showLoader =
       this.config.showLoader ?? preset.showLoader ?? true;
 
-    // ++ Добавляем primaryColor из пресета ++
+    //  Добавляем primaryColor из пресета 
     this.config.primaryColor =
       this.config.primaryColor || preset.primaryColor || "#4483f5";
 
     this._updateBaseUIFromConfig(); // Обновляем базовые поля UI
   }
 
-  // ++ Новый метод для обновления превью ++
+  //  Новый метод для обновления превью 
   _updatePresetPreview(presetId) {
     const container = this.elements.presetPreviewContainer;
     if (!container) return;
@@ -931,13 +922,13 @@ export class CollectionFilterGenerator extends BaseGenerator {
     );
     const instantFilterCheckbox = fieldCard.querySelector(
       ".filter-instant-filter"
-    ); // ++ Получаем чекбокс
+    ); //  Получаем чекбокс
 
     // Скрытие/показ
     controlsRow?.style.setProperty("display", "none");
     filterSelectorGroup?.style.setProperty("display", "none");
     firstIsAllContainer?.style.setProperty("display", "none");
-    instantFilterContainer?.style.setProperty("display", "none"); // ++ Скрываем по умолчанию ++
+    instantFilterContainer?.style.setProperty("display", "none"); //  Скрываем по умолчанию 
     clearButtonGroup?.style.setProperty("display", "none");
     if (filterSelectorInput) filterSelectorInput.required = false;
     if (requiredIndicator) requiredIndicator.style.display = "none";
@@ -960,9 +951,9 @@ export class CollectionFilterGenerator extends BaseGenerator {
         showFirstIsAll ? "block" : "none"
       );
 
-      // ++ Показываем "Мгновенная фильтрация" для ВСЕХ типов, включая INPUT ++
+      //  Показываем "Мгновенная фильтрация" для ВСЕХ типов, включая INPUT 
       instantFilterContainer?.style.setProperty("display", "block");
-      // ++ Устанавливаем состояние чекбокса "Мгновенная" при смене типа UI ++
+      //  Устанавливаем состояние чекбокса "Мгновенная" при смене типа UI 
       if (instantFilterCheckbox) {
         const uniqueId = fieldCard.dataset.fieldUniqueId;
         const fieldConf = this.config.fields?.find(
@@ -1050,7 +1041,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
     }
     if (elements.targetSelectorInput) {
       elements.targetSelectorInput.value = data.targetSelector || "";
-      // ++ Обновляем плейсхолдер на основе типа данных ++
+      //  Обновляем плейсхолдер на основе типа данных 
       const placeholderType = (data.outputType || "text").split("_")[0]; // Берем базовый тип
       elements.targetSelectorInput.placeholder = `Например: item__${
         placeholderType === "date" ? "date" : placeholderType
@@ -1062,7 +1053,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
       elements.outputTypeSelect.dataset.configName = "outputType";
     }
 
-    // ++ Устанавливаем instantFilter с учетом типа по умолчанию ++
+    //  Устанавливаем instantFilter с учетом типа по умолчанию 
     if (elements.instantFilterCheckbox) {
       const defaultInstant =
         data.instantFilter ?? data.uiType !== UI_TYPES.INPUT;
@@ -1969,7 +1960,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         const createEllipsis = () => { const el=document.createElement('span');el.className='cf-pagination__ellipsis';el.textContent='...';return el; };
         if (this.config.paginationType === 'prev_next') { const prev=createButton('Назад','-1',isFirst,'cf-pagination__prev');const next=createButton('Вперед','1',isLast,'cf-pagination__next');const info=document.createElement('span');info.className='cf-pagination__info';info.textContent=\`\${this.currentPage} / \${this.totalPages}\`;container.appendChild(prev);container.appendChild(info);container.appendChild(next);this.elements.customPagination={prevButton:prev,nextButton:next}; }
         else if (this.config.paginationType === 'load_more') { if (!isLast) { const loadMore=createButton('Загрузить еще','+1',this.isLoading,'cf-pagination__load-more');loadMore.dataset.action='load_more';container.appendChild(loadMore);this.elements.customPagination.loadMoreButton=loadMore;} }
-        else if (this.config.paginationType === 'numbers') { const prev=createButton('‹','-1',isFirst,'cf-pagination__prev');const next=createButton('›','1',isLast,'cf-pagination__next');container.appendChild(prev);const numbersContainer=document.createElement('span');numbersContainer.className='cf-pagination__numbers';const maxVisible=5;const sideCount=Math.floor((maxVisible-3)/2);const showEllipsisThreshold=maxVisible-1;if(this.totalPages<=showEllipsisThreshold+2){for(let i=1;i<=this.totalPages;i++){numbersContainer.appendChild(createPageNumber(i));}}else{numbersContainer.appendChild(createPageNumber(1));if(this.currentPage>sideCount+2){numbersContainer.appendChild(createEllipsis());}const start=Math.max(2,this.currentPage-sideCount);const end=Math.min(this.totalPages-1,this.currentPage+sideCount);for(let i=start;i<=end;i++){numbersContainer.appendChild(createPageNumber(i));}if(this.currentPage<this.totalPages-sideCount-1){numbersContainer.appendChild(createEllipsis());}numbersContainer.appendChild(createPageNumber(this.totalPages));}container.appendChild(numbersContainer);container.appendChild(next);this.elements.customPagination={prevButton:prev,nextButton:next}; }
+        else if (this.config.paginationType === 'numbers') { const prev=createButton('‹','-1',isFirst,'cf-pagination__prev');const next=createButton('›','1',isLast,'cf-pagination__next');container.appendChild(prev);const numbersContainer=document.createElement('span');numbersContainer.className='cf-pagination__numbers';const maxVisible=5;const sideCount=Math.floor((maxVisible-3)/2);const showEllipsisThreshold=maxVisible-1;if(this.totalPages<=showEllipsisThreshold+2){for(let i=1;i<=this.totalPages;i){numbersContainer.appendChild(createPageNumber(i));}}else{numbersContainer.appendChild(createPageNumber(1));if(this.currentPage>sideCount+2){numbersContainer.appendChild(createEllipsis());}const start=Math.max(2,this.currentPage-sideCount);const end=Math.min(this.totalPages-1,this.currentPage+sideCount);for(let i=start;i<=end;i){numbersContainer.appendChild(createPageNumber(i));}if(this.currentPage<this.totalPages-sideCount-1){numbersContainer.appendChild(createEllipsis());}numbersContainer.appendChild(createPageNumber(this.totalPages));}container.appendChild(numbersContainer);container.appendChild(next);this.elements.customPagination={prevButton:prev,nextButton:next}; }
     }
 
     _handleCustomPaginationClick(event) {
