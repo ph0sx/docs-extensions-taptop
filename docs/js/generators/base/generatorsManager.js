@@ -267,6 +267,11 @@ export async function initAllGenerators() {
         "collectionFilter",
         CollectionFilterGenerator,
         "#collection-filter-generator"
+      )
+      .register(
+        "countdownTimer",
+        CountdownTimerGenerator,
+        "#countdown-timer-generator"
       );
     }
     if (countdownTimerModule) {
