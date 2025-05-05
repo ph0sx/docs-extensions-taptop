@@ -189,6 +189,7 @@ export async function initAllGenerators() {
       collectionFilterModule,
       countdownTimerModule,
       beforeAfterSliderModule,
+      cardFlipModule,
     ] = await Promise.all([
       import("../cookieGenerator.js").catch((e) => {
         console.error("Ошибка загрузки cookieGenerator:", e);
@@ -218,15 +219,11 @@ export async function initAllGenerators() {
         console.error("Ошибка загрузки beforeAfterSliderGenerator:", e);
         return null;
       }),
+      import("../CardFlipGenerator.js").catch((e) => {
+        console.error("Ошибка загрузки CardFlipGenerator:", e);
+        return null;
+      }),
     ]);
-
-    // Извлекаем классы из модулей
-    const { CookieGenerator } = cookieModule;
-    const { SmoothScrollGenerator } = smoothScrollModule;
-    const { MultilandingGenerator } = multilandingModule;
-    const { TimeVisibilityGenerator } = timeVisibilityModule;
-    const { CollectionFilterGenerator } = collectionFilterModule;
-    const { CountdownTimerGenerator } = countdownTimerModule;
 
     // Регистрируем генераторы
     if (cookieModule) {
@@ -283,6 +280,15 @@ export async function initAllGenerators() {
         "beforeAfterSlider",
         BeforeAfterSliderGenerator,
         "#before-after-slider-generator"
+      );
+    }
+
+    if (cardFlipModule) {
+      const { CardFlipGenerator } = cardFlipModule;
+      generatorsManager.register(
+        "cardFlip",
+        CardFlipGenerator,
+        "#card-flip-generator" 
       );
     }
 

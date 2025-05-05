@@ -1,0 +1,102 @@
+.radio-group-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px; /* Отступ между радио-кнопками */
+  align-items: center;
+}
+
+#card-flip-generator .settings-section {
+  padding-bottom: 15px; /* Немного уменьшим отступ */
+  margin-bottom: 20px;
+}
+
+/* --- Стили для секции Превью --- */
+.preview-section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.preview-title {
+  text-align: center;
+  border-bottom: none;
+  margin-bottom: 15px;
+  color: var(--primary-color);
+}
+
+.preview-area {
+  position: relative;
+  min-height: 250px;
+  width: 100%;
+  max-width: 350px; /* Ограничим ширину для наглядности */
+  margin: 0 auto 10px auto;
+  background-color: #f8f9fa;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* Важно для корректного отображения flip-card */
+  box-shadow: var(--shadow-sm) inset;
+  /* Добавляем перспективу для превью */
+  perspective: 1000px;
+}
+
+/* Стили для самого компонента в превью */
+#cf-preview-area flip-card {
+  width: 80%; /* Примерные размеры внутри области */
+  height: 200px;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  border-radius: var(--radius-sm); /* Синхронизируем скругление */
+  box-shadow: var(--shadow-md);
+}
+
+#cf-preview-area flip-card [slot="front"],
+#cf-preview-area flip-card [slot="back"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  box-sizing: border-box; /* Учитываем padding */
+  text-align: center;
+  border-radius: inherit; /* Наследуем скругление */
+}
+
+#cf-preview-area flip-card [slot="front"] {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #6a11cb 100%);
+}
+
+#cf-preview-area flip-card [slot="back"] {
+  background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);
+}
+
+/* Стили для плейсхолдера и ошибки */
+.preview-placeholder {
+  padding: 20px;
+  color: var(--text-light);
+  text-align: center;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.preview-error {
+  color: var(--error-color);
+  background-color: var(--error-light);
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  margin: 10px;
+  text-align: center;
+  border: 1px solid rgba(229, 57, 53, 0.3);
+  font-size: 13px;
+}
+
+.preview-helper {
+  text-align: center;
+  font-size: 13px;
+}
+
+/* .preview-area.cf-vertical-flipped flip-card > section[slot="back"] {
+  transform: scale(-1);
+} */
