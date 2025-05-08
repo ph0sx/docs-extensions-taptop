@@ -11,8 +11,8 @@ export class CookieGenerator extends BaseGenerator {
       popupClass: "popup-cookie",
       consentBtnClass: "button-cookie",
       rejectBtnClass: "button-no-cookie",
-      closeBtnClass: "pop-up__inside-close-button",
-      overlayClass: "pop-up__overlay",
+      closeBtnClass: "pop-up__inside-close-button", // Стандартный класс кнопки закрытия в виджете Pop-up Taptop
+      overlayClass: "pop-up__overlay",  // Стандартный класс оверлея в виджете Pop-up Taptop
     };
   }
 
@@ -66,8 +66,8 @@ export class CookieGenerator extends BaseGenerator {
         inputs.consentBtnClass?.value || this.config.consentBtnClass,
       rejectBtnClass:
         inputs.rejectBtnClass?.value || this.config.rejectBtnClass,
-      closeBtnClass,
-      overlayClass,
+      closeBtnClass, // Используем стандартный класс Taptop, не настраивается в UI
+      overlayClass, // Используем стандартный класс Taptop, не настраивается в UI
     };
   }
 
@@ -106,8 +106,8 @@ export class CookieGenerator extends BaseGenerator {
       banner: document.querySelector(".${settings.popupClass}"),
       consentBtn: document.querySelector(".${settings.consentBtnClass}"),
       rejectBtn: document.querySelector(".${settings.rejectBtnClass}"),
-      closeBtn: document.querySelector(".${settings.closeBtnClass}"),
-      overlay: document.querySelector(".${settings.overlayClass}")
+      closeBtn: document.querySelector(".${settings.closeBtnClass}"),  // Ищет стандартную кнопку закрытия
+      overlay: document.querySelector(".${settings.overlayClass}")  // Ищет стандартный оверлей
     };
 
     const hideBanner = () => {
