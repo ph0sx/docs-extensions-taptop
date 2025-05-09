@@ -51,16 +51,16 @@
 
 - **Есть Коллекция:** У вас создана и наполнена данными Коллекция Taptop, которую вы собираетесь фильтровать ([Подробнее о Коллекциях Taptop](https://help.taptop.pro/ru/notes/kollekcii-cms)).
 
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-  <img src="./images/collection-filter/collections.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-  <p style="margin-top: 10px; font-style: italic; color: #666;">Наполните необходимую вам коллекцию</p>
+<div class="img-block">
+  <img src="./images/collection-filter/collections.png" >
+  <p class="img-block-text">Наполните необходимую вам коллекцию</p>
 </div>
 
 - **Есть Виджет Коллекции:** На страницу добавлен стандартный виджет Taptop **"Collection"**, и он привязан к вашей коллекции.
 
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-  <img src="./images/collection-filter/widget-collection.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-  <p style="margin-top: 10px; font-style: italic; color: #666;">Элементы ---> Виджеты ---> Collection</p>
+<div class="img-block">
+  <img src="./images/collection-filter/widget-collection.png" >
+  <p class="img-block-text">Элементы ---> Виджеты ---> Collection</p>
 </div>
 
 ### Добавление CSS-классов
@@ -71,12 +71,12 @@
   - **_ОБЫЧНЫЙ СЦЕНАРИЙ!_** Если на странице **только один** виджет "Collection", можно ничего не менять, скрипт найдет его по стандартному классу `collection`.
   - Если виджетов **несколько**, обязательно присвойте **уникальный класс** тому виджету, который нужно фильтровать (например, `collection__products`). Этот класс вы потом укажете в генераторе.
 
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-  <img src="./images/collection-filter/default-selector-collection.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-  <p style="margin-top: 10px; font-style: italic; color: #666;">Коллекция одна - оставляем поле "Класс виджета Коллекции" как есть (в   <a href="#/pages/collection-filter?id=Этап-2-Настройка-Генератора">генераторе кода</a> ниже)</p>
+<div class="img-block">
+  <img src="./images/collection-filter/default-selector-collection.png" >
+  <p class="img-block-text">Коллекция одна - оставляем поле "Класс виджета Коллекции" как есть (в   <a href="#/pages/collection-filter?id=Этап-2-Настройка-Генератора">генераторе кода</a> ниже)</p>
 
-  <img src="./images/collection-filter/another-selector-collection.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-  <p style="margin-top: 10px; font-style: italic; color: #666;">Коллекций несколько - назначаем уникальный класс в Taptop и пишем сюда</p>
+  <img src="./images/collection-filter/another-selector-collection.png" >
+  <p class="img-block-text">Коллекций несколько - назначаем уникальный класс в Taptop и пишем сюда</p>
 </div>
 
 - **Классы для элементов фильтров:** Придумайте и добавьте классы для полей ввода, списков, кнопок, которые будут служить фильтрами (например, `search-input`, `category-select`).
@@ -85,20 +85,20 @@
 
 **_Ниже примеры:_**
 
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
+<div class="img-block">
 <img src="./images/collection-filter/input.png" style="max-width: 50%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<img src="./images/collection-filter/selector-input.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Класс элемента фильтра</p>
+<img src="./images/collection-filter/selector-input.png" >
+<p class="img-block-text">Класс элемента фильтра</p>
 <img src="./images/collection-filter/title.png" style="max-width: 50%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<img src="./images/collection-filter/selector-title.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+<img src="./images/collection-filter/selector-title.png" >
 <img src="./images/collection-filter/img-element.png" style="max-width: 50%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<img src="./images/collection-filter/selector-image.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Классы элементов, которые будут выводиться внутри карточек коллекции (Collection Item)</p>
+<img src="./images/collection-filter/selector-image.png" >
+<p class="img-block-text">Классы элементов, которые будут выводиться внутри карточек коллекции (Collection Item)</p>
 <img src="./images/collection-filter/apply-btn.png" style="max-width: 50%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<img src="./images/collection-filter/selector-apply.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+<img src="./images/collection-filter/selector-apply.png" >
 <img src="./images/collection-filter/clear-btn.png" style="max-width: 50%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<img src="./images/collection-filter/selector-clear.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Классы кнопки применения/сброса группы фильтров</p>
+<img src="./images/collection-filter/selector-clear.png" >
+<p class="img-block-text">Классы кнопки применения/сброса группы фильтров</p>
   </div>
 
 <div class="step-box">
@@ -106,30 +106,30 @@
     <p>Для работы фильтра нужен уникальный номер (ID) вашей Коллекции. Найти его можно так:</p>
     <ol>
         <li><strong>Откройте Инструменты разработчика в редакторе вашего проекта в Taptop:</strong> Нажмите <strong>F12</strong> (или ПКМ -> Просмотреть код/Инспектировать). Перейдите на вкладку <strong>"Сеть" (Network)</strong>.</li>
-        <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-          <img src="./images/collection-filter/inspector.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+        <div class="img-block">
+          <img src="./images/collection-filter/inspector.png" >
         </div>
         <li><strong>Откройте Коллекцию в Taptop:</strong> В левой панели редактора нажмите иконку "Коллекции" и кликните на нужную коллекцию в списке.</li>
-        <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-  <img src="./images/collection-filter/collection-btn.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-  <p style="margin-top: 10px; font-style: italic; color: #666;">Выбираем нужную коллекцию</p>
+        <div class="img-block">
+  <img src="./images/collection-filter/collection-btn.png" >
+  <p class="img-block-text">Выбираем нужную коллекцию</p>
 </div>
         <li>Введите во вкладке <strong>"Сеть" (Network)</strong> в поле поиска <code>collection/get</code> (поле поиска может отличаться от браузера к браузеру, но +- одинаковое) </li>
-        <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-  <img src="./images/collection-filter/search-inspector.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-  <p style="margin-top: 10px; font-style: italic; color: #666;">Фильтруем запросы</p>
+        <div class="img-block">
+  <img src="./images/collection-filter/search-inspector.png" >
+  <p class="img-block-text">Фильтруем запросы</p>
 </div>
         <li>Вы обнаружите несколько запросов. <strong>Нажмите на самый нижний запрос</strong></li>
-        <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-          <img src="./images/collection-filter/network.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-  <p style="margin-top: 10px; font-style: italic; color: #666;">Жмем на крайний запрос</p>
+        <div class="img-block">
+          <img src="./images/collection-filter/network.png" >
+  <p class="img-block-text">Жмем на крайний запрос</p>
 </div>
         <li><strong>Найдите ID в Ответе:</strong> Справа в деталях запроса (появляется после нажатия на запрос) перейдите на вкладку <strong>"Ответ" (Response)</strong> или <strong>"Предпросмотр" (Preview)</strong>. Ищите строку вида <code>"id": 432156,</code> (обычно внутри <code>"result": {...}</code>). Это число – ваш ID.</li>
-        <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-  <img src="./images/collection-filter/find-id.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-  <p style="margin-top: 10px; font-style: italic; color: #666;">Набор символов и есть ваш ID Коллекции</p>
-    <img src="./images/collection-filter/find-id-alternative.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-  <p style="margin-top: 10px; font-style: italic; color: #666;">Альтернативный вариант</p>
+        <div class="img-block">
+  <img src="./images/collection-filter/find-id.png" >
+  <p class="img-block-text">Набор символов и есть ваш ID Коллекции</p>
+    <img src="./images/collection-filter/find-id-alternative.png" >
+  <p class="img-block-text">Альтернативный вариант</p>
 </div>
     </ol>
      <p>➡️ Скопируйте <strong>только цифры</strong> ID и вставьте их в поле "ID Коллекции" в генераторе ниже.</p>
@@ -220,9 +220,9 @@
 
 <div class="important-note">
     Добавьте поля из вашей коллекции. Укажите <strong>Имя поля</strong> (как в Taptop, напр. <code>Цена</code>, <code>Категория</code>).  Затем настройте фильтр и/или вывод данных.
-    <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-      <img src="./images/collection-filter/field-names.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-      <p style="margin-top: 10px; font-style: italic; color: #666;">Имя поля = название каждого поля из коллекции</p>
+    <div class="img-block">
+      <img src="./images/collection-filter/field-names.png" >
+      <p class="img-block-text">Имя поля = название каждого поля из коллекции</p>
     </div>
 </div>
 

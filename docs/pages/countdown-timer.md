@@ -213,10 +213,10 @@
 <li><strong>Класс для Элемента Таймера:</strong>
     <ul>
      </ul>
-      <div style="max-width: 600px; margin: 20px auto; text-align: center;">
+      <div class="img-block">
       <img src="./images/countdown-timer/timer-css-block.png" style="max-width: 100%; height: 200px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);" alt="Пример добавления класса для элемента таймера">
-      <img src="./images/countdown-timer/timer-css-selector.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);" alt="Пример добавления класса для элемента таймера">
-      <p style="margin-top: 10px; font-style: italic; color: #666;">Пример добавления класса элементу для отображения таймера</p>
+      <img src="./images/countdown-timer/timer-css-selector.png"  alt="Пример добавления класса для элемента таймера">
+      <p class="img-block-text">Пример добавления класса элементу для отображения таймера</p>
       </div>
 
 </li>
@@ -225,9 +225,9 @@
     <li>Выберите блок(и), которые должны исчезнуть.</li>
     <li>Добавьте CSS-класс. Если блоков несколько, можно дать им один общий класс или разные (их нужно будет перечислить через запятую в генераторе).</li>
      </ul>
-     <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-      <img src="./images/countdown-timer/block-hide.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);" alt="Пример добавления класса блоку для скрытия">
-       <p style="margin-top: 10px; font-style: italic; color: #666;">Пример добавления класса блоку для скрытия</p>
+     <div class="img-block">
+      <img src="./images/countdown-timer/block-hide.png"  alt="Пример добавления класса блоку для скрытия">
+       <p class="img-block-text">Пример добавления класса блоку для скрытия</p>
       </div>
 </li>
 <li><strong>Класс(ы) для Показываемых Блоков (Если Используются):</strong>
@@ -236,9 +236,9 @@
     <li>Добавьте уникальный CSS-класc (например, <code>offer-expired</code>).</li>
     <li><strong>Важно!</strong> Не закрывая панель настроек этого блока, выберите только что добавленный класс в секции "Источники стилей". Затем в настройках <code>"Авто-лейаут - Отображение" нажмите иконку "Скрыть элемент <span class="icon-eye-off"></span>"</code>. У класса в списке должна появиться такая же иконка. Это установит `display: none` для этого класса.</li>
     </ul>
-     <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-      <img src="./images/countdown-timer/block-show.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);" alt="Пример установки display:none для класса показываемого блока">
-      <p style="margin-top: 10px; font-style: italic; color: #666;">Пример: Классу <code>offer-block-show</code>установлено <code>скрыть элемент <span class="icon-eye-off"></span></code> через интерфейс Taptop</p>
+     <div class="img-block">
+      <img src="./images/countdown-timer/block-show.png"  alt="Пример установки display:none для класса показываемого блока">
+      <p class="img-block-text">Пример: Классу <code>offer-block-show</code>установлено <code>скрыть элемент <span class="icon-eye-off"></span></code> через интерфейс Taptop</p>
      </div>
 </li>
 </ol>
@@ -267,9 +267,9 @@
 <li>Перейдите в редактор Taptop -> Настройки страницы -> Перед тегом <code>&lt;body&gt;</code></li>
 <li>Вставьте скопированный код.</li>
 </ol>
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/cookie/page-settings.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
- <p style="margin-top: 10px; font-style: italic; color: #666;">Вставка кода в настройки страницы</p>
+<div class="img-block">
+<img src="./images/cookie/page-settings.png" >
+ <p class="img-block-text">Вставка кода в настройки страницы</p>
 </div>
 <ol start="5">
 <li>Закройте настройки страницы.</li>

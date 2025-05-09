@@ -227,9 +227,9 @@
 <li>Присвойте ему уникальный CSS-класс (например, <code>promo-banner</code> или <code>sale-popup</code>).</li>
 </ul>
 
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/time-visibility/add-class.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Пример добавления класса к блоку</p>
+<div class="img-block">
+<img src="./images/time-visibility/add-class.png" >
+<p class="img-block-text">Пример добавления класса к блоку</p>
 </div>
 </div>
 <div class="step-box">
@@ -237,28 +237,28 @@
 <p>В генераторе кода создайте необходимые правила:</p>
 <ol>
 <li>Для каждого правила укажите CSS-классы блоков, к которым оно будет применяться</li>
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/time-visibility/add-classes.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+<div class="img-block">
+<img src="./images/time-visibility/add-classes.png" >
 </div>
 <li>Настройте время начала и окончания показа с точностью до секунд</li>
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/time-visibility/time.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+<div class="img-block">
+<img src="./images/time-visibility/time.png" >
 </div>
 <li>Выберите подходящий часовой пояс из расширенного списка</li>
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/time-visibility/timezone.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+<div class="img-block">
+<img src="./images/time-visibility/timezone.png" >
 </div>
 <li>Отметьте дни недели, в которые нужно показывать блоки</li>
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/time-visibility/weekdays.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+<div class="img-block">
+<img src="./images/time-visibility/weekdays.png" >
 </div>
 <li>При необходимости включите автоматическое скрытие после определенной даты и времени</li>
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/time-visibility/hideblock.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+<div class="img-block">
+<img src="./images/time-visibility/hideblock.png" >
 </div>
 <li>Если нужно создать дополнительное правило с другими настройками — нажмите "Добавить новое правило"</li>
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/time-visibility/add-rule.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+<div class="img-block">
+<img src="./images/time-visibility/add-rule.png" >
 </div>
 </ol>
 
@@ -279,8 +279,8 @@
 <li>В блоке <strong>"Перед тегом body"</strong> вставьте сгенерированный код</li>
 </ol>
 
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/cookie/page-settings.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+<div class="img-block">
+<img src="./images/cookie/page-settings.png" >
 </div>
 
 <p>Сохраните изменения на странице.</p>

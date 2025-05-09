@@ -13,23 +13,18 @@ const debounce = (fn, wait = 250) => {
   return wrapped;
 };
 
-/**
- * CardFlipGenerator – генератор кода для эффекта <flip-card>
- * Основное отличие от предыдущей версии:
- *  – полностью удалён функционал «начальная обратная сторона»
- *  – упрощены keyframes для вертикального режима (без translateZ)
- *  – исправлены баги отражения и дрожания
- */
 export class CardFlipGenerator extends BaseGenerator {
   constructor() {
     super();
     this.previewFlipCard = null;
     this.previewTriggerElement = null;
     this._boundUpdateSpeedSliderDisplay =
-      this._updateSpeedSliderDisplay.bind(this); // ++
+      this._updateSpeedSliderDisplay.bind(this); //
     this._boundUpdateHeightSliderDisplay =
-      this._updateHeightSliderDisplay.bind(this); // ++
+      this._updateHeightSliderDisplay.bind(this); //
     this._debouncedUpdatePreview = debounce(this._updatePreview.bind(this));
+    this._boundUpdateConditionalUI = this._updateConditionalUI.bind(this);
+    this._previewUpdateControls = []; // Инициализация свойства для зависимых контролов
   }
 
   /* ===== UI: поиск элементов ===== */
@@ -45,24 +40,24 @@ export class CardFlipGenerator extends BaseGenerator {
     this.elements.directionRadios = document.querySelectorAll(
       'input[name="cf-direction"]'
     );
-    this.elements.speedSlider = document.getElementById("cf-speed-slider"); // ++ Замена Select на Slider
+    this.elements.speedSlider = document.getElementById("cf-speed-slider"); //  Замена Select на Slider
     this.elements.speedSliderGroup =
-      this.elements.speedSlider?.closest(".setting-group"); // ++ Находим родителя
+      this.elements.speedSlider?.closest(".setting-group"); //  Находим родителя
     this.elements.speedValueDisplay = document.getElementById(
       "cf-speed-value-display"
-    ); // ++
+    ); //
     this.elements.animationStyleSelect =
       document.getElementById("cf-animation-style");
     this.elements.animationStyleGroup =
-      this.elements.animationStyleSelect?.closest(".setting-group"); // ++ Находим родителя
+      this.elements.animationStyleSelect?.closest(".setting-group"); //  Находим родителя
     this.elements.borderRadiusInput =
-      document.getElementById("cf-border-radius"); // ++
-    this.elements.flipHeightSlider = document.getElementById("cf-flip-height"); // ++
+      document.getElementById("cf-border-radius"); //
+    this.elements.flipHeightSlider = document.getElementById("cf-flip-height"); //
     this.elements.flipHeightGroup =
-      this.elements.flipHeightSlider?.closest(".setting-group"); // ++ Находим родителя
+      this.elements.flipHeightSlider?.closest(".setting-group"); //  Находим родителя
     this.elements.flipHeightValueDisplay = document.getElementById(
       "cf-flip-height-value-display"
-    ); // ++
+    ); //
 
     // preview area
     this.elements.previewArea = document.getElementById("cf-preview-area");
@@ -78,7 +73,7 @@ export class CardFlipGenerator extends BaseGenerator {
       this.elements.speedSlider &&
       this.elements.animationStyleSelect &&
       this.elements.borderRadiusInput &&
-      this.elements.flipHeightSlider && // ++
+      this.elements.flipHeightSlider && //
       this.elements.previewArea;
 
     if (!ok && this.elements.generateButton) {
@@ -86,6 +81,16 @@ export class CardFlipGenerator extends BaseGenerator {
       this.elements.generateButton.title =
         "Ошибка: не найдены все элементы интерфейса генератора.";
     }
+
+    // Заполняем массив _previewUpdateControls после того, как все элементы найдены
+    this._previewUpdateControls = [
+      this.elements.speedSlider,
+      ...(this.elements.triggerRadios || []), // NodeList не будет null, но для единообразия примера
+      ...(this.elements.directionRadios || []),
+      this.elements.animationStyleSelect,
+      this.elements.borderRadiusInput,
+      this.elements.flipHeightSlider,
+    ].filter((el) => el); // Фильтруем null/undefined элементы, если они могли бы быть
   }
 
   /* ===== События ===== */
@@ -93,17 +98,8 @@ export class CardFlipGenerator extends BaseGenerator {
     super.bindEvents();
 
     // Группируем элементы, изменение которых требует обновления превью И условного UI
-    const dependants = [
-      this.elements.speedSlider, // ++ Добавляем Slider
-      ...this.elements.triggerRadios,
-      ...this.elements.directionRadios,
-      this.elements.animationStyleSelect,
-      this.elements.borderRadiusInput, // ++
-      this.elements.flipHeightSlider, // ++
-    ];
-
-    dependants.forEach((el) => {
-      if (!el) return;
+    this._previewUpdateControls.forEach((el) => {
+      // if (!el) return; // Уже не нужно, если отфильтровано в findElements
       const evt =
         el.tagName === "SELECT" ||
         el.type === "radio" ||
@@ -116,13 +112,14 @@ export class CardFlipGenerator extends BaseGenerator {
 
     // Слушатели для обновления условного UI (без debounce)
     this.elements.directionRadios.forEach((radio) =>
-      radio.addEventListener("change", () => this._updateConditionalUI())
+      radio.addEventListener("change", this._boundUpdateConditionalUI)
     );
-    this.elements.animationStyleSelect?.addEventListener("change", () =>
-      this._updateConditionalUI()
+    this.elements.animationStyleSelect?.addEventListener(
+      "change",
+      this._boundUpdateConditionalUI
     );
 
-    // ++ Отдельные слушатели для обновления текстовых значений слайдеров
+    //  Отдельные слушатели для обновления текстовых значений слайдеров
     this.elements.speedSlider?.addEventListener(
       "input",
       this._boundUpdateSpeedSliderDisplay
@@ -140,7 +137,7 @@ export class CardFlipGenerator extends BaseGenerator {
    * Удаляет обработчики событий.
    */
   unbindEvents() {
-    // ++ Удаляем слушатели для текстовых значений слайдеров
+    //  Удаляем слушатели для текстовых значений слайдеров
     this.elements.speedSlider?.removeEventListener(
       "input",
       this._boundUpdateSpeedSliderDisplay
@@ -149,22 +146,34 @@ export class CardFlipGenerator extends BaseGenerator {
       "input",
       this._boundUpdateHeightSliderDisplay
     );
-    // ++ Удаляем слушатели для условного UI
+    //  Удаляем слушатели для условного UI
     this.elements.directionRadios.forEach((radio) =>
-      radio.removeEventListener("change", () => this._updateConditionalUI())
+      radio.removeEventListener("change", this._boundUpdateConditionalUI)
     );
-    this.elements.animationStyleSelect?.removeEventListener("change", () =>
-      this._updateConditionalUI()
+    this.elements.animationStyleSelect?.removeEventListener(
+      "change",
+      this._boundUpdateConditionalUI
     );
 
-    // ... остальные removeEventListener из предыдущей версии ...
+    // Удаляем обработчики для элементов, влияющих на превью
+    this._previewUpdateControls.forEach((el) => {
+      // if (!el) return; // Уже не нужно, если отфильтровано
+      const evt =
+        el.tagName === "SELECT" ||
+        el.type === "radio" ||
+        el.type === "range" ||
+        el.type === "number"
+          ? "change"
+          : "input";
+      el.removeEventListener(evt, this._debouncedUpdatePreview);
+    });
     super.unbindEvents();
   }
 
   /* ===== Стартовые настройки ===== */
   setInitialState() {
     super.setInitialState();
-    if (this.elements.speedSlider) this.elements.speedSlider.value = 750; // ++ Ставим значение по умолчанию для слайдера
+    if (this.elements.speedSlider) this.elements.speedSlider.value = 750; //  Ставим значение по умолчанию для слайдера
     document.querySelector(
       'input[name="cf-trigger"][value="click"]'
     ).checked = true;
@@ -176,10 +185,10 @@ export class CardFlipGenerator extends BaseGenerator {
     if (this.elements.borderRadiusInput)
       this.elements.borderRadiusInput.value = 8;
     if (this.elements.flipHeightSlider)
-      this.elements.flipHeightSlider.value = 50; // ++
-    this._updateSpeedSliderDisplay(); // ++ Обновляем отображение
-    this._updateHeightSliderDisplay(); // ++ Обновляем отображение
-    this._updateConditionalUI(); // ++ Применяем условное отображение
+      this.elements.flipHeightSlider.value = 25; //
+    this._updateSpeedSliderDisplay(); //  Обновляем отображение
+    this._updateHeightSliderDisplay(); //  Обновляем отображение
+    this._updateConditionalUI(); //  Применяем условное отображение
     this._updatePreview();
   }
 
@@ -204,9 +213,6 @@ export class CardFlipGenerator extends BaseGenerator {
       this.elements.flipHeightGroup.style.display = showHeight ? "" : "none";
     }
 
-    // Обновляем превью, если видимость изменилась, т.к. это может повлиять
-    // на применяемую анимацию (если стиль скрыт, он не будет 'flat')
-    // this._debouncedUpdatePreview(); // Не нужно, т.к. вызывается из слушателей, которые и так обновляют превью
     this._updatePreview();
   }
 
@@ -222,14 +228,14 @@ export class CardFlipGenerator extends BaseGenerator {
       document.querySelector('input[name="cf-direction"]:checked')?.value ||
       "horizontal";
 
-    const duration = parseInt(this.elements.speedSlider?.value, 10) || 750; // ++ Читаем слайдер скорости
+    const duration = parseInt(this.elements.speedSlider?.value, 10) || 750; //  Читаем слайдер скорости
     const animationStyle =
       direction === "horizontal"
         ? this.elements.animationStyleSelect?.value || "default"
-        : "default"; // ++ Читаем стиль, только если Горизонтально
-    const borderRadius = parseInt(this.elements.borderRadiusInput?.value, 10); // ++
+        : "default"; //  Читаем стиль, только если Горизонтально
+    const borderRadius = parseInt(this.elements.borderRadiusInput?.value, 10); //
     const flipHeightPercent =
-      parseInt(this.elements.flipHeightSlider?.value, 10) || 50; // ++
+      parseInt(this.elements.flipHeightSlider?.value, 10) || 25; //
 
     const rx = /^[a-zA-Z0-9_-]+$/;
     if (!containerSelector) {
@@ -292,15 +298,22 @@ export class CardFlipGenerator extends BaseGenerator {
       document.querySelector('input[name="cf-direction"]:checked')?.value ||
       "horizontal";
 
-    const duration = parseInt(this.elements.speedSlider?.value, 10) || 750; // ++
+    const duration = parseInt(this.elements.speedSlider?.value, 10) || 750; //
     const animationStyle =
       this.elements.animationStyleSelect?.value || "default";
-    const borderRadius = parseInt(this.elements.borderRadiusInput?.value, 10); // ++
+    const borderRadius = parseInt(this.elements.borderRadiusInput?.value, 10); //
     const flipHeightPercent =
-      parseInt(this.elements.flipHeightSlider?.value, 10) || 50; // ++
+      parseInt(this.elements.flipHeightSlider?.value, 10) || 25; //
 
     // Конвертируем % высоты в em (0-100% -> 0-40em)
     const flipHeightEm = (flipHeightPercent / 100) * 40;
+
+    if (this.elements.previewArea) {
+      this.elements.previewArea.style.overflow = "visible";
+    }
+
+    // Элемент задней стороны для прямого манипулирования стилем в превью
+    let backSlotElementPreview = null;
 
     // пересоздаём flip‑card
     if (this.previewFlipCard && previewArea.contains(this.previewFlipCard)) {
@@ -308,13 +321,26 @@ export class CardFlipGenerator extends BaseGenerator {
       this.previewFlipCard.remove();
     }
 
+    // Определяем контейнер для превью, к которому можно добавлять классы состояния
+    // В данном случае, будем считать, что сам previewArea является таким контейнером
+    // или что previewFlipCard сам может нести этот класс для упрощения превью CSS.
+    // Для большей точности симуляции, класс cf-vertical должен быть на родительском элементе flip-card.
+    // Но для простоты превью, мы можем напрямую стилизовать backSlotElementPreview ниже.
+    // const previewWrapper = this.elements.previewArea; // Пример
+    // previewWrapper.classList.remove('cf-vertical-preview', 'cf-horizontal-preview');
+
+    // Удаляем старые классы направления с previewArea (если они там были)
+    // this.elements.previewArea.classList.remove('cf-vertical', 'cf-horizontal');
+
     this.previewFlipCard = document.createElement("flip-card");
     const front = document.createElement("section");
     front.slot = "front";
     const back = document.createElement("section");
     back.slot = "back";
     this.previewFlipCard.append(front, back);
-    // ++ Применяем новые стили к превью
+    backSlotElementPreview =
+      this.previewFlipCard.querySelector('[slot="back"]');
+    //  Применяем новые стили к превью
     this.previewFlipCard.style.setProperty("--flip-duration", `${duration}ms`);
     // Устанавливаем радиус ПРЯМО на flip-card в превью
     this.previewFlipCard.style.borderRadius = `${
@@ -331,6 +357,10 @@ export class CardFlipGenerator extends BaseGenerator {
 
     // кастомная вертикальная анимация
     if (direction === "vertical") {
+      // this.elements.previewArea.classList.add('cf-vertical'); // Если класс нужен на previewArea
+      if (backSlotElementPreview) {
+        backSlotElementPreview.style.transform = "scaleY(-1)"; // Компенсируем зеркалирование
+      }
       const kfFront = [
         { transform: "rotateX(180deg)" },
         { transform: "rotateX(270deg)" },
@@ -345,7 +375,11 @@ export class CardFlipGenerator extends BaseGenerator {
       this.previewFlipCard.setFlipToFrontAnimation(kfFront, opts);
       this.previewFlipCard.setFlipToBackAnimation(kfBack, opts);
     } else if (direction === "horizontal" && animationStyle === "flat") {
-      // ++ Плоская горизонтальная
+      // this.elements.previewArea.classList.add('cf-horizontal'); // Если класс нужен на previewArea
+      //  Плоская горизонтальная
+      if (backSlotElementPreview) {
+        backSlotElementPreview.style.transform = ""; // Сбрасываем трансформацию для других режимов
+      }
       const kfFront = [
         { transform: "rotateY(180deg)" },
         { transform: "rotateY(270deg)" },
@@ -360,11 +394,16 @@ export class CardFlipGenerator extends BaseGenerator {
       this.previewFlipCard.setFlipToFrontAnimation(kfFront, opts);
       this.previewFlipCard.setFlipToBackAnimation(kfBack, opts);
     } else {
+      // this.elements.previewArea.classList.add('cf-horizontal'); // Если класс нужен на previewArea
+      if (backSlotElementPreview) {
+        backSlotElementPreview.style.transform = ""; // Сбрасываем трансформацию для других режимов
+      }
       // Сброс на дефолтную анимацию библиотеки (если был применен кастомный)
       // Библиотека не предоставляет явного метода сброса,
       // но при пересоздании элемента <flip-card> (что мы и делаем выше),
-      // она будет использовать свою дефолтную анимацию.
-      // Дополнительных действий здесь не нужно.
+      // анимации по умолчанию будут восстановлены.
+      // Если бы методы setFlipToFrontAnimation/setFlipToBackAnimation принимали null или
+      // был бы метод resetAnimation, мы бы использовали его здесь.
     }
 
     this._bindPreviewTrigger(trigger);
@@ -401,26 +440,46 @@ export class CardFlipGenerator extends BaseGenerator {
   /* ===== Preview trigger helpers ===== */
   _bindPreviewTrigger(triggerType) {
     if (!this.previewTriggerElement || !this.previewFlipCard) return;
-    this._removePreviewTrigger();
+    this._removePreviewTrigger(); // Удаляем все старые слушатели
 
-    const card = this.previewFlipCard;
-    let isBusy = false;
+    const card = this.previewFlipCard; // Это наш this.previewFlipCard
+    let isClickFlippingPreview = false; // Для click-режима превью
 
-    const flip = () => {
-      if (isBusy) return;
-      isBusy = true;
-      card.flip();
-      setTimeout(
-        () => (isBusy = false),
-        parseFloat(
-          getComputedStyle(card).getPropertyValue("--flip-duration")
-        ) || 750
-      );
+    // Переменные состояния для hover-режима превью
+    let intentToFlipToBackPreview = false;
+    let isAnimatingByComponentPreview = false;
+
+    // Слушатели событий компонента для hover-режима превью
+    this._previewComponentFlippingListener = (e) => {
+      isAnimatingByComponentPreview = true;
+    };
+    this._previewComponentFlippedListener = (e) => {
+      isAnimatingByComponentPreview = false;
+
+      if (!intentToFlipToBackPreview && card.hasAttribute("facedown")) {
+        card.flip();
+      }
     };
 
     if (triggerType === "hover") {
-      this._previewHoverEnter = () => !card.facedown && flip();
-      this._previewHoverLeave = () => card.facedown && flip();
+      card.addEventListener("flipping", this._previewComponentFlippingListener);
+      card.addEventListener("flipped", this._previewComponentFlippedListener);
+
+      this._previewHoverEnter = () => {
+        intentToFlipToBackPreview = true;
+        if (isAnimatingByComponentPreview) return;
+        if (!card.hasAttribute("facedown")) {
+          card.flip();
+        }
+      };
+      this._previewHoverLeave = () => {
+        intentToFlipToBackPreview = false;
+        if (isAnimatingByComponentPreview) return;
+        if (card.hasAttribute("facedown")) {
+          card.flip();
+        }
+      };
+      // Привязываем к this.previewTriggerElement, который теперь this.previewFlipCard
       this.previewTriggerElement.addEventListener(
         "mouseenter",
         this._previewHoverEnter
@@ -429,19 +488,54 @@ export class CardFlipGenerator extends BaseGenerator {
         "mouseleave",
         this._previewHoverLeave
       );
+      // Для превью можно не добавлять focus/blur/keydown, если это усложняет,
+      // так как основная проверка этих вещей будет на реальной странице.
+      // Но если хотим полной идентичности, то keydown нужен.
+      this._previewKeydownAction = (e) => {
+        // Общий keydown для превью
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          if (isAnimatingByComponentPreview && triggerType === "hover") return; // Не прерываем анимацию в hover
+          card.flip();
+        }
+      };
+      this.previewTriggerElement.addEventListener(
+        "keydown",
+        this._previewKeydownAction
+      );
     } else {
-      this._previewFlipAction = flip;
+      // triggerType === 'click' (или 'hybrid' сведенный к 'click' для превью)
+      this._previewClickAction = () => {
+        if (isClickFlippingPreview) return;
+        isClickFlippingPreview = true;
+        card.flip();
+      };
+      // Для click-режима превью слушатели flipping/flipped нужны только для isClickFlippingPreview
+      this._previewComponentClickFlippedListener = () => {
+        isClickFlippingPreview = false;
+      };
+      card.addEventListener(
+        "flipped",
+        this._previewComponentClickFlippedListener
+      );
+
       this.previewTriggerElement.addEventListener(
         "click",
-        this._previewFlipAction
+        this._previewClickAction
       );
-      this.previewTriggerElement.addEventListener("keydown", (e) => {
+      this._previewKeydownAction = (e) => {
+        // Общий keydown для превью
         if (e.key === "Enter" || e.key === " ") {
-          // Не даем прокручиваться странице при пробеле, если фокус на карточке превью
           e.preventDefault();
-          flip();
+          if (isClickFlippingPreview) return;
+          isClickFlippingPreview = true;
+          card.flip();
         }
-      });
+      };
+      this.previewTriggerElement.addEventListener(
+        "keydown",
+        this._previewKeydownAction
+      );
     }
   }
 
@@ -487,12 +581,19 @@ export class CardFlipGenerator extends BaseGenerator {
 
     const configJson = JSON.stringify(settings, null, 2);
     // Убедимся, что animationStyle передается
-    console.log("Generating code with settings:", settings);
+    // console.log("Generating code with settings:", settings); // Можно оставить для отладки
     const flipCardCDN = "https://unpkg.com/@auroratide/flip-card/lib/define.js";
-    const containerClass = settings.containerSelector; // Класс основного контейнера
+    const containerClass = settings.containerSelector;
 
-    // --- Генерируем CSS для предотвращения FOUC ---
-    let styleRules = []; // Собираем правила в массив
+    let styleRules = [];
+    let containerSpecificStyles = [];
+
+    if (settings.borderRadius != null && settings.borderRadius >= 0) {
+      containerSpecificStyles.push(`border-radius: ${settings.borderRadius}px`);
+      containerSpecificStyles.push(`-webkit-transform-style: preserve-3d`); // Для старых Safari
+      containerSpecificStyles.push(`transform-style: preserve-3d`); // Всегда нужен для 3D дочерних элементов
+    }
+
     if (settings.showBackInitially) {
       // Если изначально показываем заднюю сторону, скрываем переднюю
       styleRules.push(`
@@ -507,6 +608,14 @@ export class CardFlipGenerator extends BaseGenerator {
       `);
     }
 
+    if (containerSpecificStyles.length > 0) {
+      styleRules.push(
+        `.${settings.containerSelector} {\n  ${containerSpecificStyles.join(
+          ";\n  "
+        )};\n}`
+      );
+    }
+
     // Добавляем стили для контейнера на время инициализации, чтобы избежать дергания высоты
     styleRules.push(`
 .${containerClass}:not([data-taptop-flip-card-initialized="true"]) {
@@ -517,27 +626,30 @@ export class CardFlipGenerator extends BaseGenerator {
 }
     `);
 
-    // --- НОВОЕ CSS правило для компенсации при вертикальном перевороте ---
     styleRules.push(`
-.${containerClass}.cf-vertical flip-card > section[slot="back"] {
-    transform: scale(-1); /* зеркалим back-слот ВСЕГДА, как советует автор lib */
+.${containerClass}.cf-vertical flip-card > [slot="back"] { 
+    transform: scale(-1); /* Используем scale(-1) для правильного отображения текста */
 }
     `);
-    // --- Конец нового CSS ---
 
     const styleBlock = `<style>\n${styleRules.join("\n").trim()}\n</style>`;
-    // --- Конец генерации CSS ---
-
     const scriptContent = `
 /**
  * Taptop Card Flip Extension
- * Generated on: ${new Date().toISOString()}
- * Configuration:
- * Container: .${settings.containerSelector}
- * Trigger: ${settings.trigger}
- * Direction: ${settings.direction}
- * Style: ${settings.animationStyle}
  */
+/**
+ * debounce – простая защита от избыточных вызовов функции
+ */
+const debounce = (fn, wait = 250) => {
+  let t;
+  const wrapped = (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(null, args), wait);
+  };
+  wrapped.cancel = () => clearTimeout(t);
+  return wrapped;
+};
+
 /**
  * Динамически загружает скрипт библиотеки @auroratide/flip-card, если он еще не загружен.
  * Гарантирует, что пользовательский элемент 'flip-card' будет зарегистрирован перед вызовом callback.
@@ -579,47 +691,6 @@ function loadFlipCardLibrary(cdnUrl, callback) {
 }
 
 /**
- * Находит основной контейнер и внутренние элементы .flip-front, .flip-back.
- * @param {string} selector - CSS-селектор основного контейнера.
- * @param {number} index - Индекс контейнера (для логов).
- * @param {string} instanceId - Уникальный ID экземпляра (для логов).
- * @returns {object|null} Объект с элементами или null при ошибке.
- */
-function _findFlipElements(selector, index, instanceId) {
-    const container = document.querySelector(\`\${selector}:nth-of-type(\${index + 1})\`); // Более точный поиск по индексу не сработает с querySelectorAll, используем общий селектор
-     // Нужен альтернативный способ идентификации, если классы одинаковые. Пока ищем просто по селектору.
-     // Используем index только для логов. Лучше, если пользователь будет давать уникальные классы или ID.
-     // Но по ТЗ - только классы. Будем инициализировать все найденные.
-     // Вернемся к поиску одного элемента, т.к. forEach ниже перебирает containers
-     // const container = containers[index]; // Это не сработает, т.к. функция вызывается не из цикла
-
-     // --- Возвращаем логику поиска ---
-     const currentContainer = document.querySelectorAll('.' + selector)[index];
-     if (!currentContainer) {
-        console.error(\`[FlipCard Init] \${instanceId}: Не удалось найти контейнер по индексу \${index}.\`);
-        return null;
-     }
-
-     if (currentContainer.dataset.taptopFlipCardInitialized === 'true') {
-        console.warn(\`[FlipCard Init] \${instanceId}: Контейнер уже инициализирован.\`);
-        return null;
-     }
-     const frontEl = currentContainer.querySelector('.flip-front');
-     const backEl = currentContainer.querySelector('.flip-back');
-
-     if (!frontEl) {
-        console.error(\`[FlipCard Init] \${instanceId}: Не найден элемент '.flip-front'.\`);
-        return null;
-     }
-     if (!backEl) {
-        console.error(\`[FlipCard Init] \${instanceId}: Не найден элемент '.flip-back'.\`);
-        return null;
-     }
-      console.log(\`[FlipCard Init] \${instanceId}: Найдены .flip-front и .flip-back.\`);
-      return { container: currentContainer, frontEl, backEl };
-}
-
-/**
  * Создает и настраивает базовый элемент <flip-card>.
  * @param {object} config - Конфигурация.
  * @returns {HTMLElement} Созданный элемент <flip-card>.
@@ -630,7 +701,6 @@ function _createFlipCardElement(config) {
     if (config.showBackInitially) {
         flipCardElement.setAttribute('facedown', '');
     }
-    // ++ Устанавливаем стили из настроек генератора
     if (config.borderRadius != null) flipCardElement.style.borderRadius = config.borderRadius + 'px';
     return flipCardElement;
 }
@@ -704,113 +774,195 @@ function initFlipCards(config) { // Переименовываем функци�
         const flipCardElement = _createFlipCardElement(config); // Создаем <flip-card>
         _assignSlotsAndAppend(frontEl, backEl, flipCardElement); // Перемещаем ОРИГИНАЛЬНЫЕ .flip-front/.flip-back ВНУТРЬ <flip-card>
         container.appendChild(flipCardElement);
-        // ++ Устанавливаем border-radius на flip-card ЭЛЕМЕНТ после добавления в DOM
+        //  Устанавливаем border-radius на flip-card ЭЛЕМЕНТ после добавления в DOM
         if (config.borderRadius != null && config.borderRadius >= 0) {
            flipCardElement.style.borderRadius = config.borderRadius + 'px';
         }
         console.log(\`[FlipCard Init] \${instanceId}: <flip-card> создан и добавлен.\`);
 
-        const flipAction = () => {
-            // Убедимся, что flipCardElement все еще в DOM
-            const currentFlipCard = container.querySelector('flip-card');
-            if (currentFlipCard && currentFlipCard.flip) {
-                currentFlipCard.flip();
-                // Обновляем aria-pressed принудительно, если есть слушатели,
-                // так как атрибут facedown может обновиться не мгновенно
-                const isFlippingToBack = !currentFlipCard.hasAttribute('facedown');
-                container.setAttribute('aria-pressed', isFlippingToBack ? 'true' : 'false');
-                // Состояние берем от реального элемента flip-card
-                const isPressed = currentFlipCard.hasAttribute('facedown');
-                container.setAttribute('aria-pressed', isPressed ? 'true' : 'false');
-                // Добавляем/удаляем класс для вертикальной компенсации
-                if (config.direction === 'vertical') {
-                    container.classList.toggle('cf-vertical-flipped', isPressed);
-                } else {
-                     container.classList.remove('cf-vertical-flipped'); // Убираем на всякий случай для горизонтального
-                }
-                console.log(\`[FlipCard Action] \${instanceId}: Карточка перевернута. facedown:\`, isPressed);
-            } else {
-                console.warn(\`[FlipCard Action] \${instanceId}: Экземпляр flip-card не найден или не имеет метода flip.\`);
+        let currentTrigger = config.trigger; // Изначально берем из конфига
+        const hybridBreakpoint = 992;
+
+        // Функция для привязки/перепривязки слушателей
+function attachEventListeners() {
+    // Сначала удаляем все возможные старые слушатели
+    const oldListeners = container.__taptopFlipListeners || {};
+    if (oldListeners.click) container.removeEventListener('click', oldListeners.click);
+    if (oldListeners.keydown) container.removeEventListener('keydown', oldListeners.keydown);
+    if (oldListeners.mouseenter) container.removeEventListener('mouseenter', oldListeners.mouseenter);
+    if (oldListeners.mouseleave) container.removeEventListener('mouseleave', oldListeners.mouseleave);
+    if (oldListeners.focus) container.removeEventListener('focus', oldListeners.focus);
+    if (oldListeners.blur) container.removeEventListener('blur', oldListeners.blur);
+    
+    const cardElement = container.querySelector('flip-card'); //  Получаем сам веб-компонент
+    //  Удаляем старые слушатели компонента, если они были (важно при re-attach)
+    if (cardElement && cardElement.__flippingListener) {
+        cardElement.removeEventListener('flipping', cardElement.__flippingListener);
+    }
+    if (cardElement && cardElement.__flippedListener) {
+        cardElement.removeEventListener('flipped', cardElement.__flippedListener);
+    }
+    container.__taptopFlipListeners = {};
+
+    if (currentTrigger === 'click') {
+        let isClickFlipping = false; // Локальный флаг для клика, чтобы избежать двойного срабатывания
+        const clickHandler = () => {
+            if (isClickFlipping || !cardElement || typeof cardElement.flip !== 'function') return;
+            isClickFlipping = true;
+            cardElement.flip();
+            // setTimeout не нужен, т.к. isClickFlipping сбросится в flipped
+        };
+        const keydownHandler = (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                if (isClickFlipping || !cardElement || typeof cardElement.flip !== 'function') return;
+                isClickFlipping = true; // Используем тот же флаг
+                cardElement.flip();
+            }
+        };
+        container.addEventListener('click', clickHandler);
+        container.addEventListener('keydown', keydownHandler);
+        container.__taptopFlipListeners = { click: clickHandler, keydown: keydownHandler };
+
+        // Слушатели для сброса isClickFlipping и обновления aria-pressed для click-режима
+        if (cardElement) {
+            const clickFlippingListener = () => { /* isClickFlipping тут не меняем, т.к. это начало */ };
+            const clickFlippedListener = (e) => {
+                isClickFlipping = false;
+                container.setAttribute('aria-pressed', e.detail.facedown ? 'true' : 'false');
+            };
+            cardElement.addEventListener('flipping', clickFlippingListener);
+            cardElement.addEventListener('flipped', clickFlippedListener);
+            cardElement.__flippingListener = clickFlippingListener;
+            cardElement.__flippedListener = clickFlippedListener;
+        }
+
+    } else if (currentTrigger === 'hover') { // Этот блок теперь обрабатывает гибридное поведение
+        console.log(\`[FlipCard Trigger] \${instanceId}: Hover Logic Active (Smart Hover/Click)\`);
+        if (!cardElement || typeof cardElement.flip !== 'function') {
+            console.warn(\`[FlipCard Trigger] \${instanceId}: <flip-card> element not found or .flip not a function.\`);
+            return;
+        }
+
+        let intentToFlipToBack = false;
+        let isAnimatingByComponent = false; // Флаг, что анимация компонента СЕЙЧАС идет
+
+        const flippingListener = (e) => {
+            isAnimatingByComponent = true;
+            // Обновляем aria-pressed в начале анимации
+            container.setAttribute('aria-pressed', e.detail.facedown ? 'true' : 'false');
+        };
+        const flippedListener = (e) => {
+            isAnimatingByComponent = false;
+            // Обновляем aria-pressed по завершению, на всякий случай
+            container.setAttribute('aria-pressed', e.detail.facedown ? 'true' : 'false');
+            // После завершения анимации, если курсор уже НЕ на карточке,
+            // а карточка осталась перевернутой (facedown=true), то переворачиваем обратно.
+            if (!intentToFlipToBack && cardElement.hasAttribute('facedown')) {
+                cardElement.flip();
             }
         };
 
-        // Удаляем старые обработчики перед добавлением новых (более надежный способ)
-        const storedListeners = container.__taptopFlipListeners || {};
-        if (storedListeners.click) container.removeEventListener('click', storedListeners.click);
-        if (storedListeners.keydown) container.removeEventListener('keydown', storedListeners.keydown);
-        if (storedListeners.mouseenter) container.removeEventListener('mouseenter', storedListeners.mouseenter);
-        if (storedListeners.mouseleave) container.removeEventListener('mouseleave', storedListeners.mouseleave);
-        if (storedListeners.focus) container.removeEventListener('focus', storedListeners.focus);
-        if (storedListeners.blur) container.removeEventListener('blur', storedListeners.blur);
+        cardElement.addEventListener('flipping', flippingListener);
+        cardElement.addEventListener('flipped', flippedListener);
+        cardElement.__flippingListener = flippingListener;
+        cardElement.__flippedListener = flippedListener;
 
-        container.__taptopFlipListeners = {}; // Сбрасываем
 
-        if (config.trigger === 'click') {
-            console.log(\`[FlipCard Trigger] \${instanceId}: Click + Keydown\`);
-            let isFlipping = false;
-            const clickHandler = () => {
-                if (isFlipping) return;
-                isFlipping = true;
-                flipAction();
-                setTimeout(() => isFlipping = false, config.duration);
-            };
-            const keydownHandler = (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    flipAction();
+        const mouseEnterHandler = () => {
+            intentToFlipToBack = true;
+            if (isAnimatingByComponent) {
+                return; 
+            }
+            if (!cardElement.hasAttribute('facedown')) { // Если сейчас лицевая сторона
+                cardElement.flip();
+            }
+        };
+
+        const mouseLeaveHandler = () => {
+            intentToFlipToBack = false;
+            if (isAnimatingByComponent) {
+                return; 
+            }
+            if (cardElement.hasAttribute('facedown')) { // Если сейчас обратная сторона
+                cardElement.flip();
+            }
+        };
+        
+        const focusHandler = () => container.classList.add('hover-active');
+        const blurHandler = () => container.classList.remove('hover-active');
+        
+        const keydownHandler = (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                if (isAnimatingByComponent && config.trigger === 'hover') { // В hover-режиме ждем завершения анимации
+                    return;
                 }
-            };
-            container.addEventListener('click', clickHandler);
-            container.addEventListener('keydown', keydownHandler);
-            container.__taptopFlipListeners = { click: clickHandler, keydown: keydownHandler };
+                cardElement.flip();
+            }
+        };
 
-        } else if (config.trigger === 'hover') {
-            console.log(\`[FlipCard Trigger] \${instanceId}: Hover + Keydown (Focus)\`);
-            let isFlipping = false;
-            let flipTimeout;
+        container.addEventListener('mouseenter', mouseEnterHandler);
+        container.addEventListener('mouseleave', mouseLeaveHandler);
+        container.addEventListener('focus', focusHandler);
+        container.addEventListener('blur', blurHandler);
+        container.addEventListener('keydown', keydownHandler); // Клавиатура работает и в hover
+        
+        container.__taptopFlipListeners = {
+            mouseenter: mouseEnterHandler, mouseleave: mouseLeaveHandler,
+            focus: focusHandler, blur: blurHandler, keydown: keydownHandler,
+            // Сохраняем и слушатели компонента, чтобы их можно было удалить при смене режима
+            componentFlipping: flippingListener, 
+            componentFlipped: flippedListener
+        };
+    }
+} // Конец attachEventListeners
 
-            const mouseEnterHandler = () => {
-               if (!isFlipping && flipCardElement && !flipCardElement.hasAttribute('facedown')) {
-                  clearTimeout(flipTimeout); isFlipping = true;
-                  console.log('[FlipCard Hover] Mouse enter -> flip to back');
-                  flipAction();
-                  flipTimeout = setTimeout(() => { isFlipping = false; }, config.duration);
-               }
-            };
-            const mouseLeaveHandler = () => {
-                if (!isFlipping && flipCardElement && flipCardElement.hasAttribute('facedown')) {
-                  clearTimeout(flipTimeout); isFlipping = true;
-                  console.log('[FlipCard Hover] Mouse leave -> flip to front');
-                  flipAction();
-                  flipTimeout = setTimeout(() => { isFlipping = false; }, config.duration);
-               }
-            };
-            const focusHandler = () => container.classList.add('hover-active');
-            const blurHandler = () => container.classList.remove('hover-active');
-            const keydownHandler = (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    flipAction();
-                }
-            };
-
-            container.addEventListener('mouseenter', mouseEnterHandler);
-            container.addEventListener('mouseleave', mouseLeaveHandler);
-            container.addEventListener('focus', focusHandler);
-            container.addEventListener('blur', blurHandler);
-            container.addEventListener('keydown', keydownHandler);
-            container.__taptopFlipListeners = {
-                mouseenter: mouseEnterHandler, mouseleave: mouseLeaveHandler,
-                focus: focusHandler, blur: blurHandler, keydown: keydownHandler
-            };
+        // Функция для обновления триггера на основе размера экрана (только если изначально был hover)
+        const updateTriggerBasedOnScreen = () => {
+            // Эта функция теперь вызывается только если config.trigger === 'hover'
+            const newTriggerBasedOnWidth = window.innerWidth < hybridBreakpoint ? 'click' : 'hover';
+            if (newTriggerBasedOnWidth !== currentTrigger) { // Только если РЕЖИМ изменился
+                currentTrigger = newTriggerBasedOnWidth;
+                console.log(\`[FlipCard Trigger Update] \${instanceId}: Mode switched to \${currentTrigger}. Re-attaching listeners.\`);
+                attachEventListeners(); // Перепривязываем слушатели для нового режима
+            }
+            // Если режим не изменился, слушатели уже должны быть корректно привязаны предыдущим вызовом attachEventListeners.
+        };
+        if (config.trigger === 'hover') {
+            // Удаляем классы направления перед новой установкой, если они могли быть
+            container.classList.remove('cf-horizontal', 'cf-vertical');
+            // Применяем класс направления в зависимости от currentTrigger (который может стать click)
+            // или лучше основываться на config.direction для установки cf-vertical/cf-horizontal
+            // Устанавливаем НАЧАЛЬНЫЙ currentTrigger на основе текущей ширины экрана
+            currentTrigger = window.innerWidth < hybridBreakpoint ? 'click' : 'hover';
+            console.log(\`[FlipCard Init] \${instanceId}: Initial trigger mode for hover config: \${currentTrigger}.\`);
+            attachEventListeners(); // Привязываем слушатели для начального режима
+            // Удаляем предыдущий resize listener, если он был
+            if (container.__taptopResizeListener) {
+                window.removeEventListener('resize', container.__taptopResizeListener);
+            }
+            container.__taptopResizeListener = debounce(updateTriggerBasedOnScreen, 200);
+            window.addEventListener('resize', container.__taptopResizeListener);
+        } else { // Если trigger === 'click'
+            // Удаляем классы направления перед новой установкой
+            container.classList.remove('cf-horizontal', 'cf-vertical');
+            currentTrigger = 'click';
+            attachEventListeners(); // Обычная привязка
         }
+
+        // Устанавливаем классы направления и специфичные для направления стили/анимации
+        // Это должно происходить ПОСЛЕ определения currentTrigger и attachEventListeners,
+        // но ДО применения анимаций.
+        const backSlotInGeneratedCard = flipCardElement.querySelector('[slot="back"]'); // Используем [slot="back"]
 
         // Применяем кастомную анимацию, если нужно
         if (config.direction === 'vertical' && flipCardElement.setFlipToFrontAnimation) {
+             container.classList.add('cf-vertical'); // Добавляем класс для CSS правила
              _applyVerticalAnimation(flipCardElement);
              console.log(\`[FlipCard Init] \${instanceId}: Установлена вертикальная анимация.\`);
         } else if (config.direction === 'horizontal' && config.animationStyle === 'flat' && flipCardElement.setFlipToFrontAnimation) {
-             // ++ Применяем плоскую горизонтальную анимацию
+             container.classList.add('cf-horizontal'); // Добавляем класс для консистентности
              const kfFront = [ { transform: "rotateY(180deg)" }, { transform: "rotateY(270deg)" }, { transform: "rotateY(360deg)" } ];
              const kfBack = [ { transform: "rotateY(0deg)" }, { transform: "rotateY(90deg)" }, { transform: "rotateY(180deg)" } ];
              const opts = { easing: "ease-in-out" };
@@ -818,6 +970,7 @@ function initFlipCards(config) { // Переименовываем функци�
              flipCardElement.setFlipToBackAnimation(kfBack, opts);
              console.log(\`[FlipCard Init] \${instanceId}: Установлена плоская горизонтальная анимация.\`);
         } else {
+             container.classList.add('cf-horizontal'); // Режим по умолчанию - горизонтальный
              // Для 'horizontal' + 'default' ничего не делаем, используется анимация библиотеки
              _resetToHorizontalAnimation(flipCardElement); // Убираем стили, если были
              console.log(\`[FlipCard Init] \${instanceId}: Используется стандартная горизонтальная анимация.\`);
@@ -833,13 +986,16 @@ function initFlipCards(config) { // Переименовываем функци�
 
         // Устанавливаем атрибуты доступности в самом конце,
         // чтобы быть уверенными, что они не будут перезаписаны DOM-манипуляциями
-        container.setAttribute('tabindex', '0');
-        container.style.cursor = 'pointer'; // Можно оставить для визуальной подсказки
+         container.setAttribute('tabindex', '0');
+         if (config.trigger === 'hover') {
+             container.style.cursor = 'default'; 
+         } else {
+             container.style.cursor = 'pointer';
+         }
         container.setAttribute('role', 'button');
         // aria-pressed обновляется в flipAction, здесь устанавливаем начальное/конечное
         container.setAttribute('aria-pressed', flipCardElement.hasAttribute('facedown') ? 'true' : 'false');
         container.setAttribute('aria-label', 'Перевернуть карточку');
-        // <<< КОНЕЦ ПЕРЕМЕЩЕННОГО БЛОКА >>>
 
         container.dataset.taptopFlipCardInitialized = 'true'; // Помечаем контейнер как инициализированный
         console.log(\`[FlipCard Init] \${instanceId}: Инициализация завершена.\`);
@@ -891,18 +1047,15 @@ document.addEventListener('DOMContentLoaded', () => {
    * @private
    */
   _removePreviewTrigger() {
-    if (!this.previewTriggerElement) return;
-    // Удаляем все возможные слушатели
-    if (this._previewFlipAction) {
+    if (!this.previewTriggerElement || !this.previewFlipCard) return;
+    const card = this.previewFlipCard;
+
+    // Удаляем слушатели с this.previewTriggerElement (он же this.previewFlipCard)
+    if (this._previewClickAction)
       this.previewTriggerElement.removeEventListener(
         "click",
-        this._previewFlipAction
+        this._previewClickAction
       );
-      this.previewTriggerElement.removeEventListener(
-        "keydown",
-        this._handlePreviewKeydown
-      );
-    }
     if (this._previewHoverEnter)
       this.previewTriggerElement.removeEventListener(
         "mouseenter",
@@ -913,9 +1066,36 @@ document.addEventListener('DOMContentLoaded', () => {
         "mouseleave",
         this._previewHoverLeave
       );
+    if (this._previewKeydownAction)
+      this.previewTriggerElement.removeEventListener(
+        "keydown",
+        this._previewKeydownAction
+      );
+
+    // Удаляем слушатели с самого компонента card (this.previewFlipCard)
+    if (this._previewComponentFlippingListener)
+      card.removeEventListener(
+        "flipping",
+        this._previewComponentFlippingListener
+      );
+    if (this._previewComponentFlippedListener)
+      card.removeEventListener(
+        "flipped",
+        this._previewComponentFlippedListener
+      );
+    if (this._previewComponentClickFlippedListener)
+      card.removeEventListener(
+        "flipped",
+        this._previewComponentClickFlippedListener
+      );
+
     // Обнуляем сохраненные функции
-    this._previewFlipAction = null;
+    this._previewClickAction = null;
     this._previewHoverEnter = null;
     this._previewHoverLeave = null;
+    this._previewKeydownAction = null;
+    this._previewComponentFlippingListener = null;
+    this._previewComponentFlippedListener = null;
+    this._previewComponentClickFlippedListener = null;
   }
 } // Конец класса CardFlipGenerator

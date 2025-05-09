@@ -1,6 +1,6 @@
 # Переворот карточки
 
-Это расширение позволяет добавить интерактивный 3D-эффект переворота для любого блока на вашей странице Taptop, элегантно показывая его лицевую и обратную стороны при взаимодействии пользователя.
+Это расширение позволяет добавить интерактивный 3D-эффект переворота для любого блока на вашей странице Taptop, элегантно показывая его лицевую и обратную стороны при взаимодействии c пользователем.
 
 ---
 
@@ -10,44 +10,55 @@
 
 1.  **Создайте основной блок:** Добавьте на страницу `Div Block` (или другой контейнерный элемент). Это будет **основной блок-контейнер**, к которому применится эффект переворота.
 2.  **Задайте уникальный CSS-класс контейнеру:** Выделите этот основной блок и в панели стилей присвойте ему **уникальный CSS-класс**. Например: `my-flip-card` или `service-card-flipper`.
-    <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-    <img src="./images/card-flip/flip-container.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-     <p style="margin-top: 10px; font-style: italic; color: #666;">Запомните или скопируйте это имя класса – оно потребуется в поле "CSS-класс основного блока-контейнера" генератора ниже.</p>
+    <div class="img-block">
+      <img src="./images/card-flip/flip-container.png" >
+      <p class="img-block-text">Запомните или скопируйте это имя класса – оно потребуется в поле "CSS-класс основного блока-контейнера" генератора ниже.</p>
     </div>
 
 3.  **Задайте размеры контейнеру:** Убедитесь, что у **основного блока-контейнера** (с вашим уникальным классом) заданы **конкретные размеры** (ширина и высота) в панели стилей Taptop. Это необходимо для корректного отображения карточки.
 4.  **Создайте ДВА Дочерних Блока:** **Внутрь** основного блока-контейнера поместите **ровно два** дочерних блока (например, еще два `Div Block`).
-    <div style="max-width: 600px; margin: 20px auto; text-align: center; display: flex;">
-    <div>
-      <img src="./images/card-flip/flip-front.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-      <p style="margin-top: 10px; font-style: italic; color: #666;">Первый дочерний блок будет лицевой стороной.</p>
-    </div>
-    <div>
-      <img src="./images/card-flip/flip-back.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-      <p style="margin-top: 10px; font-style: italic; color: #666;">Второй дочерний блок будет обратной стороной.</p>
-    </div>
-    </di>
 
-5.  **Присвойте Классы Сторонам:**
-    - Выделите **первый** дочерний блок и присвойте ему **обязательный CSS-класс:** `flip-front`.
-    <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-    <img src="./images/card-flip/flip-front-selector.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-    </div>
-    - Выделите **второй** дочерний блок и присвойте ему **обязательный CSS-класс:** `flip-back`.
-    <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-    <img src="./images/card-flip/flip-back-selector.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-    </div>
-6.  **Добавьте Контент и Стили:**
-    - Весь контент (текст, изображения, кнопки и т.д.) для **лицевой** стороны разместите **внутри** блока с классом `flip-front`.
-    - Весь контент для **обратной** стороны разместите **внутри** блока с классом `flip-back`.
-    - **Применяйте стили** (фон, цвет текста, отступы, рамки и т.д.) **непосредственно к блокам `flip-front` и `flip-back`** с помощью стандартных инструментов Taptop. Скрипт сохранит эти стили.
-
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/card-flip/structure.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
- <p style="margin-top: 10px; font-style: italic; color: #666;">Пример правильной структуры</p>
+<div class="img-block">
+<img src="./images/card-flip/structure.png" >
+ <p class="img-block-text">Пример правильной структуры</p>
 </div>
 
-!> **ВАЖНО!** Соблюдайте именно такую структуру: один контейнер с вашим классом, и внутри него **сразу** два блока с классами `flip-front` и `flip-back`. Не добавляйте другие элементы между контейнером и этими двумя блоками. Стили сторон применяйте именно к `flip-front` и `flip-back`.
+5.  **Присвойте Классы Сторонам:**
+
+    - Выделите **первый** дочерний блок и присвойте ему **обязательный CSS-класс:** `flip-front`.
+    <div class="img-block">
+    <img src="./images/card-flip/flip-front-selector.png" >
+    </div>
+    - Выделите **второй** дочерний блок и присвойте ему **обязательный CSS-класс:** `flip-back`.
+    <div class="img-block">
+    <img src="./images/card-flip/flip-back-selector.png" >
+    </div>
+
+    !> **ВАЖНО!** Соблюдайте именно такую структуру: один контейнер с вашим классом, и внутри него **сразу** два блока с классами `flip-front` и `flip-back`. Не добавляйте другие элементы между контейнером и этими двумя блоками. Стили сторон применяйте именно к `flip-front` и `flip-back`.
+
+6.  **Добавьте Контент и Стили:**
+
+    - Весь контент (текст, изображения, кнопки и т.д.) для **лицевой** стороны разместите **внутри** блока с классом `flip-front`.
+    - Весь контент для **обратной** стороны разместите **внутри** блока с классом `flip-back`.
+    - **Применяйте стили** (фон, цвет текста, отступы, рамки и т.д.) **непосредственно к блокам `flip-front` и `flip-back`** с помощью стандартных инструментов Taptop.
+
+    <div style="max-width: 600px; margin: 20px auto; text-align: center; display: flex;">
+      <div>
+      <img src="./images/card-flip/flip-front.png" >
+      <p class="img-block-text">Первый дочерний блок <code>(flip-front)</code> будет лицевой стороной.</p>
+      </div>
+      <div>
+      <img src="./images/card-flip/flip-back.png" >
+      <p class="img-block-text">Второй дочерний блок <code>(flip-back)</code> будет обратной стороной.</p>
+      </div>
+    </di>
+
+!> **Совет для удобства редактирования в Taptop:** Чтобы стороны карточки накладывались друг на друга в редакторе (а не шли друг под другом), вы можете задать блоку с классом `.flip-back` абсолютное позиционирование.
+
+<div class="img-block">
+<img src="./images/card-flip/flip-back-position.png" >
+ <p class="img-block-text">Абсолютное позиционирование, стороны по нулям</p>
+</div>
 
 ---
 
@@ -66,9 +77,11 @@
                 <label for="cf-container-selector">CSS-класс основного блока-контейнера <span class="required-indicator">*</span></label>
                 <input type="text" id="cf-container-selector" class="text-input" placeholder="Например: my-flip-card" required>
                 <div class="helper-text">Класс, который вы присвоили основному блоку в Taptop (см. инструкцию выше). Без точки в начале.</div>
+                <div class="helper-text" style="margin-top: 8px; color: var(--primary-color); font-weight: 500;">
+                  Убедитесь, что внутри этого контейнера есть ровно два дочерних блока с классами <code>flip-front</code> и <code>flip-back</code>.</div>
+             </div>
             </div>
          </div>
-    </div>
     <div class="settings-section">
       <div class="settings-section-title">2. Настройки анимации</div>
        <div class="settings-row">
@@ -77,14 +90,14 @@
               <div class="radio-group-row">
                  <label class="radio-container">
                    <input type="radio" name="cf-trigger" value="click" checked>
-                   <span class="radio-checkmark"></span> Клик (Рекомендуется)
+                   <span class="radio-checkmark"></span> Клик
                  </label>
                  <label class="radio-container">
                    <input type="radio" name="cf-trigger" value="hover">
                    <span class="radio-checkmark"></span> Наведение мыши
                  </label>
               </div>
-              <div class="helper-text">Как пользователь будет активировать переворот. "Клик" работает на всех устройствах.</div>
+              <div class="helper-text">Как пользователь будет активировать переворот.<br><em>Наведение мыши:</em> на ПК работает от наведения курсора, на мобильных (<992px) автоматически используется клик.</div>
           </div>
            <div class="setting-group">
              <label>Направление переворота</label>
@@ -122,7 +135,7 @@
                  <option value="default" selected>Объемный 3D (с подъемом)</option>
                  <option value="flat">Плоский 2D (без подъема)</option>
              </select>
-             <div class="helper-text">"Плоский" может помочь, если карта выходит за рамки.</div>
+             <div class="helper-text">"Плоский" может помочь, если карточка выходит за рамки.</div>
           </div>
        </div>
     </div>
@@ -137,20 +150,20 @@
            <div class="setting-group" id="cf-flip-height-group"> 
             <label for="cf-flip-height">Высота подъема (0-100)</label>
              <div class="slider-container">
-                <input type="range" id="cf-flip-height" class="slider" min="0" max="100" value="50" step="1">
+                <input type="range" id="cf-flip-height" class="slider" min="1" max="100" value="25" step="1">
                  <div class="slider-labels">
-                    <span>Нет</span>
+                    <span>Мин.</span>
                     <span>Макс.</span>
                  </div>
                  <div class="slider-value">
-                    <span id="cf-flip-height-value-display" class="slider-value-primary">50%</span>
+                    <span id="cf-flip-height-value-display" class="slider-value-primary">25%</span>
                  </div>
              </div>
             <div class="helper-text">Интенсивность 3D "подъема" при объемной анимации (видна только для стиля "Объемный 3D").</div>
            </div>
         </div>
     </div>
-  </div>
+
   <div class="settings-section preview-section">
         <div class="settings-section-title preview-title">Предпросмотр</div>
         <div id="cf-preview-area" class="preview-area" aria-live="polite">
@@ -164,6 +177,7 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span class="button-text">Сгенерировать код</span>
     </button>
+  </div>
   </div>
    <div id="success-modal" class="modal">
     <div class="modal-content">

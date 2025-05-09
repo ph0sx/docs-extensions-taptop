@@ -447,31 +447,31 @@
   </li>
 </ul>
 
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/multilanding/image-1.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Пример настройки параметров</p>
+<div class="img-block">
+<img src="./images/multilanding/image-1.png" >
+<p class="img-block-text">Пример настройки параметров</p>
 </div>
 <p>На странице используем шаблон: <code>Позвоните нам: %%phone%%</code></p>
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/multilanding/key.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Запись в редакторе</p>
+<div class="img-block">
+<img src="./images/multilanding/key.png" >
+<p class="img-block-text">Запись в редакторе</p>
 </div>
 
 <p>Если посетитель зайдет с <strong>Telegram</strong> (utm_source=telegram), он увидит: "Позвоните нам: +7 (999) 111-11-11"</p>
 
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/multilanding/utm.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Utm-метка в адресной строке</p>
+<div class="img-block">
+<img src="./images/multilanding/utm.png" >
+<p class="img-block-text">Utm-метка в адресной строке</p>
 
-<img src="./images/multilanding/4.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Текст изменился в соответствии с нашим условитем</p>
+<img src="./images/multilanding/4.png" >
+<p class="img-block-text">Текст изменился в соответствии с нашим условитем</p>
 </div>
 
 <p>Если посетитель зайдет с другого источника, он увидит: "Позвоните нам: +7 (800) 555-35-35"</p>
 
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/multilanding/image-2.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Текст по умолчанию</p>
+<div class="img-block">
+<img src="./images/multilanding/image-2.png" >
+<p class="img-block-text">Текст по умолчанию</p>
 </div>
 
 </div>
@@ -506,9 +506,9 @@
   </li>
 </ul>
 
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/multilanding/block.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Пример настройки параметров</p>
+<div class="img-block">
+<img src="./images/multilanding/block.png" >
+<p class="img-block-text">Пример настройки параметров</p>
 </div>
 
 <p>Если посетитель зайдет с параметром <code>utm_campaign=sale</code>, будут показаны блоки с классами <code>discount-block</code> и <code>timer</code>, а блок с классом <code>regular-price</code> будет скрыт.</p></div>
@@ -562,14 +562,14 @@
         </li>
     </ul>
 
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/multilanding/ip.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Пример настройки параметров</p>
+<div class="img-block">
+<img src="./images/multilanding/ip.png" >
+<p class="img-block-text">Пример настройки параметров</p>
 </div>
     <p>На странице используем: <code>Доставка %%region%% бесплатная!</code></p>
-    <div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/multilanding/free.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
-<p style="margin-top: 10px; font-style: italic; color: #666;">Запись в редакторе</p></div>
+    <div class="img-block">
+<img src="./images/multilanding/free.png" >
+<p class="img-block-text">Запись в редакторе</p></div>
     <ul>
         <li>Посетители из России увидят: "Доставка в России бесплатная!"</li>
         <li>Остальные посетители увидят: "Доставка в вашем регионе бесплатная!"</li>

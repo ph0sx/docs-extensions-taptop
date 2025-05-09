@@ -186,18 +186,18 @@
 <ul>
     <li><strong>Изображения:</strong> Загрузите два изображения ("до" и "после") в ресурсы Taptop. Убедитесь, что они имеют <strong>одинаковые размеры</strong> (ширину и высоту в пикселях) для наилучшего результата. Скопируйте их <strong>полные (абсолютные) URL-адреса</strong>, начинающиеся с <em>https://....</em></li>
     <div style="max-width: 600px; margin: 15px auto; text-align: center;">
-        <img src="./images/before-after-slider/resources.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);" alt="">
-        <p style="margin-top: 10px; font-style: italic; color: #666;">Для добавления изображений жмём на синюю кнопку</p>
-        <img src="./images/before-after-slider/recources-with-images.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);" alt="">
-        <p style="margin-top: 10px; font-style: italic; color: #666;">Добавляем изображения</p>
-        <img src="./images/before-after-slider/resources-links.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);" alt="">
-        <p style="margin-top: 10px; font-style: italic; color: #666;">Копируем абсолютную ссылку</p>
+        <img src="./images/before-after-slider/resources.png"  alt="">
+        <p class="img-block-text">Для добавления изображений жмём на синюю кнопку</p>
+        <img src="./images/before-after-slider/recources-with-images.png"  alt="">
+        <p class="img-block-text">Добавляем изображения</p>
+        <img src="./images/before-after-slider/resources-links.png"  alt="">
+        <p class="img-block-text">Копируем абсолютную ссылку</p>
         </div>
     <li><strong>Контейнер:</strong> На странице Taptop, где должен быть слайдер, добавьте <strong>пустой блок (Div Block)</strong></li>
     <li><strong>CSS-класс контейнера:</strong> Выделите этот блок и назначьте ему <strong>уникальный CSS-класс</strong>.
     <div style="max-width: 600px; margin: 15px auto; text-align: center;">
-        <img src="./images/before-after-slider/add-slider-selector.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);" alt="">
-        <p style="margin-top: 10px; font-style: italic; color: #666;">Назначаем класс</p>
+        <img src="./images/before-after-slider/add-slider-selector.png"  alt="">
+        <p class="img-block-text">Назначаем класс</p>
         </div>
     </li>
     <li><strong>Размеры контейнера:</strong> Задайте этому блоку нужные размеры (ширину и/или высоту) с помощью стандартных настроек Taptop (на панели стилей). Слайдер займет <strong>100% ширины</strong>  этого блока, а его <strong>высота автоматически подстроится</strong> под пропорции ваших изображений.
@@ -230,18 +230,18 @@
 <li>Перейдите в редактор Taptop -> Настройки страницы -> Перед тегом <code>&lt;body&gt;</code></li>
 <li>Вставьте скопированный код.</li>
 </ol>
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/cookie/page-settings.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
- <p style="margin-top: 10px; font-style: italic; color: #666;">Вставка кода в настройки страницы</p>
+<div class="img-block">
+<img src="./images/cookie/page-settings.png" >
+ <p class="img-block-text">Вставка кода в настройки страницы</p>
 </div>
 <ol start="5">
 <li>Закройте настройки страницы.</li>
 <li>Опубликуйте страницу.</li>
 </ol>
 <p>После публикации слайдер должен появиться на странице внутри вашего блока-контейнера.</p>
-<div style="max-width: 600px; margin: 20px auto; text-align: center;">
-<img src="./images/before-after-slider/slider-example.png" style="max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
- <p style="margin-top: 10px; font-style: italic; color: #666;">Вставка кода в настройки страницы</p>
+<div class="img-block">
+<img src="./images/before-after-slider/slider-example.png" >
+ <p class="img-block-text">Вставка кода в настройки страницы</p>
 </div>
 </div>
 
