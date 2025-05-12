@@ -12,7 +12,7 @@ export class CookieGenerator extends BaseGenerator {
       consentBtnClass: "button-cookie",
       rejectBtnClass: "button-no-cookie",
       closeBtnClass: "pop-up__inside-close-button", // Стандартный класс кнопки закрытия в виджете Pop-up Taptop
-      overlayClass: "pop-up__overlay",  // Стандартный класс оверлея в виджете Pop-up Taptop
+      overlayClass: "pop-up__overlay", // Стандартный класс оверлея в виджете Pop-up Taptop
     };
   }
 
@@ -111,7 +111,7 @@ export class CookieGenerator extends BaseGenerator {
     };
 
     const hideBanner = () => {
-      if (ui.banner) ui.banner.style.display = "none";
+      if (ui.banner) ui.banner.style.setProperty('display', 'none', 'important');
     };
 
     // Если cookie отсутствует и баннер найден – показываем баннер и назначаем обработчики
