@@ -80,6 +80,10 @@
   margin-top: 20px;
 }
 
+summary {
+  cursor: pointer;
+}
+
 /* Медиа-запросы для адаптивности */
 @media (max-width: 768px) {
   .generator-container {
