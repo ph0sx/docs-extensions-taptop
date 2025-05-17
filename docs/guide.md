@@ -8,3 +8,4 @@
 - [Таймер обратного отсчёта](/pages/countdown-timer.md)
 - [Слайдер до/после](/pages/before-after-slider.md)
 - [Переворот карточки](/pages/card-flip.md)
+- [Loader](/pages/loader.md)

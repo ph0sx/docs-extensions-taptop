@@ -190,6 +190,7 @@ export async function initAllGenerators() {
       countdownTimerModule,
       beforeAfterSliderModule,
       cardFlipModule,
+      loaderModule,
     ] = await Promise.all([
       import("../cookieGenerator.js").catch((e) => {
         console.error("Ошибка загрузки cookieGenerator:", e);
@@ -222,6 +223,9 @@ export async function initAllGenerators() {
       import("../CardFlipGenerator.js").catch((e) => {
         console.error("Ошибка загрузки CardFlipGenerator:", e);
         return null;
+      }),
+      import("../loaderGenerator.js").catch((e) => {
+        console.error("Ошибка загрузки loaderGenerator:", e);
       }),
     ]);
 
@@ -288,7 +292,16 @@ export async function initAllGenerators() {
       generatorsManager.register(
         "cardFlip",
         CardFlipGenerator,
-        "#card-flip-generator" 
+        "#card-flip-generator"
+      );
+    }
+
+    if (loaderModule) {
+      const { LoaderGenerator } = loaderModule;
+      generatorsManager.register(
+        "loader",
+        LoaderGenerator,
+        "#loader-generator"
       );
     }
 

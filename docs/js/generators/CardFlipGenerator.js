@@ -1,1101 +1,1775 @@
 import { BaseGenerator } from "./base/baseGenerator.js";
 
-/**
- * debounce – простая защита от избыточных вызовов функции
- */
-const debounce = (fn, wait = 250) => {
-  let t;
-  const wrapped = (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn.apply(null, args), wait);
-  };
-  wrapped.cancel = () => clearTimeout(t);
-  return wrapped;
+// --- Константы Типов Фильтров (из документации API) ---
+const FILTER_TYPES = {
+  EQUAL: "FILTER_EQUAL",
+  CONTAINS: "FILTER_CONTAINS",
+  NOT_EQUAL: "FILTER_NOT_EQUAL",
+  NOT_CONTAINS: "FILTER_NOT_CONTAINS",
+  IS_SET: "FILTER_IS_SET",
+  IS_NOT_SET: "FILTER_IS_NOT_SET",
+  COLLECTION_TEXT: "FILTER_COLLECTION_TEXT",
 };
 
-export class CardFlipGenerator extends BaseGenerator {
+// --- Константы Типов UI Элементов Фильтра ---
+const UI_TYPES = {
+  NONE: "none",
+  INPUT: "input",
+  SELECT: "select",
+  RADIO: "radio",
+  BUTTONS: "buttons",
+  CHECKBOX_SET: "checkbox-set",
+};
+
+// --- Константы Типов Вывода Данных (Больше не используются в генераторе, но оставлены для контекста) ---
+const OUTPUT_TYPES = {
+  TEXT: "text",
+  IMAGE: "image",
+  LINK: "link",
+  DATE_DMY: "date_dmy",
+  RICH_TEXT: "rich_text",
+};
+
+// --- Константы ложных строковых значений (без "0" и "") ---
+const KNOWN_FALSE_STRINGS_LOWERCASE = ["false", "no", "нет"];
+
+export class CollectionFilterGenerator extends BaseGenerator {
   constructor() {
     super();
-    this.previewFlipCard = null;
-    this.previewTriggerElement = null;
-    this._boundUpdateSpeedSliderDisplay =
-      this._updateSpeedSliderDisplay.bind(this); //
-    this._boundUpdateHeightSliderDisplay =
-      this._updateHeightSliderDisplay.bind(this); //
-    this._debouncedUpdatePreview = debounce(this._updatePreview.bind(this));
-    this._boundUpdateConditionalUI = this._updateConditionalUI.bind(this);
-    this._previewUpdateControls = []; // Инициализация свойства для зависимых контролов
+
+    // --- Стандартные селекторы ---
+    const defaultSelectors = {
+      targetSelector: "collection", // Стандартный класс виджета Taptop
+      applyButtonSelector: "filter-apply-button", // Единое имя по умолчанию
+      resetButtonSelector: "filter-reset-button", // Единое имя по умолчанию
+    };
+
+    const defaultColor = "#4483f5";
+    const previewPath = "assets/preset-previews/"; // Путь к превью
+
+    // --- Обновленные пресеты ---
+    this.presets = {
+      custom: {
+        name: "Свой набор полей",
+        description: "Начните с чистого листа и добавьте нужные поля вручную.",
+        collectionId: "", // widgetId будет определяться автоматически в runtime
+        fields: [], // Только поля для фильтрации
+        itemsPerPage: 9,
+        ...defaultSelectors, // targetSelector, applyButtonSelector, resetButtonSelector
+        preset: "custom",
+        paginationType: "none",
+        showLoader: true,
+        primaryColor: defaultColor,
+      },
+      simpleCatalog: {
+        name: "Простой Каталог (Поиск + Вывод)",
+        description:
+          "Каталог: Поиск по 'title'. Отображение полей настраивается в Taptop.", // Изменено описание
+        collectionId: "",
+        fields: [
+          {
+            uniqueId: "psc1",
+            fieldId: "title",
+            label: "Поиск по названию",
+            uiType: UI_TYPES.INPUT,
+            elementSelector: "catalog-search",
+            // targetSelector и outputType УДАЛЕНЫ
+            instantFilter: false, // Обычно поиск не мгновенный
+            clearButtonSelector: "clear-search",
+          },
+          // Поля для вывода (изображение, цена, описание) УДАЛЕНЫ из пресета,
+          // так как их вывод теперь настраивается в Taptop.
+        ],
+        itemsPerPage: 12,
+        ...defaultSelectors, // applyButtonSelector здесь может быть нужен, если поиск не мгновенный
+        preset: "simpleCatalog",
+        paginationType: "load_more",
+        showLoader: true,
+        primaryColor: defaultColor,
+        previewImages: { default: `${previewPath}Простой Каталог.png` },
+      },
+      categorySelect: {
+        name: "Фильтр по Категориям (Список)",
+        // description: "Фильтр: Список для поля 'категория', вывод 'title'.",
+        description:
+          "Фильтр: Список для поля 'категория'. Отображение полей настраивается в Taptop.", // Предлагаемое изменение
+        collectionId: "",
+        fields: [
+          {
+            uniqueId: "pcs1",
+            fieldId: "категория",
+            label: "Категория",
+            uiType: UI_TYPES.SELECT,
+            elementSelector: "category-select",
+            // targetSelector и outputType УДАЛЕНЫ
+            instantFilter: true,
+            firstIsAll: true,
+            clearButtonSelector: null,
+          },
+          // Поля для вывода (title, изображение, цена) УДАЛЕНЫ
+        ],
+        itemsPerPage: 9,
+        ...defaultSelectors,
+        preset: "categorySelect",
+        paginationType: "prev_next",
+        showLoader: true,
+        primaryColor: defaultColor,
+        previewImages: { default: `${previewPath}Фильтр по категориям.png` },
+      },
+      tagButtons: {
+        name: "Фильтр по Тегам (Кнопки)",
+        // description: "Фильтр: Кнопки для поля 'тег', вывод 'title'.",
+        description:
+          "Фильтр: Кнопки-теги для поля 'тег'. Отображение полей настраивается в Taptop.", // Предлагаемое изменение
+        collectionId: "",
+        fields: [
+          {
+            uniqueId: "ptb1",
+            fieldId: "тег", // или 'tag'
+            label: "Тег",
+            uiType: UI_TYPES.BUTTONS,
+            elementSelector: "tag-button", // Пользователь присваивает этот класс каждой кнопке-тегу
+            // targetSelector и outputType УДАЛЕНЫ
+            instantFilter: true,
+            firstIsAll: true, // Первая кнопка/таб сбрасывает фильтр по тегам
+            clearButtonSelector: null,
+          },
+          // Поля для вывода (title, изображение, бренд) УДАЛЕНЫ
+        ],
+        itemsPerPage: 10,
+        ...defaultSelectors,
+        preset: "tagButtons",
+        paginationType: "numbers",
+        showLoader: true,
+        primaryColor: defaultColor,
+        previewImages: {
+          default: `${previewPath}Фильтр по тегам.png`,
+          active: `${previewPath}Фильтр по тегам Активный.png`,
+        },
+      },
+      stockCheckbox: {
+        name: "Фильтр 'В Наличии' + Категории",
+        description:
+          "Чекбокс для поля 'наличие', список для 'категория'. Отображение настраивается в Taptop.", // Изменено
+        collectionId: "",
+        fields: [
+          {
+            uniqueId: "psc1",
+            fieldId: "наличие", // Или 'stock', 'available'
+            label: "В наличии",
+            uiType: UI_TYPES.CHECKBOX_SET,
+            elementSelector: "stock-checkbox",
+            // targetSelector и outputType УДАЛЕНЫ
+            instantFilter: true,
+            // firstIsAll не имеет смысла для чекбокса
+            clearButtonSelector: null,
+          },
+          {
+            uniqueId: "psc_cat",
+            fieldId: "категория",
+            label: "Категория",
+            uiType: UI_TYPES.SELECT,
+            elementSelector: "stock-category-select",
+            // targetSelector и outputType УДАЛЕНЫ
+            instantFilter: true,
+            firstIsAll: true,
+            clearButtonSelector: null,
+          },
+          // Поля для вывода (название, цена) УДАЛЕНЫ
+        ],
+        itemsPerPage: 12,
+        ...defaultSelectors,
+        preset: "stockCheckbox",
+        paginationType: "none",
+        showLoader: true,
+        primaryColor: defaultColor,
+        previewImages: {
+          default: `${previewPath}Фильтр в Наличии.png`,
+          active: `${previewPath}Фильтр в Наличии активный.png`,
+        },
+      },
+      combinedFilter: {
+        name: "Комбинация: Поиск и Категория",
+        description:
+          "Фильтр: Поиск по 'title' + список для 'категория'. Отображение настраивается в Taptop.", // Изменено
+        collectionId: "",
+        fields: [
+          {
+            uniqueId: "pcf1",
+            fieldId: "title",
+            label: "Поиск по названию",
+            uiType: UI_TYPES.INPUT,
+            elementSelector: "combined-search",
+            // targetSelector и outputType УДАЛЕНЫ
+            instantFilter: false, // Требует кнопки "Применить"
+            // firstIsAll не имеет смысла для input
+            clearButtonSelector: null,
+          },
+          {
+            uniqueId: "pcf2",
+            fieldId: "категория",
+            label: "Категория",
+            uiType: UI_TYPES.SELECT,
+            elementSelector: "combined-category",
+            // targetSelector и outputType УДАЛЕНЫ
+            instantFilter: false, // Требует кнопки "Применить"
+            firstIsAll: true,
+            clearButtonSelector: null,
+          },
+          // Поля для вывода УДАЛЕНЫ
+        ],
+        itemsPerPage: 9,
+        ...defaultSelectors,
+        applyButtonSelector: "filter-apply-button", // Кнопка Применить обязательна
+        preset: "combinedFilter",
+        paginationType: "prev_next",
+        showLoader: true,
+        primaryColor: defaultColor,
+        previewImages: {
+          default: `${previewPath}Комбинация Поиск и Категория.png`,
+        },
+      },
+    };
+
+    // --- Остальной конструктор без изменений ---
+    this.config = {};
+    this._boundHandlePresetChange = this._handlePresetChange.bind(this);
+    this._boundHandleAddFilter = this._handleAddFilterField.bind(this);
+    this._boundContainerListener = this._handleContainerEvents.bind(this);
+    this._boundHandlePaginationTypeChange =
+      this._handlePaginationTypeChange.bind(this);
+    this._boundHandleColorChange = this._handleColorChange.bind(this);
   }
 
-  /* ===== UI: поиск элементов ===== */
+  // --- Поиск элементов интерфейса ---
   findElements() {
     super.findElements();
-
-    this.elements.containerSelectorInput = document.getElementById(
-      "cf-container-selector"
-    );
-    this.elements.triggerRadios = document.querySelectorAll(
-      'input[name="cf-trigger"]'
-    );
-    this.elements.directionRadios = document.querySelectorAll(
-      'input[name="cf-direction"]'
-    );
-    this.elements.speedSlider = document.getElementById("cf-speed-slider"); //  Замена Select на Slider
-    this.elements.speedSliderGroup =
-      this.elements.speedSlider?.closest(".setting-group"); //  Находим родителя
-    this.elements.speedValueDisplay = document.getElementById(
-      "cf-speed-value-display"
-    ); //
-    this.elements.animationStyleSelect =
-      document.getElementById("cf-animation-style");
-    this.elements.animationStyleGroup =
-      this.elements.animationStyleSelect?.closest(".setting-group"); //  Находим родителя
-    this.elements.borderRadiusInput =
-      document.getElementById("cf-border-radius"); //
-    this.elements.flipHeightSlider = document.getElementById("cf-flip-height"); //
-    this.elements.flipHeightGroup =
-      this.elements.flipHeightSlider?.closest(".setting-group"); //  Находим родителя
-    this.elements.flipHeightValueDisplay = document.getElementById(
-      "cf-flip-height-value-display"
-    ); //
-
-    // preview area
-    this.elements.previewArea = document.getElementById("cf-preview-area");
-    this.elements.previewPlaceholder = document.getElementById(
-      "cf-preview-placeholder"
-    );
-    this.elements.previewError = document.getElementById("cf-preview-error");
-
-    const ok =
-      this.elements.containerSelectorInput &&
-      this.elements.triggerRadios.length &&
-      this.elements.directionRadios.length &&
-      this.elements.speedSlider &&
-      this.elements.animationStyleSelect &&
-      this.elements.borderRadiusInput &&
-      this.elements.flipHeightSlider && //
-      this.elements.previewArea;
-
-    if (!ok && this.elements.generateButton) {
-      this.elements.generateButton.disabled = true;
-      this.elements.generateButton.title =
-        "Ошибка: не найдены все элементы интерфейса генератора.";
-    }
-
-    // Заполняем массив _previewUpdateControls после того, как все элементы найдены
-    this._previewUpdateControls = [
-      this.elements.speedSlider,
-      ...(this.elements.triggerRadios || []), // NodeList не будет null, но для единообразия примера
-      ...(this.elements.directionRadios || []),
-      this.elements.animationStyleSelect,
-      this.elements.borderRadiusInput,
-      this.elements.flipHeightSlider,
-    ].filter((el) => el); // Фильтруем null/undefined элементы, если они могли бы быть
+    this.elements = {
+      ...this.elements,
+      presetSelect: document.getElementById("preset-select"),
+      presetDescription: document.getElementById("preset-description"),
+      presetPreviewContainer: document.getElementById(
+        "preset-preview-container"
+      ),
+      collectionIdInput: document.getElementById("collection-id"), // widgetIdInput УДАЛЕНО
+      targetSelectorInput: document.getElementById("target-selector"),
+      applyButtonSelectorInput: document.getElementById(
+        "apply-button-selector"
+      ),
+      resetButtonSelectorInput: document.getElementById(
+        "reset-button-selector"
+      ),
+      filterFieldsContainer: document.getElementById("filter-fields-container"),
+      addFilterButton: document.getElementById("add-filter-field-button"),
+      filterFieldTemplate: document.getElementById("filter-field-template"),
+      itemsPerPageInput: document.getElementById("items-per-page"),
+      paginationTypeSelect: document.getElementById("pagination-type"),
+      showLoaderCheckbox: document.getElementById("show-loader"),
+      primaryColorInput: document.getElementById("primary-color"),
+      generateButton: document.getElementById("generate-code-button"), // Используем ID из MD
+    };
   }
 
-  /* ===== События ===== */
+  // --- Привязка обработчиков событий ---
   bindEvents() {
     super.bindEvents();
 
-    // Группируем элементы, изменение которых требует обновления превью И условного UI
-    this._previewUpdateControls.forEach((el) => {
-      // if (!el) return; // Уже не нужно, если отфильтровано в findElements
-      const evt =
-        el.tagName === "SELECT" ||
-        el.type === "radio" ||
-        el.type === "range" ||
-        el.type === "number"
-          ? "change" // Используем change для ползунков и number для фиксации значения
-          : "input"; // input для мгновенной реакции, если нужно будет
-      el.addEventListener(evt, this._debouncedUpdatePreview); // Обновляем превью
-    });
-
-    // Слушатели для обновления условного UI (без debounce)
-    this.elements.directionRadios.forEach((radio) =>
-      radio.addEventListener("change", this._boundUpdateConditionalUI)
-    );
-    this.elements.animationStyleSelect?.addEventListener(
+    this.elements.presetSelect?.addEventListener(
       "change",
-      this._boundUpdateConditionalUI
+      this._boundHandlePresetChange
+    );
+    this.elements.addFilterButton?.addEventListener(
+      "click",
+      this._boundHandleAddFilter
+    );
+    this.elements.paginationTypeSelect?.addEventListener(
+      "change",
+      this._boundHandlePaginationTypeChange
+    );
+    this.elements.primaryColorInput?.addEventListener(
+      "input",
+      this._boundHandleColorChange
+    ); //  Листенер для цвета
+
+    // --- Единый слушатель контейнера для делегирования событий ---
+    this.elements.filterFieldsContainer?.addEventListener(
+      "click",
+      this._boundContainerListener
+    );
+    this.elements.filterFieldsContainer?.addEventListener(
+      "change",
+      this._boundContainerListener
+    );
+    this.elements.filterFieldsContainer?.addEventListener(
+      "input",
+      this._boundContainerListener
+    );
+    this.elements.filterFieldsContainer?.addEventListener(
+      "blur",
+      this._boundContainerListener,
+      true
+    );
+    this.elements.filterFieldsContainer?.addEventListener(
+      "keydown",
+      this._boundContainerListener,
+      true
     );
 
-    //  Отдельные слушатели для обновления текстовых значений слайдеров
-    this.elements.speedSlider?.addEventListener(
-      "input",
-      this._boundUpdateSpeedSliderDisplay
-    );
-    this.elements.flipHeightSlider?.addEventListener(
-      "input",
-      this._boundUpdateHeightSliderDisplay
-    );
+    // --- Сброс пресета при изменении базовых полей ---
+    const elementsToResetPreset = [
+      this.elements.collectionIdInput, // widgetIdInput УДАЛЕНО
+      this.elements.targetSelectorInput,
+      this.elements.applyButtonSelectorInput,
+      this.elements.resetButtonSelectorInput,
+      this.elements.itemsPerPageInput,
+      this.elements.paginationTypeSelect,
+      this.elements.showLoaderCheckbox,
+      this.elements.primaryColorInput,
+    ];
 
-    this._bindPreviewTrigger();
+    elementsToResetPreset.forEach((el) =>
+      el?.addEventListener("change", () => this._resetPresetSelection())
+    );
   }
 
-  /**
-   * @override
-   * Удаляет обработчики событий.
-   */
+  // --- Отвязка обработчиков событий ---
   unbindEvents() {
-    //  Удаляем слушатели для текстовых значений слайдеров
-    this.elements.speedSlider?.removeEventListener(
-      "input",
-      this._boundUpdateSpeedSliderDisplay
-    );
-    this.elements.flipHeightSlider?.removeEventListener(
-      "input",
-      this._boundUpdateHeightSliderDisplay
-    );
-    //  Удаляем слушатели для условного UI
-    this.elements.directionRadios.forEach((radio) =>
-      radio.removeEventListener("change", this._boundUpdateConditionalUI)
-    );
-    this.elements.animationStyleSelect?.removeEventListener(
-      "change",
-      this._boundUpdateConditionalUI
-    );
-
-    // Удаляем обработчики для элементов, влияющих на превью
-    this._previewUpdateControls.forEach((el) => {
-      // if (!el) return; // Уже не нужно, если отфильтровано
-      const evt =
-        el.tagName === "SELECT" ||
-        el.type === "radio" ||
-        el.type === "range" ||
-        el.type === "number"
-          ? "change"
-          : "input";
-      el.removeEventListener(evt, this._debouncedUpdatePreview);
-    });
     super.unbindEvents();
+
+    this.elements.presetSelect?.removeEventListener(
+      "change",
+      this._boundHandlePresetChange
+    );
+    this.elements.addFilterButton?.removeEventListener(
+      "click",
+      this._boundHandleAddFilter
+    );
+    this.elements.paginationTypeSelect?.removeEventListener(
+      "change",
+      this._boundHandlePaginationTypeChange
+    );
+    this.elements.primaryColorInput?.removeEventListener(
+      "input",
+      this._boundHandleColorChange
+    );
+
+    // --- Снятие единого слушателя ---
+    this.elements.filterFieldsContainer?.removeEventListener(
+      "click",
+      this._boundContainerListener
+    );
+    this.elements.filterFieldsContainer?.removeEventListener(
+      "change",
+      this._boundContainerListener
+    );
+    this.elements.filterFieldsContainer?.removeEventListener(
+      "input",
+      this._boundContainerListener
+    );
+    this.elements.filterFieldsContainer?.removeEventListener(
+      "blur",
+      this._boundContainerListener,
+      true
+    );
+    this.elements.filterFieldsContainer?.removeEventListener(
+      "keydown",
+      this._boundContainerListener,
+      true
+    );
+
+    // --- Отвязка сброса пресета ---
+    const elementsToResetPreset = [
+      this.elements.collectionIdInput,
+      // this.elements.widgetIdInput, // Этого поля больше нет
+      this.elements.targetSelectorInput,
+      this.elements.applyButtonSelectorInput,
+      this.elements.resetButtonSelectorInput,
+      this.elements.itemsPerPageInput,
+      this.elements.paginationTypeSelect,
+      this.elements.showLoaderCheckbox,
+      this.elements.primaryColorInput,
+    ];
+
+    elementsToResetPreset.forEach((el) =>
+      el?.removeEventListener("change", () => {})
+    );
   }
 
-  /* ===== Стартовые настройки ===== */
-  setInitialState() {
-    super.setInitialState();
-    if (this.elements.speedSlider) this.elements.speedSlider.value = 750; //  Ставим значение по умолчанию для слайдера
-    document.querySelector(
-      'input[name="cf-trigger"][value="click"]'
-    ).checked = true;
-    document.querySelector(
-      'input[name="cf-direction"][value="horizontal"]'
-    ).checked = true;
-    if (this.elements.animationStyleSelect)
-      this.elements.animationStyleSelect.value = "default";
-    if (this.elements.borderRadiusInput)
-      this.elements.borderRadiusInput.value = 8;
-    if (this.elements.flipHeightSlider)
-      this.elements.flipHeightSlider.value = 25; //
-    this._updateSpeedSliderDisplay(); //  Обновляем отображение
-    this._updateHeightSliderDisplay(); //  Обновляем отображение
-    this._updateConditionalUI(); //  Применяем условное отображение
-    this._updatePreview();
+  // + Новый обработчик для select пагинации +
+  _handlePaginationTypeChange(event) {
+    this.config.paginationType = event.target.value;
+    this._resetPresetSelection(); // Сбрасываем пресет при изменении
   }
 
-  /**
-   * Обновляет видимость настроек "Стиль анимации" и "Высота подъема"
-   * в зависимости от выбранного направления и стиля.
-   * @private
-   */
-  _updateConditionalUI() {
-    const direction = document.querySelector(
-      'input[name="cf-direction"]:checked'
-    )?.value;
-    const style = this.elements.animationStyleSelect?.value;
-
-    const showStyle = direction === "horizontal";
-    const showHeight = direction === "horizontal" && style === "default"; // Показываем высоту только для 3D
-
-    if (this.elements.animationStyleGroup) {
-      this.elements.animationStyleGroup.style.display = showStyle ? "" : "none";
-    }
-    if (this.elements.flipHeightGroup) {
-      this.elements.flipHeightGroup.style.display = showHeight ? "" : "none";
-    }
-
-    this._updatePreview();
+  //  Новый обработчик для изменения цвета
+  _handleColorChange(event) {
+    this.config.primaryColor = event.target.value;
+    this._resetPresetSelection();
   }
 
-  /* ===== Сбор данных из формы ===== */
-  collectData() {
-    const containerSelector = this.elements.containerSelectorInput?.value
-      .trim()
-      .replace(/^\./, "");
-    const trigger =
-      document.querySelector('input[name="cf-trigger"]:checked')?.value ||
-      "click";
-    const direction =
-      document.querySelector('input[name="cf-direction"]:checked')?.value ||
-      "horizontal";
+  // --- Единый обработчик событий контейнера (делегирование) ---
+  _handleContainerEvents(event) {
+    const target = event.target;
+    const fieldCard = target.closest(".field-card");
+    if (!fieldCard) return;
 
-    const duration = parseInt(this.elements.speedSlider?.value, 10) || 750; //  Читаем слайдер скорости
-    const animationStyle =
-      direction === "horizontal"
-        ? this.elements.animationStyleSelect?.value || "default"
-        : "default"; //  Читаем стиль, только если Горизонтально
-    const borderRadius = parseInt(this.elements.borderRadiusInput?.value, 10); //
-    const flipHeightPercent =
-      parseInt(this.elements.flipHeightSlider?.value, 10) || 25; //
+    const uniqueId = fieldCard.dataset.fieldUniqueId;
+    if (!uniqueId) return;
 
-    const rx = /^[a-zA-Z0-9_-]+$/;
-    if (!containerSelector) {
-      this.showErrorModal("Укажите CSS‑класс основного блока‑контейнера.");
-      return null;
-    }
-    if (!rx.test(containerSelector)) {
-      this.showErrorModal(
-        `Класс \"${containerSelector}\" содержит недопустимые символы.`
+    const fieldConf = this.config.fields?.find((f) => f.uniqueId === uniqueId);
+    if (!fieldConf) {
+      console.warn(
+        `[CF Generator Event] Конфигурация для поля ${uniqueId} не найдена.`
       );
-      return null;
-    }
-
-    // Валидация числовых значений
-    const validateNumber = (value, min, max, defaultValue) => {
-      const num = parseInt(value, 10);
-      return isNaN(num) || num < min || num > max ? defaultValue : num;
-    };
-
-    return {
-      containerSelector,
-      trigger,
-      direction,
-      duration: validateNumber(duration, 100, 5000, 750),
-      animationStyle,
-      borderRadius: validateNumber(borderRadius, 0, 1000, 8), // Макс. радиус 1000px
-      flipHeightPercent: validateNumber(flipHeightPercent, 0, 100, 50), // Высота 0-100%
-    };
-  }
-
-  /* ===== Обновление превью ===== */
-  _updatePreview() {
-    const { previewArea, previewPlaceholder, previewError } = this.elements;
-    if (!previewArea) return;
-
-    // ждём регистрации web‑компонента один раз
-    if (!window.customElements.get("flip-card")) {
-      if (previewPlaceholder)
-        previewPlaceholder.textContent = "Загрузка компонента...";
-      window.customElements
-        .whenDefined("flip-card")
-        .then(() => this._updatePreview())
-        .catch(() => {
-          if (previewError) {
-            previewError.style.display = "block";
-            previewError.textContent =
-              "Не удалось загрузить компонент для превью.";
-          }
-        });
       return;
     }
 
-    if (previewPlaceholder) previewPlaceholder.style.display = "none";
-    if (previewError) previewError.style.display = "none";
-
-    const trigger =
-      document.querySelector('input[name="cf-trigger"]:checked')?.value ||
-      "click";
-    const direction =
-      document.querySelector('input[name="cf-direction"]:checked')?.value ||
-      "horizontal";
-
-    const duration = parseInt(this.elements.speedSlider?.value, 10) || 750; //
-    const animationStyle =
-      this.elements.animationStyleSelect?.value || "default";
-    const borderRadius = parseInt(this.elements.borderRadiusInput?.value, 10); //
-    const flipHeightPercent =
-      parseInt(this.elements.flipHeightSlider?.value, 10) || 25; //
-
-    // Конвертируем % высоты в em (0-100% -> 0-40em)
-    const flipHeightEm = (flipHeightPercent / 100) * 40;
-
-    if (this.elements.previewArea) {
-      this.elements.previewArea.style.overflow = "visible";
-    }
-
-    // Элемент задней стороны для прямого манипулирования стилем в превью
-    let backSlotElementPreview = null;
-
-    // пересоздаём flip‑card
-    if (this.previewFlipCard && previewArea.contains(this.previewFlipCard)) {
-      this._removePreviewTrigger();
-      this.previewFlipCard.remove();
-    }
-
-    // Определяем контейнер для превью, к которому можно добавлять классы состояния
-    // В данном случае, будем считать, что сам previewArea является таким контейнером
-    // или что previewFlipCard сам может нести этот класс для упрощения превью CSS.
-    // Для большей точности симуляции, класс cf-vertical должен быть на родительском элементе flip-card.
-    // Но для простоты превью, мы можем напрямую стилизовать backSlotElementPreview ниже.
-    // const previewWrapper = this.elements.previewArea; // Пример
-    // previewWrapper.classList.remove('cf-vertical-preview', 'cf-horizontal-preview');
-
-    // Удаляем старые классы направления с previewArea (если они там были)
-    // this.elements.previewArea.classList.remove('cf-vertical', 'cf-horizontal');
-
-    this.previewFlipCard = document.createElement("flip-card");
-    const front = document.createElement("section");
-    front.slot = "front";
-    const back = document.createElement("section");
-    back.slot = "back";
-    this.previewFlipCard.append(front, back);
-    backSlotElementPreview =
-      this.previewFlipCard.querySelector('[slot="back"]');
-    //  Применяем новые стили к превью
-    this.previewFlipCard.style.setProperty("--flip-duration", `${duration}ms`);
-    // Устанавливаем радиус ПРЯМО на flip-card в превью
-    this.previewFlipCard.style.borderRadius = `${
-      isNaN(borderRadius) ? 8 : borderRadius
-    }px`;
-    this.previewFlipCard.style.setProperty(
-      "--flip-height",
-      `${flipHeightEm}em`
-    );
-    // Толщину больше не ставим this.previewFlipCard.style.setProperty("--card-depth", ...);
-    this.previewFlipCard.style.setProperty("--corner-granularity", "8"); // Ставим значение по умолчанию
-    previewArea.appendChild(this.previewFlipCard);
-    this.previewTriggerElement = this.previewFlipCard; // Триггер на самой карточке в превью
-
-    // кастомная вертикальная анимация
-    if (direction === "vertical") {
-      // this.elements.previewArea.classList.add('cf-vertical'); // Если класс нужен на previewArea
-      if (backSlotElementPreview) {
-        backSlotElementPreview.style.transform = "scaleY(-1)"; // Компенсируем зеркалирование
+    // --- 1. Обработка кликов ---
+    if (event.type === "click") {
+      if (target.closest(".remove-field-button")) {
+        this._handleRemoveFilterField(uniqueId);
+      } else if (target.closest(".configure-output-btn")) {
+        // Кнопка удалена, но оставим на всякий случай
+        // this._toggleOutputSection(fieldCard);
       }
-      const kfFront = [
-        { transform: "rotateX(180deg)" },
-        { transform: "rotateX(270deg)" },
-        { transform: "rotateX(360deg)" },
-      ];
-      const kfBack = [
-        { transform: "rotateX(0deg)" },
-        { transform: "rotateX(90deg)" },
-        { transform: "rotateX(180deg)" },
-      ];
-      const opts = { easing: "ease-in-out" };
-      this.previewFlipCard.setFlipToFrontAnimation(kfFront, opts);
-      this.previewFlipCard.setFlipToBackAnimation(kfBack, opts);
-    } else if (direction === "horizontal" && animationStyle === "flat") {
-      // this.elements.previewArea.classList.add('cf-horizontal'); // Если класс нужен на previewArea
-      //  Плоская горизонтальная
-      if (backSlotElementPreview) {
-        backSlotElementPreview.style.transform = ""; // Сбрасываем трансформацию для других режимов
-      }
-      const kfFront = [
-        { transform: "rotateY(180deg)" },
-        { transform: "rotateY(270deg)" },
-        { transform: "rotateY(360deg)" },
-      ];
-      const kfBack = [
-        { transform: "rotateY(0deg)" },
-        { transform: "rotateY(90deg)" },
-        { transform: "rotateY(180deg)" },
-      ];
-      const opts = { easing: "ease-in-out" };
-      this.previewFlipCard.setFlipToFrontAnimation(kfFront, opts);
-      this.previewFlipCard.setFlipToBackAnimation(kfBack, opts);
-    } else {
-      // this.elements.previewArea.classList.add('cf-horizontal'); // Если класс нужен на previewArea
-      if (backSlotElementPreview) {
-        backSlotElementPreview.style.transform = ""; // Сбрасываем трансформацию для других режимов
-      }
-      // Сброс на дефолтную анимацию библиотеки (если был применен кастомный)
-      // Библиотека не предоставляет явного метода сброса,
-      // но при пересоздании элемента <flip-card> (что мы и делаем выше),
-      // анимации по умолчанию будут восстановлены.
-      // Если бы методы setFlipToFrontAnimation/setFlipToBackAnimation принимали null или
-      // был бы метод resetAnimation, мы бы использовали его здесь.
+      return; // Выходим после обработки клика
     }
 
-    this._bindPreviewTrigger(trigger);
+    // --- 2. Обработка изменений (change, input) ---
+    if (event.type === "change" || event.type === "input") {
+      const configName = target.dataset.configName;
+      if (configName) {
+        const value =
+          target.type === "checkbox" ? target.checked : target.value;
 
-    // Установим фокус на карточку для проверки клавиатуры в превью
-    this.previewFlipCard.setAttribute("tabindex", "0");
-  }
+        // Обновляем config (пустые селекторы сохраняем как null)
+        fieldConf[configName] =
+          value === "" && // УДАЛЕНО "targetSelector" из списка
+          ["elementSelector", "clearButtonSelector"].includes(configName)
+            ? null
+            : value;
 
-  /**
-   * Обновляет текстовое отображение для слайдера скорости.
-   * @private
-   */
-  _updateSpeedSliderDisplay() {
-    if (this.elements.speedSlider && this.elements.speedValueDisplay) {
-      const value = this.elements.speedSlider.value;
-      this.elements.speedValueDisplay.textContent = `${value}мс`;
+        // Обновляем UI при изменении типа
+        if (configName === "uiType") {
+          // По умолчанию instantFilter = true для всех, кроме input
+          fieldConf.instantFilter = value !== UI_TYPES.INPUT;
+          this._updateFieldCardUIVisibility(fieldCard);
+        }
+        // Удалена логика для outputType, так как его больше нет
+        // if (configName === "outputType") {
+        //   this._updateOutputTypeVisibility(fieldCard);
+        // }
+
+        //  Live update label
+        if (configName === "fieldId") {
+          this._updateFieldLabel(fieldCard, fieldConf, value);
+        }
+
+        this._resetPresetSelection();
+      }
+      return; // Выходим после обработки изменения
     }
-  }
 
-  /**
-   * Обновляет текстовое отображение для слайдера высоты подъема.
-   * @private
-   */
-  _updateHeightSliderDisplay() {
+    // Обработка Enter для поля ID/Имени (для сохранения label)
     if (
-      this.elements.flipHeightSlider &&
-      this.elements.flipHeightValueDisplay
+      event.type === "keydown" &&
+      target.classList.contains("filter-field-id") &&
+      event.key === "Enter"
     ) {
-      const value = this.elements.flipHeightSlider.value;
-      this.elements.flipHeightValueDisplay.textContent = `${value}%`;
+      event.preventDefault();
+      target.blur(); // Убираем фокус, чтобы сработало сохранение
+      this._updateFieldLabel(fieldCard, fieldConf, target.value); // Доп. обновление на Enter
     }
   }
 
-  /* ===== Preview trigger helpers ===== */
-  _bindPreviewTrigger(triggerType) {
-    if (!this.previewTriggerElement || !this.previewFlipCard) return;
-    this._removePreviewTrigger(); // Удаляем все старые слушатели
+  _updateFieldLabel(fieldCard, fieldConf, newFieldId) {
+    if (!fieldCard || !fieldConf) return;
+    const labelTextElement = fieldCard.querySelector(".field-label-text");
+    const newLabel = newFieldId
+      ? this._capitalizeFirstLetter(newFieldId)
+      : "Новое поле";
+    if (labelTextElement) labelTextElement.textContent = newLabel;
+    fieldConf.label = newLabel; // Обновляем и в конфиге
+  }
 
-    const card = this.previewFlipCard; // Это наш this.previewFlipCard
-    let isClickFlippingPreview = false; // Для click-режима превью
+  setInitialState() {
+    this._populatePresetSelect();
+    const initialPresetId = this.elements.presetSelect?.value || "custom";
+    this._applyPreset(initialPresetId, false); // Применяем пресет для установки config
+    this._renderAllFieldCardsDOM(); // Рендерим карточки на основе config
+    this._updatePresetPreview(initialPresetId); //  Вызов обновления превью
+  }
 
-    // Переменные состояния для hover-режима превью
-    let intentToFlipToBackPreview = false;
-    let isAnimatingByComponentPreview = false;
+  _handlePresetChange(event) {
+    const presetId = event.target.value;
+    this._applyPreset(presetId, true); // Сбрасываем ID коллекции
+    this._renderAllFieldCardsDOM(); // Перерисовываем карточки
+    this._updatePresetPreview(presetId); //  Вызов обновления превью
+  }
 
-    // Слушатели событий компонента для hover-режима превью
-    this._previewComponentFlippingListener = (e) => {
-      isAnimatingByComponentPreview = true;
-    };
-    this._previewComponentFlippedListener = (e) => {
-      isAnimatingByComponentPreview = false;
+  _applyPreset(presetId, resetCollectionId = true) {
+    const preset = this.presets[presetId];
+    if (!preset) return;
 
-      if (!intentToFlipToBackPreview && card.hasAttribute("facedown")) {
-        card.flip();
+    const currentCollectionId = resetCollectionId
+      ? ""
+      : this.elements.collectionIdInput?.value ||
+        this.config.collectionId ||
+        "";
+
+    // Глубокое клонирование, чтобы не менять исходный пресет
+    this.config = structuredClone(preset);
+    this.config.preset = presetId;
+    this.config.collectionId = currentCollectionId; // Сохраняем ID коллекции
+
+    // Гарантируем наличие uniqueId для полей
+    if (Array.isArray(this.config.fields)) {
+      this.config.fields.forEach((field, index) => {
+        field.uniqueId =
+          field.uniqueId || `preset_${presetId}_f${index + 1}_${Date.now()}`;
+        //  Установка instantFilter по умолчанию для input при применении пресета
+        if (!("instantFilter" in field)) {
+          // Если в пресете не указано явно
+          field.instantFilter = field.uiType !== UI_TYPES.INPUT; // false для input, true для остальных
+        }
+      });
+    }
+
+    //  Добавляем paginationType из пресета, если его нет в config
+    this.config.paginationType =
+      this.config.paginationType || preset.paginationType || "none";
+
+    //  Добавляем showLoader из пресета
+    this.config.showLoader =
+      this.config.showLoader ?? preset.showLoader ?? true;
+
+    // Добавляем primaryColor из пресета
+    this.config.primaryColor =
+      this.config.primaryColor || preset.primaryColor || "#4483f5";
+
+    this._updateBaseUIFromConfig(); // Обновляем базовые поля UI
+  }
+
+  //  Новый метод для обновления превью
+  _updatePresetPreview(presetId) {
+    const container = this.elements.presetPreviewContainer;
+    if (!container) return;
+    container.innerHTML = ""; // Очищаем
+    container.classList.remove("has-multiple-previews"); // Убираем класс для сетки
+    container.style.display = "none"; // Скрываем по умолчанию
+
+    const presetData = this.presets[presetId];
+    const previews = presetData?.previewImages;
+
+    if (previews && previews.default) {
+      container.style.display = "block"; // Показываем контейнер
+
+      if (previews.active) {
+        // Если есть две картинки
+        container.classList.add("has-multiple-previews");
+
+        const figureDefault = document.createElement("figure");
+        const imgDefault = document.createElement("img");
+        imgDefault.src = previews.default;
+        imgDefault.alt = `Превью: ${presetData.name} (стандартное)`;
+        imgDefault.loading = "lazy";
+        const captionDefault = document.createElement("figcaption");
+        captionDefault.textContent = "Стандартный вид";
+        figureDefault.appendChild(imgDefault);
+        figureDefault.appendChild(captionDefault);
+        container.appendChild(figureDefault);
+
+        const figureActive = document.createElement("figure");
+        const imgActive = document.createElement("img");
+        imgActive.src = previews.active;
+        imgActive.alt = `Превью: ${presetData.name} (активное)`;
+        imgActive.loading = "lazy";
+        const captionActive = document.createElement("figcaption");
+        captionActive.textContent = "Активный фильтр";
+        figureActive.appendChild(imgActive);
+        figureActive.appendChild(captionActive);
+        container.appendChild(figureActive);
+      } else {
+        // Если только одна картинка
+        const img = document.createElement("img");
+        img.src = previews.default;
+        img.alt = `Превью: ${presetData.name}`;
+        img.loading = "lazy";
+        container.appendChild(img);
       }
-    };
-
-    if (triggerType === "hover") {
-      card.addEventListener("flipping", this._previewComponentFlippingListener);
-      card.addEventListener("flipped", this._previewComponentFlippedListener);
-
-      this._previewHoverEnter = () => {
-        intentToFlipToBackPreview = true;
-        if (isAnimatingByComponentPreview) return;
-        if (!card.hasAttribute("facedown")) {
-          card.flip();
-        }
-      };
-      this._previewHoverLeave = () => {
-        intentToFlipToBackPreview = false;
-        if (isAnimatingByComponentPreview) return;
-        if (card.hasAttribute("facedown")) {
-          card.flip();
-        }
-      };
-      // Привязываем к this.previewTriggerElement, который теперь this.previewFlipCard
-      this.previewTriggerElement.addEventListener(
-        "mouseenter",
-        this._previewHoverEnter
-      );
-      this.previewTriggerElement.addEventListener(
-        "mouseleave",
-        this._previewHoverLeave
-      );
-      // Для превью можно не добавлять focus/blur/keydown, если это усложняет,
-      // так как основная проверка этих вещей будет на реальной странице.
-      // Но если хотим полной идентичности, то keydown нужен.
-      this._previewKeydownAction = (e) => {
-        // Общий keydown для превью
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          if (isAnimatingByComponentPreview && triggerType === "hover") return; // Не прерываем анимацию в hover
-          card.flip();
-        }
-      };
-      this.previewTriggerElement.addEventListener(
-        "keydown",
-        this._previewKeydownAction
-      );
-    } else {
-      // triggerType === 'click' (или 'hybrid' сведенный к 'click' для превью)
-      this._previewClickAction = () => {
-        if (isClickFlippingPreview) return;
-        isClickFlippingPreview = true;
-        card.flip();
-      };
-      // Для click-режима превью слушатели flipping/flipped нужны только для isClickFlippingPreview
-      this._previewComponentClickFlippedListener = () => {
-        isClickFlippingPreview = false;
-      };
-      card.addEventListener(
-        "flipped",
-        this._previewComponentClickFlippedListener
-      );
-
-      this.previewTriggerElement.addEventListener(
-        "click",
-        this._previewClickAction
-      );
-      this._previewKeydownAction = (e) => {
-        // Общий keydown для превью
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          if (isClickFlippingPreview) return;
-          isClickFlippingPreview = true;
-          card.flip();
-        }
-      };
-      this.previewTriggerElement.addEventListener(
-        "keydown",
-        this._previewKeydownAction
-      );
     }
   }
 
-  /**
-   * @override
-   * Переопределяем для проверки валидации *до* генерации/копирования.
-   */
-  generateAndCopyCode() {
-    console.log("[CardFlipGenerator] Попытка генерации кода...");
-    const settings = this.collectData(); // Вызываем наш метод сбора данных и валидации
-
-    // Если collectData вернул null (из-за ошибки валидации), прерываем выполнение
-    if (settings === null) {
-      console.warn(
-        "[CardFlipGenerator] Генерация кода прервана из-за ошибки валидации."
-      );
-      return; // Прерываем выполнение
-    }
-
-    // Если данные собраны успешно, продолжаем как в базовом классе
-    console.log("[CardFlipGenerator] Данные собраны, генерируем код...");
-    const code = this.generateCode(settings);
-
-    if (this.elements.jsCode) {
-      this.elements.jsCode.textContent = code;
-    }
-    this.copyAndNotify(code); // Вызываем копирование и показ модалки успеха
-  }
-
-  /**
-   * @override
-   * Генерирует JavaScript-код и CSS для инициализации Card Flip.
-   * @param {object} settings - Настройки, собранные из collectData.
-   * @returns {string} Строка с HTML-кодом (<style> и <script>).
-   */
-  generateCode(settings) {
-    if (!settings) {
-      console.error(
-        "CardFlipGenerator: Ошибка - нет настроек для генерации кода."
-      );
-      return "";
-    }
-
-    const configJson = JSON.stringify(settings, null, 2);
-    // Убедимся, что animationStyle передается
-    // console.log("Generating code with settings:", settings); // Можно оставить для отладки
-    const flipCardCDN = "https://unpkg.com/@auroratide/flip-card/lib/define.js";
-    const containerClass = settings.containerSelector;
-
-    let styleRules = [];
-    let containerSpecificStyles = [];
-
-    if (settings.borderRadius != null && settings.borderRadius >= 0) {
-      containerSpecificStyles.push(`border-radius: ${settings.borderRadius}px`);
-      containerSpecificStyles.push(`-webkit-transform-style: preserve-3d`); // Для старых Safari
-      containerSpecificStyles.push(`transform-style: preserve-3d`); // Всегда нужен для 3D дочерних элементов
-    }
-
-    if (settings.showBackInitially) {
-      // Если изначально показываем заднюю сторону, скрываем переднюю
-      styleRules.push(`
-.${containerClass} > .flip-front { display: none !important; }
-.${containerClass} > .flip-back { display: block !important; } /* На всякий случай */
-      `);
-    } else {
-      // Иначе (по умолчанию) скрываем заднюю сторону
-      styleRules.push(`
-.${containerClass} > .flip-back { display: none !important; }
-.${containerClass} > .flip-front { display: block !important; } /* На всякий случай */
-      `);
-    }
-
-    if (containerSpecificStyles.length > 0) {
-      styleRules.push(
-        `.${settings.containerSelector} {\n  ${containerSpecificStyles.join(
-          ";\n  "
-        )};\n}`
-      );
-    }
-
-    // Добавляем стили для контейнера на время инициализации, чтобы избежать дергания высоты
-    styleRules.push(`
-.${containerClass}:not([data-taptop-flip-card-initialized="true"]) {
-    /* Можно добавить временный min-height, если известна примерная высота,
-       но лучше положиться на размеры, заданные в Taptop.
-       Главное - скрыть одну из сторон */
-    overflow: hidden; /* Скроем возможное вылезание контента до инициализации */
-}
-    `);
-
-    styleRules.push(`
-.${containerClass}.cf-vertical flip-card > [slot="back"] { 
-    transform: scale(-1); /* Используем scale(-1) для правильного отображения текста */
-}
-    `);
-
-    const styleBlock = `<style>\n${styleRules.join("\n").trim()}\n</style>`;
-    const scriptContent = `
-/**
- * Taptop Card Flip Extension
- */
-/**
- * debounce – простая защита от избыточных вызовов функции
- */
-const debounce = (fn, wait = 250) => {
-  let t;
-  const wrapped = (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn.apply(null, args), wait);
-  };
-  wrapped.cancel = () => clearTimeout(t);
-  return wrapped;
-};
-
-/**
- * Динамически загружает скрипт библиотеки @auroratide/flip-card, если он еще не загружен.
- * Гарантирует, что пользовательский элемент 'flip-card' будет зарегистрирован перед вызовом callback.
- * @param {string} cdnUrl - URL CDN библиотеки.
- * @param {Function} callback - Функция, которая будет вызвана после загрузки и регистрации компонента.
- */
-function loadFlipCardLibrary(cdnUrl, callback) {
-    const scriptId = 'auroratide-flip-card-script';
-
-    if (document.getElementById(scriptId) || window.customElements.get('flip-card')) {
-        if (window.customElements.get('flip-card')) {
-            console.log('[FlipCard Loader] Компонент уже зарегистрирован.');
-            requestAnimationFrame(callback);
-        } else {
-            console.log('[FlipCard Loader] Скрипт загружается, ожидание регистрации...');
-            window.customElements.whenDefined('flip-card')
-                .then(() => requestAnimationFrame(callback))
-                .catch(err => console.error('[FlipCard Loader] Ошибка ожидания регистрации:', err));
-        }
-        return;
-    }
-
-    console.log('[FlipCard Loader] Загрузка библиотеки с:', cdnUrl);
-    const script = document.createElement('script');
-    script.id = scriptId;
-    script.type = 'module';
-    script.src = cdnUrl;
-    script.onload = () => {
-        console.log('[FlipCard Loader] Скрипт загружен, ожидание регистрации...');
-         window.customElements.whenDefined('flip-card')
-             .then(() => {
-                 console.log('[FlipCard Loader] Компонент зарегистрирован после загрузки.');
-                 requestAnimationFrame(callback);
-             })
-            .catch(err => console.error('[FlipCard Loader] Ошибка ожидания регистрации после загрузки:', err));
-    };
-    script.onerror = () => console.error('[FlipCard Loader] Ошибка загрузки скрипта библиотеки:', cdnUrl);
-    document.head.appendChild(script);
-}
-
-/**
- * Создает и настраивает базовый элемент <flip-card>.
- * @param {object} config - Конфигурация.
- * @returns {HTMLElement} Созданный элемент <flip-card>.
- */
-function _createFlipCardElement(config) {
-    const flipCardElement = document.createElement('flip-card');
-    flipCardElement.style.setProperty('--flip-duration', \`\${config.duration || 750}ms\`);
-    if (config.showBackInitially) {
-        flipCardElement.setAttribute('facedown', '');
-    }
-    if (config.borderRadius != null) flipCardElement.style.borderRadius = config.borderRadius + 'px';
-    return flipCardElement;
-}
-
-/**
- * Назначает атрибуты slot существующим элементам frontEl и backEl
- * и перемещает их внутрь flipCardElement.
- * @param {HTMLElement} frontEl - Оригинальный элемент .flip-front.
- * @param {HTMLElement} backEl - Оригинальный элемент .flip-back.
- * @param {HTMLElement} flipCardElement - Целевой элемент <flip-card>.
- */
-function _assignSlotsAndAppend(frontEl, backEl, flipCardElement) {
-    if (frontEl) {
-        frontEl.setAttribute('slot', 'front'); // Назначаем слот существующему элементу
-        // Отсоединяем от старого родителя (на всякий случай, если appendChild не делает этого автоматически)
-        // const parent = frontEl.parentNode;
-        // if (parent) parent.removeChild(frontEl); // Это может быть излишним, appendChild обычно перемещает
-        flipCardElement.appendChild(frontEl); // Добавляем существующий элемент в flip-card
-         console.log('[FlipCard Slot] Назначен slot="front" существующему .flip-front и добавлен в flip-card.');
-    } else {
-        console.error('[FlipCard Slot] Оригинальный элемент .flip-front не найден!');
-    }
-
-    if (backEl) {
-        backEl.setAttribute('slot', 'back'); // Назначаем слот существующему элементу
-        // const parent = backEl.parentNode;
-        // if (parent) parent.removeChild(backEl); // См. комментарий выше
-        flipCardElement.appendChild(backEl); // Добавляем существующий элемент в flip-card
-        console.log('[FlipCard Slot] Назначен slot="back" существующему .flip-back и добавлен в flip-card.');
-    } else {
-        console.error('[FlipCard Slot] Оригинальный элемент .flip-back не найден!');
-    }
-    // Не нужно удалять frontEl/backEl, так как они теперь внутри flipCardElement
-}
-
-/**
- * Инициализирует одну карточку Taptop Card Flip.
- * @param {object} config - Объект конфигурации для этой карточки.
- */
-function initFlipCards(config) { // Переименовываем функцию
-    // Находим ВСЕ контейнеры с указанным классом
-    // Используем try...catch на случай невалидного селектора
-    try {
-       const containers = document.querySelectorAll('.' + config.containerSelector);
-
-       if (containers.length === 0) {
-           console.warn(\`[FlipCard Init] Не найдено ни одного контейнера с классом '\${config.containerSelector}'. Убедитесь, что класс указан верно и элементы существуют на странице.\`);
-           return;
-       }
-       console.log(\`[FlipCard Init] Найдено контейнеров для инициализации: \${containers.length}\`);
-
-    containers.forEach((container, index) => {
-        const instanceId = \`\${config.containerSelector}-\${index}\`; // Уникальный ID для логов
-        // Переносим логику поиска внутрь цикла и используем текущий 'container'
-        if (container.dataset.taptopFlipCardInitialized === 'true') {
-            console.warn(\`[FlipCard Init] \${instanceId}: Контейнер уже инициализирован. Пропускаем.\`);
-            return; // Используем continue для forEach
-        }
-        const frontEl = container.querySelector('.flip-front');
-        const backEl = container.querySelector('.flip-back');
-        if (!frontEl) {
-            console.error(\`[FlipCard Init] \${instanceId}: Не найден элемент '.flip-front'. Пропускаем.\`);
-            return;
-        }
-        if (!backEl) {
-            console.error(\`[FlipCard Init] \${instanceId}: Не найден элемент '.flip-back'. Пропускаем.\`);
-            return;
-        }
-         console.log(\`[FlipCard Init] \${instanceId}: Найдены .flip-front и .flip-back.\`);
-
-        const flipCardElement = _createFlipCardElement(config); // Создаем <flip-card>
-        _assignSlotsAndAppend(frontEl, backEl, flipCardElement); // Перемещаем ОРИГИНАЛЬНЫЕ .flip-front/.flip-back ВНУТРЬ <flip-card>
-        container.appendChild(flipCardElement);
-        //  Устанавливаем border-radius на flip-card ЭЛЕМЕНТ после добавления в DOM
-        if (config.borderRadius != null && config.borderRadius >= 0) {
-           flipCardElement.style.borderRadius = config.borderRadius + 'px';
-        }
-        console.log(\`[FlipCard Init] \${instanceId}: <flip-card> создан и добавлен.\`);
-
-        let currentTrigger = config.trigger; // Изначально берем из конфига
-        const hybridBreakpoint = 992;
-
-        // Функция для привязки/перепривязки слушателей
-function attachEventListeners() {
-    // Сначала удаляем все возможные старые слушатели
-    const oldListeners = container.__taptopFlipListeners || {};
-    if (oldListeners.click) container.removeEventListener('click', oldListeners.click);
-    if (oldListeners.keydown) container.removeEventListener('keydown', oldListeners.keydown);
-    if (oldListeners.mouseenter) container.removeEventListener('mouseenter', oldListeners.mouseenter);
-    if (oldListeners.mouseleave) container.removeEventListener('mouseleave', oldListeners.mouseleave);
-    if (oldListeners.focus) container.removeEventListener('focus', oldListeners.focus);
-    if (oldListeners.blur) container.removeEventListener('blur', oldListeners.blur);
-    
-    const cardElement = container.querySelector('flip-card'); //  Получаем сам веб-компонент
-    //  Удаляем старые слушатели компонента, если они были (важно при re-attach)
-    if (cardElement && cardElement.__flippingListener) {
-        cardElement.removeEventListener('flipping', cardElement.__flippingListener);
-    }
-    if (cardElement && cardElement.__flippedListener) {
-        cardElement.removeEventListener('flipped', cardElement.__flippedListener);
-    }
-    container.__taptopFlipListeners = {};
-
-    if (currentTrigger === 'click') {
-        let isClickFlipping = false; // Локальный флаг для клика, чтобы избежать двойного срабатывания
-        const clickHandler = () => {
-            if (isClickFlipping || !cardElement || typeof cardElement.flip !== 'function') return;
-            isClickFlipping = true;
-            cardElement.flip();
-            // setTimeout не нужен, т.к. isClickFlipping сбросится в flipped
-        };
-        const keydownHandler = (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                if (isClickFlipping || !cardElement || typeof cardElement.flip !== 'function') return;
-                isClickFlipping = true; // Используем тот же флаг
-                cardElement.flip();
-            }
-        };
-        container.addEventListener('click', clickHandler);
-        container.addEventListener('keydown', keydownHandler);
-        container.__taptopFlipListeners = { click: clickHandler, keydown: keydownHandler };
-
-        // Слушатели для сброса isClickFlipping и обновления aria-pressed для click-режима
-        if (cardElement) {
-            const clickFlippingListener = () => { /* isClickFlipping тут не меняем, т.к. это начало */ };
-            const clickFlippedListener = (e) => {
-                isClickFlipping = false;
-                container.setAttribute('aria-pressed', e.detail.facedown ? 'true' : 'false');
-            };
-            cardElement.addEventListener('flipping', clickFlippingListener);
-            cardElement.addEventListener('flipped', clickFlippedListener);
-            cardElement.__flippingListener = clickFlippingListener;
-            cardElement.__flippedListener = clickFlippedListener;
-        }
-
-    } else if (currentTrigger === 'hover') { // Этот блок теперь обрабатывает гибридное поведение
-        console.log(\`[FlipCard Trigger] \${instanceId}: Hover Logic Active (Smart Hover/Click)\`);
-        if (!cardElement || typeof cardElement.flip !== 'function') {
-            console.warn(\`[FlipCard Trigger] \${instanceId}: <flip-card> element not found or .flip not a function.\`);
-            return;
-        }
-
-        let intentToFlipToBack = false;
-        let isAnimatingByComponent = false; // Флаг, что анимация компонента СЕЙЧАС идет
-
-        const flippingListener = (e) => {
-            isAnimatingByComponent = true;
-            // Обновляем aria-pressed в начале анимации
-            container.setAttribute('aria-pressed', e.detail.facedown ? 'true' : 'false');
-        };
-        const flippedListener = (e) => {
-            isAnimatingByComponent = false;
-            // Обновляем aria-pressed по завершению, на всякий случай
-            container.setAttribute('aria-pressed', e.detail.facedown ? 'true' : 'false');
-            // После завершения анимации, если курсор уже НЕ на карточке,
-            // а карточка осталась перевернутой (facedown=true), то переворачиваем обратно.
-            if (!intentToFlipToBack && cardElement.hasAttribute('facedown')) {
-                cardElement.flip();
-            }
-        };
-
-        cardElement.addEventListener('flipping', flippingListener);
-        cardElement.addEventListener('flipped', flippedListener);
-        cardElement.__flippingListener = flippingListener;
-        cardElement.__flippedListener = flippedListener;
-
-
-        const mouseEnterHandler = () => {
-            intentToFlipToBack = true;
-            if (isAnimatingByComponent) {
-                return; 
-            }
-            if (!cardElement.hasAttribute('facedown')) { // Если сейчас лицевая сторона
-                cardElement.flip();
-            }
-        };
-
-        const mouseLeaveHandler = () => {
-            intentToFlipToBack = false;
-            if (isAnimatingByComponent) {
-                return; 
-            }
-            if (cardElement.hasAttribute('facedown')) { // Если сейчас обратная сторона
-                cardElement.flip();
-            }
-        };
-        
-        const focusHandler = () => container.classList.add('hover-active');
-        const blurHandler = () => container.classList.remove('hover-active');
-        
-        const keydownHandler = (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                if (isAnimatingByComponent && config.trigger === 'hover') { // В hover-режиме ждем завершения анимации
-                    return;
-                }
-                cardElement.flip();
-            }
-        };
-
-        container.addEventListener('mouseenter', mouseEnterHandler);
-        container.addEventListener('mouseleave', mouseLeaveHandler);
-        container.addEventListener('focus', focusHandler);
-        container.addEventListener('blur', blurHandler);
-        container.addEventListener('keydown', keydownHandler); // Клавиатура работает и в hover
-        
-        container.__taptopFlipListeners = {
-            mouseenter: mouseEnterHandler, mouseleave: mouseLeaveHandler,
-            focus: focusHandler, blur: blurHandler, keydown: keydownHandler,
-            // Сохраняем и слушатели компонента, чтобы их можно было удалить при смене режима
-            componentFlipping: flippingListener, 
-            componentFlipped: flippedListener
-        };
-    }
-} // Конец attachEventListeners
-
-        // Функция для обновления триггера на основе размера экрана (только если изначально был hover)
-        const updateTriggerBasedOnScreen = () => {
-            // Эта функция теперь вызывается только если config.trigger === 'hover'
-            const newTriggerBasedOnWidth = window.innerWidth < hybridBreakpoint ? 'click' : 'hover';
-            if (newTriggerBasedOnWidth !== currentTrigger) { // Только если РЕЖИМ изменился
-                currentTrigger = newTriggerBasedOnWidth;
-                console.log(\`[FlipCard Trigger Update] \${instanceId}: Mode switched to \${currentTrigger}. Re-attaching listeners.\`);
-                attachEventListeners(); // Перепривязываем слушатели для нового режима
-            }
-            // Если режим не изменился, слушатели уже должны быть корректно привязаны предыдущим вызовом attachEventListeners.
-        };
-        if (config.trigger === 'hover') {
-            // Удаляем классы направления перед новой установкой, если они могли быть
-            container.classList.remove('cf-horizontal', 'cf-vertical');
-            // Применяем класс направления в зависимости от currentTrigger (который может стать click)
-            // или лучше основываться на config.direction для установки cf-vertical/cf-horizontal
-            // Устанавливаем НАЧАЛЬНЫЙ currentTrigger на основе текущей ширины экрана
-            currentTrigger = window.innerWidth < hybridBreakpoint ? 'click' : 'hover';
-            console.log(\`[FlipCard Init] \${instanceId}: Initial trigger mode for hover config: \${currentTrigger}.\`);
-            attachEventListeners(); // Привязываем слушатели для начального режима
-            // Удаляем предыдущий resize listener, если он был
-            if (container.__taptopResizeListener) {
-                window.removeEventListener('resize', container.__taptopResizeListener);
-            }
-            container.__taptopResizeListener = debounce(updateTriggerBasedOnScreen, 200);
-            window.addEventListener('resize', container.__taptopResizeListener);
-        } else { // Если trigger === 'click'
-            // Удаляем классы направления перед новой установкой
-            container.classList.remove('cf-horizontal', 'cf-vertical');
-            currentTrigger = 'click';
-            attachEventListeners(); // Обычная привязка
-        }
-
-        // Устанавливаем классы направления и специфичные для направления стили/анимации
-        // Это должно происходить ПОСЛЕ определения currentTrigger и attachEventListeners,
-        // но ДО применения анимаций.
-        const backSlotInGeneratedCard = flipCardElement.querySelector('[slot="back"]'); // Используем [slot="back"]
-
-        // Применяем кастомную анимацию, если нужно
-        if (config.direction === 'vertical' && flipCardElement.setFlipToFrontAnimation) {
-             container.classList.add('cf-vertical'); // Добавляем класс для CSS правила
-             _applyVerticalAnimation(flipCardElement);
-             console.log(\`[FlipCard Init] \${instanceId}: Установлена вертикальная анимация.\`);
-        } else if (config.direction === 'horizontal' && config.animationStyle === 'flat' && flipCardElement.setFlipToFrontAnimation) {
-             container.classList.add('cf-horizontal'); // Добавляем класс для консистентности
-             const kfFront = [ { transform: "rotateY(180deg)" }, { transform: "rotateY(270deg)" }, { transform: "rotateY(360deg)" } ];
-             const kfBack = [ { transform: "rotateY(0deg)" }, { transform: "rotateY(90deg)" }, { transform: "rotateY(180deg)" } ];
-             const opts = { easing: "ease-in-out" };
-             flipCardElement.setFlipToFrontAnimation(kfFront, opts);
-             flipCardElement.setFlipToBackAnimation(kfBack, opts);
-             console.log(\`[FlipCard Init] \${instanceId}: Установлена плоская горизонтальная анимация.\`);
-        } else {
-             container.classList.add('cf-horizontal'); // Режим по умолчанию - горизонтальный
-             // Для 'horizontal' + 'default' ничего не делаем, используется анимация библиотеки
-             _resetToHorizontalAnimation(flipCardElement); // Убираем стили, если были
-             console.log(\`[FlipCard Init] \${instanceId}: Используется стандартная горизонтальная анимация.\`);
-        }
-
-        if (config.borderRadius != null && config.borderRadius >= 0) {
-           flipCardElement.style.borderRadius = config.borderRadius + 'px';
-        }
-        // -- Удаляем установку --card-depth flipCardElement.style.setProperty('--card-depth', ...);
-        const flipHeightEm = ((config.flipHeightPercent != null ? config.flipHeightPercent : 50) / 100) * 40; // 0-100% -> 0-40em
-        flipCardElement.style.setProperty('--flip-height', \`\${flipHeightEm}em\`);
-        flipCardElement.style.setProperty('--corner-granularity', '8'); // Ставим разумное значение по умолчанию
-
-        // Устанавливаем атрибуты доступности в самом конце,
-        // чтобы быть уверенными, что они не будут перезаписаны DOM-манипуляциями
-         container.setAttribute('tabindex', '0');
-         if (config.trigger === 'hover') {
-             container.style.cursor = 'default'; 
-         } else {
-             container.style.cursor = 'pointer';
-         }
-        container.setAttribute('role', 'button');
-        // aria-pressed обновляется в flipAction, здесь устанавливаем начальное/конечное
-        container.setAttribute('aria-pressed', flipCardElement.hasAttribute('facedown') ? 'true' : 'false');
-        container.setAttribute('aria-label', 'Перевернуть карточку');
-
-        container.dataset.taptopFlipCardInitialized = 'true'; // Помечаем контейнер как инициализированный
-        console.log(\`[FlipCard Init] \${instanceId}: Инициализация завершена.\`);
-    }); // Конец forEach
-   } catch (e) {
-        console.error(\`[FlipCard Init] Ошибка при поиске или инициализации контейнеров ('\${config.containerSelector}'):\`, e);
-   }
-}
-
-/**
- * Применяет кастомную вертикальную анимацию к элементу flip-card.
- * @param {HTMLElement} flipCardElement - Элемент <flip-card>.
- */
-function _applyVerticalAnimation(flipCardElement) {
-     if (!flipCardElement?.setFlipToFrontAnimation) return;
-     const vKF = [{ transform: "rotateX(180deg)" },{ transform: "rotateX(270deg)" },{ transform: "rotateX(360deg)" }];
-     const vKB = [{ transform: "rotateX(0deg)" },{ transform: "rotateX(90deg)" },{ transform: "rotateX(180deg)" }];
-     const opts = { easing: "ease-in-out" };
-     flipCardElement.setFlipToFrontAnimation(vKF, opts);
-     flipCardElement.setFlipToBackAnimation(vKB, opts);
-}
-
-/**
- * Сбрасывает кастомную анимацию к стандартной горизонтальной библиотеки.
- * @param {HTMLElement} flipCardElement - Элемент <flip-card>.
- */
-function _resetToHorizontalAnimation(flipCardElement) {
-    // Здесь должен быть код для сброса анимации, если библиотека предоставляет такой метод
-    // Но на данный момент библиотека не предоставляет такой функциональности
-    // При пересоздании элемента flip-card он получает стандартную анимацию
-}
-
-// Инициализация после загрузки библиотеки и DOM
-document.addEventListener('DOMContentLoaded', () => {
-     // Передаем URL CDN и функцию инициализации
-     loadFlipCardLibrary('${flipCardCDN}', () => {
-        const currentConfig = ${configJson}; // Используем актуальные настройки
-        initFlipCards(currentConfig); // Вызываем новую функцию инициализации
+  _populatePresetSelect() {
+    const select = this.elements.presetSelect;
+    if (!select) return;
+    select.innerHTML = "";
+    Object.entries(this.presets).forEach(([id, presetData]) => {
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = presetData.name;
+      select.appendChild(option);
     });
-});
+    select.value = this.config.preset || "custom"; // Устанавливаем выбранное значение
+  }
+
+  _updateBaseUIFromConfig() {
+    if (!this.elements) return;
+    if (this.elements.collectionIdInput)
+      this.elements.collectionIdInput.value = this.config.collectionId || "";
+    // widgetIdInput УДАЛЕНО
+    if (this.elements.targetSelectorInput)
+      this.elements.targetSelectorInput.value =
+        this.config.targetSelector || "collection";
+    if (this.elements.applyButtonSelectorInput)
+      this.elements.applyButtonSelectorInput.value =
+        this.config.applyButtonSelector || "";
+    if (this.elements.resetButtonSelectorInput)
+      this.elements.resetButtonSelectorInput.value =
+        this.config.resetButtonSelector || "";
+    if (this.elements.itemsPerPageInput)
+      this.elements.itemsPerPageInput.value = this.config.itemsPerPage || 9;
+    if (this.elements.paginationTypeSelect)
+      this.elements.paginationTypeSelect.value =
+        this.config.paginationType || "none";
+    if (this.elements.showLoaderCheckbox)
+      this.elements.showLoaderCheckbox.checked =
+        this.config.showLoader !== false;
+    if (this.elements.primaryColorInput)
+      this.elements.primaryColorInput.value =
+        this.config.primaryColor || "#4483f5";
+    if (this.elements.presetSelect)
+      this.elements.presetSelect.value = this.config.preset || "custom";
+    if (this.elements.presetDescription)
+      this.elements.presetDescription.textContent =
+        this.presets[this.config.preset || "custom"]?.description || "";
+  }
+
+  _renderAllFieldCardsDOM() {
+    if (!this.elements.filterFieldsContainer) return;
+    const container = this.elements.filterFieldsContainer;
+    container.innerHTML = ""; // Очищаем перед рендерингом
+    if (Array.isArray(this.config.fields)) {
+      this.config.fields.forEach((fieldData, index) => {
+        this._addSingleFieldCardDOM(fieldData, index);
+      });
+    }
+  }
+
+  _toggleOutputSection(fieldCard) {
+    // Эта функция больше не используется, так как секция вывода удалена
+    if (!fieldCard) return;
+    const outputSection = fieldCard.querySelector(".field-output-config");
+    const button = fieldCard.querySelector(".configure-output-btn");
+    if (!outputSection || !button) return;
+    const isVisible = outputSection.style.display !== "none";
+    outputSection.style.display = isVisible ? "none" : "block";
+    button.textContent = isVisible
+      ? "Настроить вывод данных"
+      : "Скрыть настройки вывода";
+    button.setAttribute("aria-expanded", isVisible ? "false" : "true");
+  }
+
+  _handleAddFilterField() {
+    const uniqueId = `field-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 5)}`;
+    const newFieldData = {
+      fieldId: "",
+      uniqueId: uniqueId,
+      label: "Новое поле",
+      uiType: UI_TYPES.NONE,
+      firstIsAll: true, // По умолчанию true для select/radio/buttons
+      // instantFilter по умолчанию true, кроме INPUT (устанавливается в _addSingleFieldCardDOM)
+      instantFilter: true, // По умолчанию true (будет изменено на false для input в _addSingleFieldCardDOM)
+      elementSelector: null,
+      clearButtonSelector: null,
+      // targetSelector и outputType УДАЛЕНЫ
+      condition: null, // Определяется при сборе данных
+    };
+
+    if (!Array.isArray(this.config.fields)) {
+      this.config.fields = [];
+    }
+    this.config.fields.push(newFieldData);
+    this._addSingleFieldCardDOM(newFieldData, this.config.fields.length - 1);
+    this._resetPresetSelection();
+  }
+
+  _handleRemoveFilterField(uniqueIdToRemove) {
+    if (!uniqueIdToRemove || !Array.isArray(this.config.fields)) return;
+    const indexToRemove = this.config.fields.findIndex(
+      (f) => f.uniqueId === uniqueIdToRemove
+    );
+    if (indexToRemove !== -1) {
+      this.config.fields.splice(indexToRemove, 1);
+      const cardToRemove = this.elements.filterFieldsContainer?.querySelector(
+        `.field-card[data-field-unique-id="${uniqueIdToRemove}"]`
+      );
+      cardToRemove?.remove();
+      this._updateCardIndices();
+      this._resetPresetSelection();
+    }
+  }
+
+  _updateCardIndices() {
+    const cards =
+      this.elements.filterFieldsContainer?.querySelectorAll(".field-card");
+    cards?.forEach((card, index) => {
+      card.dataset.fieldIndex = index;
+      const indexDisplay = card.querySelector(".field-index-display");
+      if (indexDisplay) indexDisplay.textContent = `#${index + 1}`;
+    });
+  }
+
+  _resetPresetSelection() {
+    if (this.config.preset !== "custom") {
+      this.config.preset = "custom";
+      if (this.elements.presetSelect)
+        this.elements.presetSelect.value = "custom";
+      if (this.elements.presetDescription)
+        this.elements.presetDescription.textContent =
+          this.presets.custom.description;
+    }
+  }
+
+  _capitalizeFirstLetter(string) {
+    if (!string) return "";
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
+  // --- Обновление видимости элементов в карточке ---
+  _updateFieldCardUIVisibility(fieldCard) {
+    if (!fieldCard) return;
+
+    const uiTypeSelect = fieldCard.querySelector(".filter-ui-type");
+    const selectedUiType = uiTypeSelect?.value || UI_TYPES.NONE;
+
+    // Скрытие/показ строк и групп в зависимости от uiType
+    const controlsRow = fieldCard.querySelector(".filter-controls-row"); // Это основная строка для настроек фильтра
+    const filterSelectorGroup = fieldCard.querySelector(
+      ".filter-selector-group"
+    ); // Группа для "Класс элемента(ов) фильтра"
+    const firstIsAllContainer = fieldCard.querySelector(
+      ".filter-first-is-all-container"
+    );
+    const instantFilterContainer = fieldCard.querySelector(
+      ".filter-instant-container"
+    );
+    const clearButtonGroup = fieldCard
+      .querySelector(".filter-clear-button-selector") // Инпут для класса кнопки сброса
+      ?.closest(".field-group");
+    const filterSelectorInput = fieldCard.querySelector(
+      ".filter-element-selector"
+    );
+    const requiredIndicator = filterSelectorGroup?.querySelector(
+      // Ищем индикатор внутри группы
+      ".filter-selector-required"
+    );
+    const instantFilterCheckbox = fieldCard.querySelector(
+      ".filter-instant-filter"
+    ); //  Получаем чекбокс
+
+    // Скрытие/показ
+    if (controlsRow) controlsRow.style.display = "none";
+    if (filterSelectorGroup) filterSelectorGroup.style.display = "none";
+    if (firstIsAllContainer) firstIsAllContainer.style.display = "none";
+    if (instantFilterContainer) instantFilterContainer.style.display = "none";
+    if (clearButtonGroup) clearButtonGroup.style.display = "none";
+    if (filterSelectorInput) filterSelectorInput.required = false;
+    if (requiredIndicator) requiredIndicator.style.display = "none";
+
+    const isFilterType = selectedUiType !== UI_TYPES.NONE;
+    if (isFilterType) {
+      if (controlsRow) controlsRow.style.display = "grid"; // Или "flex", в зависимости от CSS
+      if (filterSelectorGroup) filterSelectorGroup.style.display = "block";
+      if (filterSelectorInput) filterSelectorInput.required = true;
+      if (requiredIndicator) requiredIndicator.style.display = "inline";
+      if (clearButtonGroup) clearButtonGroup.style.display = "block";
+
+      const showFirstIsAll = [
+        UI_TYPES.SELECT,
+        UI_TYPES.RADIO,
+        UI_TYPES.BUTTONS,
+      ].includes(selectedUiType);
+      if (firstIsAllContainer) {
+        firstIsAllContainer.style.display = showFirstIsAll ? "block" : "none";
+      }
+
+      //  Показываем "Мгновенная фильтрация" для ВСЕХ типов, включая INPUT
+      if (instantFilterContainer)
+        instantFilterContainer.style.display = "block";
+
+      //  Устанавливаем состояние чекбокса "Мгновенная" при смене типа UI
+      if (instantFilterCheckbox) {
+        const uniqueId = fieldCard.dataset.fieldUniqueId;
+        const fieldConf = this.config.fields?.find(
+          (f) => f.uniqueId === uniqueId
+        );
+        if (fieldConf) {
+          // По умолчанию true для всех, кроме INPUT
+          instantFilterCheckbox.checked =
+            fieldConf.instantFilter ?? selectedUiType !== UI_TYPES.INPUT;
+        }
+      }
+    }
+
+    this._updateUiTypeHelper(fieldCard, selectedUiType); // Обновляем подсказку
+    // this._updateOutputTypeVisibility(fieldCard); // УДАЛЕНО, так как секции вывода нет
+  }
+
+  // --- Добавление ОДНОЙ карточки поля в DOM ---
+  _addSingleFieldCardDOM(data = {}, index) {
+    if (
+      !this.elements.filterFieldTemplate ||
+      !this.elements.filterFieldsContainer
+    )
+      return;
+    const tpl = this.elements.filterFieldTemplate;
+    const container = this.elements.filterFieldsContainer;
+    const clone = tpl.content.cloneNode(true);
+    const fieldCard = clone.querySelector(".field-card");
+    if (!fieldCard) return;
+
+    data.uniqueId =
+      data.uniqueId ||
+      `field-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    fieldCard.dataset.fieldIndex = index;
+    fieldCard.dataset.fieldUniqueId = data.uniqueId;
+
+    // --- Заполнение элементов ---
+    const elements = {
+      labelTextElement: fieldCard.querySelector(".field-label-text"),
+      indexDisplay: fieldCard.querySelector(".field-index-display"),
+      fieldIdInput: fieldCard.querySelector(".filter-field-id"),
+      fieldIdHelperText: fieldCard.querySelector(
+        ".filter-field-id + .helper-text"
+      ),
+      uiTypeSelect: fieldCard.querySelector(".filter-ui-type"),
+      firstIsAllCheckbox: fieldCard.querySelector(".filter-first-is-all"),
+      instantFilterCheckbox: fieldCard.querySelector(".filter-instant-filter"),
+      filterSelectorInput: fieldCard.querySelector(".filter-element-selector"),
+      clearButtonSelectorInput: fieldCard.querySelector(
+        ".filter-clear-button-selector"
+      ), // Удалены элементы, связанные с выводом:
+      // configureOutputBtn: fieldCard.querySelector(".configure-output-btn"),
+      // outputConfigContainer: fieldCard.querySelector(".field-output-config"),
+      // targetSelectorInput: fieldCard.querySelector(".filter-target-selector"),
+      // outputTypeSelect: fieldCard.querySelector(".filter-output-type"),
+    };
+
+    const displayLabel =
+      data.label ||
+      (data.fieldId ? this._capitalizeFirstLetter(data.fieldId) : `Новое поле`);
+    if (elements.labelTextElement)
+      elements.labelTextElement.textContent = displayLabel;
+    if (elements.indexDisplay)
+      elements.indexDisplay.textContent = `#${index + 1}`;
+    if (elements.fieldIdInput) {
+      elements.fieldIdInput.value = data.fieldId || "";
+      elements.fieldIdInput.dataset.configName = "fieldId";
+    }
+    if (elements.uiTypeSelect) {
+      elements.uiTypeSelect.value = data.uiType || UI_TYPES.NONE;
+      elements.uiTypeSelect.dataset.configName = "uiType";
+    }
+    if (elements.firstIsAllCheckbox) {
+      elements.firstIsAllCheckbox.checked = data.firstIsAll !== false;
+      elements.firstIsAllCheckbox.dataset.configName = "firstIsAll";
+    }
+    if (elements.filterSelectorInput) {
+      elements.filterSelectorInput.value = data.elementSelector || "";
+      elements.filterSelectorInput.dataset.configName = "elementSelector";
+    }
+    if (elements.clearButtonSelectorInput) {
+      elements.clearButtonSelectorInput.value = data.clearButtonSelector || "";
+      elements.clearButtonSelectorInput.dataset.configName =
+        "clearButtonSelector";
+    } // Удалена логика для targetSelectorInput и outputTypeSelect
+
+    // Логика для configureOutputBtn и outputConfigContainer УДАЛЕНА
+
+    //  Устанавливаем instantFilter с учетом типа по умолчанию
+    if (elements.instantFilterCheckbox) {
+      const defaultInstant =
+        data.instantFilter ?? data.uiType !== UI_TYPES.INPUT;
+      elements.instantFilterCheckbox.checked = defaultInstant;
+      elements.instantFilterCheckbox.dataset.configName = "instantFilter";
+      // Важно: Обновляем и объект data, если instantFilter не был задан явно
+      if (!("instantFilter" in data)) {
+        data.instantFilter = defaultInstant;
+      }
+    }
+
+    container.appendChild(clone);
+    this._updateFieldCardUIVisibility(fieldCard); // Обновляем видимость контролов
+  }
+
+  _updateUiTypeHelper(fieldCard, uiType) {
+    const helper = fieldCard.querySelector(".ui-type-helper");
+    const description = fieldCard.querySelector(".ui-type-description");
+    if (!helper || !description) return;
+    let helperText = "";
+    let showHelper = true;
+    switch (uiType) {
+      case "input":
+        helperText =
+          "Поиск по тексту: используйте для полнотекстового поиска или фильтрации по части слова";
+        break;
+      case "select":
+        helperText =
+          "Выпадающий список: подходит для фильтрации по категориям, где возможен выбор только одного значения";
+        break;
+      case "radio":
+        helperText =
+          "Радио-кнопки: используйте для выбора одного значения из нескольких вариантов";
+        break;
+      case "buttons":
+        helperText =
+          "Кнопки-теги: визуальные кнопки для выбора одного варианта, хорошо работают с табами Taptop";
+        break;
+      case "checkbox-set":
+        helperText =
+          'Чекбокс: позволяет фильтровать по наличию/отсутствию значения (например, "В наличии")';
+        break;
+      default:
+        showHelper = false;
+    }
+    if (showHelper) {
+      description.textContent = helperText;
+      helper.style.display = "flex";
+    } else {
+      helper.style.display = "none";
+    }
+  }
+
+  // Метод _updateOutputTypeVisibility(fieldCard) УДАЛЕН, так как больше не нужен.
+  // _updateOutputTypeVisibility(fieldCard) {
+  //   const attributeContainer = fieldCard?.querySelector(
+  //     ".target-attribute-container"
+  //   );
+  //   if (attributeContainer) attributeContainer.style.display = "none";
+  // }
+
+  collectData() {
+    const baseSettings = {
+      collectionId: this.elements.collectionIdInput?.value.trim() || null,
+      targetSelector:
+        this.elements.targetSelectorInput?.value.trim() || "collection",
+      applyButtonSelector:
+        this.elements.applyButtonSelectorInput?.value.trim() || null, // widgetId УДАЛЕНО из сбора
+      resetButtonSelector:
+        this.elements.resetButtonSelectorInput?.value.trim() || null,
+      itemsPerPage: parseInt(this.elements.itemsPerPageInput?.value, 10) || 9,
+      paginationType: this.elements.paginationTypeSelect?.value || "none",
+      showLoader: this.elements.showLoaderCheckbox?.checked ?? true,
+      primaryColor: this.elements.primaryColorInput?.value || "#4483f5",
+      preset: this.config.preset,
+    };
+
+    const collectedFields = (this.config.fields || [])
+      .map((fieldConf) => {
+        let condition = null;
+        if (fieldConf.uiType !== UI_TYPES.NONE) {
+          switch (fieldConf.uiType) {
+            case UI_TYPES.INPUT:
+              condition = FILTER_TYPES.CONTAINS;
+              break;
+            case UI_TYPES.SELECT:
+            case UI_TYPES.RADIO:
+            case UI_TYPES.BUTTONS:
+              condition = FILTER_TYPES.EQUAL;
+              break;
+            case UI_TYPES.CHECKBOX_SET:
+              condition = FILTER_TYPES.IS_SET;
+              break;
+          }
+        }
+        // Убедимся, что instantFilter имеет булево значение
+        const instantFilter =
+          typeof fieldConf.instantFilter === "boolean"
+            ? fieldConf.instantFilter
+            : fieldConf.uiType !== UI_TYPES.INPUT;
+        return { ...fieldConf, condition, instantFilter };
+      }) // Убрана фильтрация по f.targetSelector, так как его больше нет
+      .filter((f) => f.fieldId && f.uiType !== UI_TYPES.NONE); // Не включаем поля, не используемые для фильтрации
+    return { ...baseSettings, fields: collectedFields };
+  }
+
+  _validateSettings(settings) {
+    if (!settings.collectionId) {
+      this.showErrorModal("Укажите ID Коллекции.");
+      return false;
+    }
+    if (!settings.targetSelector) {
+      // targetSelector все еще нужен для определения основного контейнера коллекции
+      // но widgetId теперь определяется автоматически
+      this.showErrorModal("Укажите Класс виджета Коллекции.");
+      return false;
+    }
+    const itemsPerPage = settings.itemsPerPage;
+    if (
+      itemsPerPage === undefined ||
+      !Number.isInteger(itemsPerPage) ||
+      itemsPerPage < 1 ||
+      itemsPerPage > 100
+    ) {
+      this.showErrorModal(
+        "Укажите корректное число элементов на странице API (от 1 до 100)."
+      );
+      return false;
+    }
+
+    const isInvalidClassName = (value, label) => {
+      if (!value) return false;
+      if (/[.#\s\[\]>+~:()]/.test(value)) {
+        this.showErrorModal(
+          `${label}: Класс не должен содержать точки, решетки, пробелы или другие спецсимволы CSS-селекторов.`
+        );
+        return true;
+      }
+      return false;
+    };
+
+    if (isInvalidClassName(settings.targetSelector, "Класс виджета Коллекции"))
+      return false;
+    if (
+      isInvalidClassName(
+        settings.applyButtonSelector,
+        'Класс кнопки "Применить"'
+      )
+    )
+      return false;
+    if (
+      isInvalidClassName(
+        settings.resetButtonSelector,
+        'Класс кнопки "Сбросить"'
+      )
+    )
+      return false;
+    // Проверка на settings.fields.length === 0 теперь не так критична,
+    // если пользователь хочет просто вывести всю коллекцию без фильтров.
+    // Но если fields есть, они должны быть валидны.
+
+    if (!Array.isArray(settings.fields)) settings.fields = []; // Гарантируем, что это массив
+    let requiresApplyButton = false;
+    const elementSelectorsUsed = new Map();
+    const clearButtonSelectorsUsed = new Map();
+    const targetSelectorsUsed = new Map(); // Оставляем для предупреждения, хотя вывод не настраивается здесь
+
+    for (const [index, field] of settings.fields.entries()) {
+      const fieldLabelPrefix = `Поле #${index + 1} (${
+        field.label || field.fieldId || "???"
+      })`;
+      if (!field.fieldId) {
+        this.showErrorModal(`Поле #${index + 1}: не указано Имя или ID Поля.`);
+        return false;
+      }
+      // Проверяем только поля, которые используются для фильтрации
+      const isFilterType = field.uiType !== UI_TYPES.NONE;
+
+      if (isFilterType) {
+        if (!field.elementSelector) {
+          this.showErrorModal(
+            `${fieldLabelPrefix}: не указан Класс элемента(ов) фильтра.`
+          );
+          return false;
+        }
+        if (
+          isInvalidClassName(
+            field.elementSelector,
+            `${fieldLabelPrefix}: Класс элемента(ов) фильтра`
+          )
+        )
+          return false;
+        if (
+          isInvalidClassName(
+            field.clearButtonSelector,
+            `${fieldLabelPrefix}: Класс кнопки 'Сбросить это поле'`
+          )
+        )
+          return false;
+        if (elementSelectorsUsed.has(field.elementSelector)) {
+          if (
+            field.fieldId !== elementSelectorsUsed.get(field.elementSelector)
+          ) {
+            this.showErrorModal(
+              `Класс фильтра '${field.elementSelector}' используется для разных полей.`
+            );
+            return false;
+          }
+        } else {
+          elementSelectorsUsed.set(field.elementSelector, field.fieldId);
+        }
+        if (field.clearButtonSelector) {
+          if (clearButtonSelectorsUsed.has(field.clearButtonSelector)) {
+            this.showErrorModal(
+              `Ошибка: Класс кнопки сброса '${field.clearButtonSelector}' используется для нескольких полей.`
+            );
+            return false;
+          } else {
+            clearButtonSelectorsUsed.set(
+              field.clearButtonSelector,
+              field.fieldId
+            );
+          }
+        }
+        if (!field.instantFilter) requiresApplyButton = true; // Требуется кнопка, если фильтр не мгновенный
+      }
+      // Проверки для isOutputType (targetSelector, outputType) УДАЛЕНЫ
+    }
+
+    targetSelectorsUsed.forEach((fieldIds, selector) => {
+      // Эта проверка больше не актуальна для генератора, но может быть полезна для отладки
+      // if (fieldIds.length > 1)
+      //   console.warn(
+      //     `[CF Validate] Предупреждение: Несколько полей (${fieldIds.join(
+      //       ", "
+      //     )}) выводятся в элемент '${selector}'.`
+      //   );
+    });
+
+    if (requiresApplyButton && !settings.applyButtonSelector) {
+      this.showErrorModal(
+        'Хотя бы один из настроенных фильтров не является "Мгновенным". Укажите CSS-класс для кнопки "Применить все фильтры" в Основных настройках или сделайте все фильтры мгновенными.'
+      );
+      return false;
+    }
+    return true;
+  }
+
+  generateAndCopyCode() {
+    const settings = this.collectData();
+    if (!this._validateSettings(settings)) return;
+    const code = this.generateCode(settings);
+    if (this.elements.jsCode) this.elements.jsCode.textContent = code;
+    this.copyAndNotify(code);
+  }
+
+  // --- Генерация кода скрипта с поддержкой табов Taptop ---
+  generateCode(settings = {}) {
+    const runtimeConfig = {
+      collectionId: settings.collectionId, // widgetId УДАЛЕН из runtimeConfig
+      targetSelector: settings.targetSelector,
+      applyButtonSelector: settings.applyButtonSelector || null,
+      resetButtonSelector: settings.resetButtonSelector || null,
+      itemsPerPage: settings.itemsPerPage || 9,
+      paginationType: settings.paginationType || "none",
+      showLoader: settings.showLoader !== false,
+      primaryColor: settings.primaryColor || "#4483f5",
+      fields:
+        settings.fields?.map((f) => ({
+          // Сохраняем только данные, нужные для фильтрации
+          fieldIdOrName: f.fieldId,
+          label: f.label || f.fieldId,
+          uiType: f.uiType,
+          elementSelector: f.elementSelector || null,
+          clearButtonSelector: f.clearButtonSelector || null,
+          // targetSelector и outputType УДАЛЕНЫ
+          firstIsAll: f.firstIsAll !== false,
+          instantFilter: f.instantFilter ?? f.uiType !== UI_TYPES.INPUT,
+          condition: f.condition, // condition определяется в collectData на основе uiType
+        })) || [],
+      apiEndpoint: "/-/x-api/v1/public/?method=mosaic/collectionSearch",
+      debounceTimeout: 300,
+      // Синонимы оставлены, так как они используются в runtime для маппинга имен на ID
+      imageFieldSynonyms: [
+        "изображение",
+        "картинка",
+        "фото",
+        "image",
+        "picture",
+      ],
+      priceFieldSynonyms: ["цена", "стоимость", "price", "cost"],
+      categoryFieldSynonyms: [
+        "категория",
+        "раздел",
+        "тип",
+        "category",
+        "section",
+        "type",
+      ],
+      tagFieldSynonyms: ["тег", "метка", "tag", "label"],
+      stockFieldSynonyms: [
+        "наличие",
+        "остаток",
+        "stock",
+        "available",
+        "quantity",
+        "qty",
+      ],
+      descriptionFieldSynonyms: [
+        "описание",
+        "description",
+        "текст",
+        "text",
+        "desc",
+      ],
+    };
+
+    const runtimeConfigJSON = JSON.stringify(runtimeConfig);
+
+    // Шаблон скрипта runtime (остается без изменений, так как вывод данных теперь обрабатывается Taptop)
+    const scriptCode = `
+<style>
+.cf-custom-pagination-container,.cf-loader-overlay{--cf-primary-color:${
+      runtimeConfig.primaryColor || "#4483f5"
+    };}.cf-loader-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.7);display:flex;justify-content:center;align-items:center;z-index:10;transition:opacity .3s ease,visibility .3s ease;opacity:0;visibility:hidden;}.cf-loader-overlay.is-active{opacity:1;visibility:visible;}.cf-loader{width:38px;height:38px;border:4px solid rgba(0,0,0,0.1);border-bottom-color:var(--cf-primary-color);border-radius:50%;display:inline-block;box-sizing:border-box;animation:cf-rotation 1s linear infinite;}@keyframes cf-rotation{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}.cf-custom-pagination-container{display:flex;justify-content:center;align-items:center;padding:15px 0;gap:5px;flex-wrap:wrap;}.cf-pagination__button,.cf-pagination__number,.cf-pagination__ellipsis{min-width:36px;height:36px;padding:0 10px;border:1px solid #ddd;background-color:#fff;border-radius:6px;cursor:pointer;transition:all .2s ease;font-size:14px;line-height:34px;text-align:center;display:inline-flex;justify-content:center;align-items:center;text-decoration:none;color:#333;}.cf-pagination__button:disabled{cursor:not-allowed;opacity:.5;background-color:#f5f5f5;}.cf-pagination__button:not(:disabled):hover,.cf-pagination__number:not(.is-active):not(.is-disabled):hover{border-color:var(--cf-primary-color);color:var(--cf-primary-color);background-color:rgba(68,131,245,.05);}.cf-pagination__number.is-active{background-color:var(--cf-primary-color);color:white;border-color:var(--cf-primary-color);cursor:default;}.cf-pagination__ellipsis{border:none;background:none;cursor:default;padding:0 5px;}
+.${
+      runtimeConfig.targetSelector
+    } .collection__list{visibility:hidden;opacity:0;transition:opacity .3s ease,visibility 0s linear .3s;}
+.${
+      runtimeConfig.targetSelector
+    }.cf-initialized .collection__list{visibility:visible;opacity:1;transition-delay:0s;}
+.${
+      runtimeConfig.targetSelector
+    }.cf-loading .collection__list{opacity:.4!important;transition:none!important;pointer-events:none;}
+.collection__pagination.is-removed{display:none!important;}
+.collection__pagination-pages,.collection__pagination-load,.collection__pagination-page-by-page{display:none!important;} /* Скрываем стандартные элементы пагинации Taptop */
+.cf-error-message{color:red;padding:10px;border:1px solid red;margin:10px 0;border-radius:4px;background:rgba(255,0,0,0.05);}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const FILTER_TYPES=${JSON.stringify(FILTER_TYPES)};
+  const UI_TYPES=${JSON.stringify(UI_TYPES)};
+  // OUTPUT_TYPES больше не нужен в runtime
+  const KNOWN_FALSE_STRINGS_LOWERCASE=${JSON.stringify(
+    KNOWN_FALSE_STRINGS_LOWERCASE
+  )};
+  function debounce(func, wait) { let timeout; const d = function(...a){ const c=this; clearTimeout(timeout); timeout = setTimeout(() => { timeout=null; func.apply(c,a); }, wait); }; d.cancel = () => {clearTimeout(timeout);timeout=null;}; return d; }
+
+  class TaptopCollectionFilter {
+    constructor(configObject) {
+        this.config = configObject || {}; this.currentPage = 1; this.totalPages = 1; this.currentFilters = [];
+        this.elements = { filterControls: {}, clearButtons: {}, customPagination: {} };
+        this.itemTemplateElement = null; this.isLoading = false; this.fetchTimeout = null;
+        this.fieldIdMap = new Map(); this.isSchemaLoaded = false; this.schemaLoadPromise = null;
+        this.applyFiltersDebounced = debounce(() => this.applyFilters(true), this.config.debounceTimeout || 300);
+        this._boundHandleCustomPaginationClick = this._handleCustomPaginationClick.bind(this);
+        this.isInitialLoad = true;
+        this._init();
+    }
+
+    _init() {
+        this.elements.widget = document.querySelector('.' + this.config.targetSelector);
+        if (!this.elements.widget) { console.error('[CF] Виджет не найден:', this.config.targetSelector); return; }
+        // widgetId больше не нужен, Taptop сам найдет свой ID
+        if (window.getComputedStyle(this.elements.widget).position === 'static') { this.elements.widget.style.position = 'relative'; } // Для позиционирования лоадера
+        this.elements.targetContainer = this.elements.widget.querySelector('.collection__list');
+        if (!this.elements.targetContainer) { console.error('[CF] Контейнер .collection__list не найден.'); return; }
+        this.elements.taptopPaginationContainer = this.elements.widget.querySelector('.collection__pagination');
+        if (this.elements.taptopPaginationContainer) {
+            this.elements.taptopPaginationContainer.classList.add('cf-custom-pagination-container');
+            this.elements.taptopPaginationContainer.style.display = ''; // Убедимся, что контейнер видим
+            this.elements.taptopPaginationContainer.addEventListener('click', this._boundHandleCustomPaginationClick);
+            console.log('[CF] Контейнер пагинации Taptop найден.');
+        } else { console.warn('[CF] Контейнер пагинации Taptop (.collection__pagination) не найден.'); }
+        if (this.config.showLoader) { this.elements.loaderOverlay=document.createElement('div');this.elements.loaderOverlay.className='cf-loader-overlay';this.elements.loaderOverlay.innerHTML='<span class="cf-loader"></span>';this.elements.widget.appendChild(this.elements.loaderOverlay); }
+        this.schemaLoadPromise = this._loadSchemaAndMapIds().catch(error => { console.error("[CF Init] Ошибка загрузки схемы:", error); });
+        this.elements.notFoundElement = this.elements.widget.querySelector('.collection__empty');
+        this._findControlsAndButtons();
+        if (!this._cacheItemTemplate()) return; // Шаблон теперь не используется для рендера, но нужен для проверки наличия
+        this._bindEvents();
+        console.log('[CF] Фильтр инициализирован.');
+        if (this.elements.notFoundElement) this.elements.notFoundElement.classList.add('is-removed'); // Скрываем стандартное "не найдено"
+        this.schemaLoadPromise.finally(() => { // Запускаем первый fetch после попытки загрузки схемы
+            this.isSchemaLoaded = this.fieldIdMap.size > 0;
+            console.log(\`[CF] Схема \${this.isSchemaLoaded ? 'загружена' : 'не загружена'}. Запуск первичной загрузки...\`);
+            if (this.config.showLoader) this._setLoadingState(true);
+            this.fetchAndRenderItems([], 1);
+        });
+    }
+
+    async _loadSchemaAndMapIds() {
+        if(!this.config.collectionId){console.warn("[CF Schema] ID Коллекции не указан.");return;}
+        const schemaUrl=new URL(this.config.apiEndpoint,window.location.origin);
+        schemaUrl.searchParams.set('param[collection_id]',this.config.collectionId);
+        schemaUrl.searchParams.set('param[per_page]','0'); // Запрашиваем 0 элементов, чтобы получить только схему
+        try{
+            const response=await fetch(schemaUrl);
+            if(!response.ok)throw new Error(\`API \${response.status}\`);
+            const data=await response.json();
+            if(data.error)throw new Error(\`API \${data.error.message}\`);
+            const schemaFields=[...(data.result?.c_schema||[]),...(data.result?.settings||[])]; // Объединяем основные поля и системные
+            if(schemaFields.length===0){console.warn('[CF Schema] Схема не найдена или пуста.');return;}
+            const nameToIdMap=new Map();
+            // Заполняем карту: имя_поля -> ID, id_поля -> ID
+            schemaFields.forEach(field=>{
+                const fId=String(field.id).trim();
+                let fName=(field.field_name||'').trim().toLowerCase();
+                if(!fName){ // Добавляем стандартные имена для title/slug, если имя не задано
+                    if(field.type==='title'||fId==='title')fName='title';
+                    else if(field.type==='slug'||fId==='slug')fName='slug';
+                }
+                if(fId){
+                    nameToIdMap.set(fId.toLowerCase(),fId); // ID -> ID (для случаев, когда пользователь вводит ID)
+                    if(fName) nameToIdMap.set(fName,fId); // Имя -> ID
+                }
+            });
+
+            // Маппим fieldIdOrName из конфига на реальные ID
+            if(Array.isArray(this.config.fields)){
+                this.config.fields.forEach(confField=>{
+                    const fIdOrName=String(confField.fieldIdOrName||'').trim();
+                    const fIdOrNameLower=fIdOrName.toLowerCase();
+                    let foundId=nameToIdMap.get(fIdOrNameLower); // Прямое совпадение имени или ID
+
+                    // Поиск по синонимам
+                    if(!foundId){
+                        const synGroups=[this.config.imageFieldSynonyms,this.config.priceFieldSynonyms,this.config.categoryFieldSynonyms,this.config.tagFieldSynonyms,this.config.stockFieldSynonyms,this.config.descriptionFieldSynonyms];
+                        for(const group of synGroups){
+                            if(group&&group.includes(fIdOrNameLower)){
+                                for(const syn of group){ foundId=nameToIdMap.get(syn); if(foundId){console.log(\`[CF Map] Найден синоним для '\${fIdOrNameLower}': ID '\${foundId}'\`);break;} }
+                            } if(foundId)break;
+                        }
+                    }
+
+                    // Поиск по частичному совпадению имени
+                    if(!foundId && !/^[a-f0-9]{6,}$/i.test(fIdOrName)){ // Ищем только если это не похоже на ID
+                        let partialMatchId=null, bestMatchName='';
+                        for(const[name,id] of nameToIdMap.entries()){
+                            if(!/^[a-f0-9]{6,}$/i.test(name) && name!=='title' && name!=='slug' && name.includes(fIdOrNameLower)){
+                                partialMatchId=id; bestMatchName=name; break; // Берем первое частичное совпадение
+                            }
+                        }
+                        if(partialMatchId){ foundId=partialMatchId; console.log(\`[CF Map] Частичное совпадение для '\${fIdOrName}': найдено '\${bestMatchName}' (ID '\${foundId}').\`); }
+                    }
+
+                    // Сохраняем найденный ID или используем введенное значение, если оно похоже на ID
+                    if(foundId){ this.fieldIdMap.set(confField.fieldIdOrName,foundId); }
+                    else {
+                        if(/^[a-f0-9]{6,}$/i.test(fIdOrName) || fIdOrName==='title' || fIdOrName==='slug'){
+                            this.fieldIdMap.set(confField.fieldIdOrName,fIdOrName); // Используем как есть
+                            console.log(\`[CF Map] Используется '\${fIdOrName}' как ID (не найдено в схеме).\`);
+                        } else {
+                            console.warn(\`[CF Map] Поле '\${confField.fieldIdOrName}' (Метка: '\${confField.label}') не найдено в схеме коллекции.\`);
+                        }
+                    }
+                });
+            }
+            console.log('[CF Schema] Карта ID полей:',Object.fromEntries(this.fieldIdMap));
+        } catch(error){ throw new Error(\`Загрузка схемы не удалась: \${error.message}\`); }
+    }
+
+    _getRealFieldId(fieldIdOrName){ return this.fieldIdMap.get(String(fieldIdOrName)) || String(fieldIdOrName); } // Возвращаем оригинал, если не найдено
+
+    _findControlsAndButtons(){
+        if(this.config.applyButtonSelector)this.elements.applyButton=document.querySelector('.'+this.config.applyButtonSelector);
+        if(this.config.resetButtonSelector)this.elements.resetButton=document.querySelector('.'+this.config.resetButtonSelector);
+        this.elements.filterControls={}; this.elements.clearButtons={};
+        if(!Array.isArray(this.config.fields))return;
+        this.config.fields.forEach(field=>{
+            if(field.elementSelector&&field.condition){ // Ищем контролы только для полей с фильтрацией
+                const controls=document.querySelectorAll('.'+field.elementSelector);
+                if(controls.length>0)this.elements.filterControls[field.fieldIdOrName]=controls;
+                else console.warn('[CF] Элемент управления фильтром не найден:',field.elementSelector,'для поля',field.fieldIdOrName);
+            }
+            if(field.clearButtonSelector){
+                const btn=document.querySelector('.'+field.clearButtonSelector);
+                if(btn)this.elements.clearButtons[field.fieldIdOrName]=btn;
+                else console.warn('[CF] Кнопка сброса поля не найдена:',field.clearButtonSelector,'для поля',field.fieldIdOrName);
+            }
+        });
+        // Проверяем необходимость кнопки "Применить"
+        const needsApply=this.config.fields.some(f=>f.condition&&f.instantFilter===false);
+        if(needsApply&&!this.elements.applyButton)console.error('[CF] Кнопка "Применить" ('+this.config.applyButtonSelector+') не найдена, но требуется для некоторых фильтров.');
+    }
+
+    _cacheItemTemplate(){
+        // Кэширование шаблона больше не нужно для рендера, но можно оставить для проверки
+        if(!this.elements.targetContainer)return false;
+        const first=this.elements.targetContainer.querySelector('.collection__item');
+        if(first){
+            // this.itemTemplateElement=first.cloneNode(true); // Можно убрать
+            return true;
+        }else{
+            // Если нет ни одного элемента, это нормально при первой загрузке
+            // console.warn("[CF] Шаблон элемента .collection__item не найден (возможно, коллекция пуста).");
+            return true; // Возвращаем true, чтобы инициализация продолжилась
+        }
+    }
+
+    _bindEvents() {
+        this.elements.applyButton?.addEventListener('click',()=>this.applyFilters(false));
+        this.elements.resetButton?.addEventListener('click',()=>this.resetFilters());
+        Object.entries(this.elements.clearButtons).forEach(([fId,btn])=>btn.addEventListener('click',(e)=>this._handleClearFieldClick(e,fId)));
+
+        if(!Array.isArray(this.config.fields))return;
+        this.config.fields.forEach(field=>{
+            if(!field.elementSelector||!field.condition)return; // Привязываем только к фильтрам
+            const controls=this.elements.filterControls[field.fieldIdOrName];
+            if(!controls||controls.length===0)return;
+
+            const isInstant=field.instantFilter;
+            const handler=isInstant?this.applyFiltersDebounced:()=>{}; // Пустой обработчик для не-мгновенных
+
+            switch(field.uiType){
+                case UI_TYPES.INPUT:
+                    const input=controls[0]; if(!input)break;
+                    // Всегда добавляем listener для Enter keydown, чтобы предотвратить отправку формы
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault(); // Предотвращаем стандартную отправку формы
+                            // Если фильтр не мгновенный, то вызываем applyFilters
+                            if (!isInstant) {
+                                if (this.applyFiltersDebounced.cancel) this.applyFiltersDebounced.cancel();
+                                this.applyFilters(false);
+                            }
+                        }
+                    });
+                    // Listener на 'input' добавляем только если фильтр мгновенный
+                    if (isInstant) {
+                        input.addEventListener('input', handler);
+                    }
+                    break;
+                case UI_TYPES.SELECT:
+                case UI_TYPES.CHECKBOX_SET:
+                    // Ищем input/select внутри контрола или сам контрол
+                    controls.forEach(c=>(c.matches('input,select')?c:c.querySelector('input,select'))?.addEventListener('change',handler));
+                    break;
+                case UI_TYPES.RADIO:
+                    // Ищем все радио внутри контейнера(ов)
+                     controls.forEach(c => {
+                         const radios = c.matches('input[type="radio"]') ? [c] : Array.from(c.querySelectorAll('input[type="radio"]'));
+                         radios.forEach(r => r.addEventListener('change', handler));
+                     });
+                    break;
+                case UI_TYPES.BUTTONS:
+                    const isTaptopTabs = controls[0].classList.contains('tabs__item');
+                    controls.forEach(buttonOrTab => buttonOrTab.addEventListener('click', (e) => {
+                        if (this.isLoading) return;
+                        if (!isTaptopTabs) { // Управляем активным классом только для обычных кнопок
+                            e.preventDefault();
+                            controls.forEach(btn => btn.classList.remove('tp-filter-button-active'));
+                            e.currentTarget.classList.add('tp-filter-button-active');
+                        }
+                        // Всегда вызываем обработчик (для табов Taptop он сработает после их собственного JS)
+                        if (isInstant) handler();
+                    }));
+                    break;
+            }
+        });
+    }
+
+    applyFilters(isDebounced=false){
+        if(this.isLoading && isDebounced){ console.warn('[CF Apply] Пропуск отложенного применения (уже идет загрузка)'); return; }
+        if(this.isLoading && !isDebounced){ console.warn('[CF Apply] Пропуск прямого применения (уже идет загрузка)'); return; }
+        console.log(\`[CF] Применение фильтров... (Отложено: \${isDebounced})\`);
+        this.currentPage=1; // Всегда сбрасываем на первую страницу при применении
+        this.currentFilters=this._collectFilterValues();
+        this.fetchAndRenderItems(this.currentFilters,this.currentPage);
+    }
+
+    resetFilters() {
+        if (this.isLoading) return;
+        console.log('[CF] Сброс фильтров...');
+        if (!Array.isArray(this.config.fields)) return;
+        this.config.fields.forEach(field => {
+            if (!field.elementSelector) return; // Сбрасываем только поля с контролами
+            const controls = this.elements.filterControls[field.fieldIdOrName];
+            if (!controls || controls.length === 0) return;
+
+            switch (field.uiType) {
+                case UI_TYPES.INPUT: controls[0].value = ''; break;
+                case UI_TYPES.SELECT: controls[0].selectedIndex = 0; break;
+                case UI_TYPES.RADIO:
+                    let firstRadio=true;
+                    controls.forEach(c => {
+                        const radios = c.matches('input[type="radio"]') ? [c] : Array.from(c.querySelectorAll('input[type="radio"]'));
+                        radios.forEach(r => { r.checked = firstRadio && field.firstIsAll; firstRadio = false; });
+                    });
+                    break;
+                case UI_TYPES.BUTTONS:
+                    const isTaptopTabs = controls[0].classList.contains('tabs__item');
+                    if (isTaptopTabs) {
+                        controls.forEach((tab, i) => {
+                            const isActive = i === 0 && field.firstIsAll;
+                            tab.classList.toggle('is-opened', isActive);
+                            // tab.classList.toggle('tp-filter-button-active', isActive); // Taptop сам управляет is-opened
+                        });
+                        // Визуальный сброс табов может потребовать клика на первый таб
+                        if (field.firstIsAll && controls[0] && typeof controls[0].click === 'function') {
+                             // controls[0].click(); // Раскомментировать, если нужно имитировать клик (Taptop должен сделать это сам)
+                        }
+                    } else {
+                        controls.forEach((btn, i) => btn.classList.toggle('tp-filter-button-active', i === 0 && field.firstIsAll));
+                    }
+                    break;
+                case UI_TYPES.CHECKBOX_SET:
+                    const cb = controls[0]?.querySelector('input[type="checkbox"]') || (controls[0]?.matches('input[type="checkbox"]') ? controls[0] : null);
+                    if(cb) cb.checked=false;
+                    break;
+                default:
+                    if ('value' in controls[0]) controls[0].value = '';
+                    break;
+            }
+        });
+        this.currentPage = 1; this.currentFilters = []; this.fetchAndRenderItems([], this.currentPage); // Загружаем данные после сброса
+    }
+
+    _handleClearFieldClick(event, fieldIdOrNameToClear) {
+        event.preventDefault(); if (this.isLoading || !fieldIdOrNameToClear) return;
+        console.log(\`[CF] Сброс поля: \${fieldIdOrNameToClear}\`);
+        const fieldConfig = this.config.fields.find(f => f.fieldIdOrName === fieldIdOrNameToClear);
+        if (!fieldConfig || !fieldConfig.elementSelector) return;
+        const controls = this.elements.filterControls[fieldIdOrNameToClear];
+        if (!controls || controls.length === 0) return;
+
+        // Логика сброса значения контрола (аналогично resetFilters)
+        switch (fieldConfig.uiType) {
+            case UI_TYPES.INPUT: controls[0].value = ''; break;
+            case UI_TYPES.SELECT: controls[0].selectedIndex = 0; break;
+            case UI_TYPES.RADIO:
+                const firstRadio = controls[0]?.querySelector('input[type="radio"]') || (controls[0]?.matches('input[type="radio"]') ? controls[0] : null);
+                if(firstRadio && fieldConfig.firstIsAll) firstRadio.checked=true;
+                else controls.forEach(c => (c.querySelector('input[type="radio"]')||c).checked=false);
+                break;
+            case UI_TYPES.BUTTONS:
+                const isTaptopTabs = controls[0].classList.contains('tabs__item');
+                if (isTaptopTabs) {
+                    controls.forEach((tab, i) => {
+                        const shouldBeActive = i === 0 && fieldConfig.firstIsAll;
+                        tab.classList.toggle('is-opened', shouldBeActive);
+                        // tab.classList.toggle('tp-filter-button-active', shouldBeActive);
+                    });
+                     if (fieldConfig.firstIsAll && controls[0]) controls[0].click(); // Клик для табов
+                } else {
+                     controls.forEach((btn, i) => btn.classList.toggle('tp-filter-button-active', i === 0 && fieldConfig.firstIsAll));
+                }
+                break;
+            case UI_TYPES.CHECKBOX_SET:
+                const checkbox = controls[0]?.querySelector('input[type="checkbox"]') || (controls[0]?.matches('input[type="checkbox"]') ? controls[0] : null);
+                if(checkbox) checkbox.checked=false;
+                break;
+            default:
+                if ('value' in controls[0]) controls[0].value = '';
+                break;
+        }
+        // Применяем фильтры после сброса поля
+        if (fieldConfig?.instantFilter) this.applyFiltersDebounced();
+        else if (this.elements.applyButton) console.log('[CF Clear] Требуется нажатие "Применить".');
+        else this.applyFiltersDebounced(); // Применяем, если кнопки "Применить" нет
+    }
+
+    _collectFilterValues() {
+        const apiFilters = []; if (!Array.isArray(this.config.fields)) return apiFilters;
+        this.config.fields.forEach(field => {
+            if(!field.elementSelector || !field.condition) return;
+            const realFieldId = this._getRealFieldId(field.fieldIdOrName);
+            if(!realFieldId) return;
+            const controls = this.elements.filterControls[field.fieldIdOrName];
+            if(!controls || controls.length === 0) return;
+
+            let value = null, skipFilter = false;
+            switch (field.uiType) {
+                case UI_TYPES.INPUT: value = controls[0].value?.trim(); break;
+                case UI_TYPES.SELECT: value = controls[0].value?.trim(); skipFilter = controls[0].selectedIndex === 0 && field.firstIsAll; break;
+                case UI_TYPES.RADIO:
+                    let firstRadio = null, checkedRadio = null;
+                    for (const c of controls) {
+                        const radios = c.matches('input[type="radio"]') ? [c] : Array.from(c.querySelectorAll('input[type="radio"]'));
+                        if (!firstRadio && radios.length > 0) firstRadio = radios[0];
+                        const checked = radios.find(i => i.checked);
+                        if (checked) { checkedRadio = checked; break; }
+                    }
+                    value = checkedRadio ? checkedRadio.value?.trim() : null;
+                    skipFilter = checkedRadio === firstRadio && field.firstIsAll;
+                    break;
+                case UI_TYPES.BUTTONS:
+                    const isTaptopTabs = controls[0].classList.contains('tabs__item');
+                    let firstBtnOrTab = controls[0], activeBtnOrTab = null;
+                    if (isTaptopTabs) {
+                        activeBtnOrTab = Array.from(controls).find(el => el.classList.contains('is-opened'));
+                        if (activeBtnOrTab) { const titleEl = activeBtnOrTab.querySelector('.tabs__item-title'); value = titleEl ? titleEl.textContent?.trim() : activeBtnOrTab.textContent?.trim(); }
+                        else value = null;
+                    } else {
+                        activeBtnOrTab = Array.from(controls).find(el => el.classList.contains('tp-filter-button-active'));
+                        if (activeBtnOrTab) { value = activeBtnOrTab.dataset.value?.trim() || activeBtnOrTab.textContent?.trim(); }
+                        else value = null;
+                    }
+                    skipFilter = activeBtnOrTab === firstBtnOrTab && field.firstIsAll;
+                    break;
+                case UI_TYPES.CHECKBOX_SET:
+                     let checkbox = null;
+                     if(controls[0]?.matches('input[type="checkbox"]')) checkbox = controls[0];
+                     else if(controls[0]) checkbox = controls[0].querySelector('input[type="checkbox"]');
+                     value = checkbox ? checkbox.checked : null;
+                    break;
+                default: if ('value' in controls[0]) value = controls[0].value?.trim(); else if ('checked' in controls[0]) value = controls[0].checked;
+            }
+
+            if (!skipFilter) {
+                if (field.condition === FILTER_TYPES.IS_SET) {
+                    if (value === true) { // Только если чекбокс отмечен
+                        apiFilters.push({ field_id: realFieldId, type: FILTER_TYPES.IS_SET });
+                        // Добавляем условия "не равно" для известных ложных значений,
+                        // чтобы отфильтровать пустые, "false", "no", "нет"
+                        KNOWN_FALSE_STRINGS_LOWERCASE.forEach(falseVal => { apiFilters.push({ field_id: realFieldId, type: FILTER_TYPES.NOT_EQUAL, value: falseVal }); });
+                        apiFilters.push({ field_id: realFieldId, type: FILTER_TYPES.NOT_EQUAL, value: '' }); // Добавляем проверку на пустую строку
+                    }
+                } else {
+                    const hasVal = value !== null && value !== '' && value !== false;
+                    if (hasVal) { apiFilters.push({ field_id: realFieldId, type: field.condition, value: String(value) }); }
+                }
+            }
+        });
+        return apiFilters;
+    }
+
+    async fetchAndRenderItems(filters = [], page = 1, append = false) {
+        if (this.schemaLoadPromise) { await this.schemaLoadPromise; this.schemaLoadPromise = null; }
+        if (!append && this.isLoading) { if(this.applyFiltersDebounced.cancel) this.applyFiltersDebounced.cancel(); if(this.fetchTimeout) clearTimeout(this.fetchTimeout); console.warn('[CF Fetch] Запрос пропущен (идет загрузка).'); return; }
+        if (append && this.isLoading) { console.warn('[CF Fetch] Запрос "Загрузить еще" пропущен (идет загрузка).'); return; }
+
+        this.isLoading = true; this._setLoadingState(true);
+        if (!append) this.currentPage = page; this.currentFilters = filters;
+        if (this.fetchTimeout) clearTimeout(this.fetchTimeout);
+
+        const apiUrl = new URL(this.config.apiEndpoint, window.location.origin);
+        apiUrl.searchParams.set('param[collection_id]', this.config.collectionId);
+        // widgetId больше не передается, Taptop определит его сам
+        const actualFilters = this._collectFilterValues();
+        if (actualFilters.length > 0) apiUrl.searchParams.set('param[filters]', JSON.stringify(actualFilters));
+        apiUrl.searchParams.set('param[page]', this.currentPage);
+        apiUrl.searchParams.set('param[per_page]', this.config.itemsPerPage);
+
+        const controller = new AbortController();
+        this.fetchTimeout = setTimeout(() => { controller.abort(); console.warn('[CF Fetch] Таймаут запроса.'); }, 15000);
+
+        // Сохранение текущего HTML больше не нужно, так как Taptop сам обновит контент
+        // let currentHtml = (!append && this.elements.targetContainer && !this.isInitialLoad) ? this.elements.targetContainer.innerHTML : undefined;
+
+        try {
+            const response = await fetch(apiUrl, { signal: controller.signal });
+            clearTimeout(this.fetchTimeout); this.fetchTimeout = null;
+            if (!response.ok) throw new Error(\`Ошибка API: \${response.status}\`);
+            const data = await response.json();
+            if (data.error) throw new Error(\`Ошибка API: \${data.error.message}\`);
+
+            const totalItems = data.result?.page?.all_items_count ?? 0;
+            const itemsReceived = data.result?.page?.items || []; // Получаем данные, но не рендерим их здесь
+
+            // _renderResults больше не вызывается, Taptop сам обновит DOM
+            // this._renderResults(itemsReceived, append);
+            this._renderPaginationControls(totalItems); // Обновляем только пагинацию
+
+            // Уведомляем Taptop о необходимости обновления
+            if (this.elements.widget && window.Taptop?.widgets?.[this.elements.widget.dataset.widgetId]?.update) {
+                console.log('[CF] Уведомление Taptop об обновлении...');
+                window.Taptop.widgets[this.elements.widget.dataset.widgetId].update({
+                    filters: actualFilters,
+                    page: this.currentPage,
+                    perPage: this.config.itemsPerPage
+                });
+            } else {
+                console.warn('[CF] Не удалось найти метод update виджета Taptop.');
+                // Можно добавить фоллбэк или сообщение об ошибке, если Taptop недоступен
+            }
+
+
+        } catch (error) {
+            clearTimeout(this.fetchTimeout); this.fetchTimeout = null;
+            console.error('[CF] Ошибка при загрузке данных:', error);
+            if (error.name !== 'AbortError') {
+                // if (this.elements.targetContainer && currentHtml !== undefined && !append) { this.elements.targetContainer.innerHTML = currentHtml; } // Восстановление HTML не нужно
+                this._showErrorMessage(\`Ошибка загрузки данных: \${error.message}\`);
+            } else { this._showErrorMessage('Превышено время ожидания ответа от сервера.'); }
+            if (!append) this._renderPaginationControls(0);
+            if (this.elements.notFoundElement) this.elements.notFoundElement.classList.add('is-removed');
+        } finally {
+            this.isLoading = false; this._setLoadingState(false);
+            if (this.isInitialLoad) { if (this.elements.widget) this.elements.widget.classList.add('cf-initialized'); this.isInitialLoad = false; }
+        }
+    }
+
+    _setLoadingState(isLoading) {
+        this.elements.widget?.classList.toggle('cf-loading', isLoading);
+        Object.values(this.elements.filterControls).forEach(controls => controls?.forEach(c => { const i=c.matches('input,select,button')?c:c.querySelector('input,select,button'); if(i)i.disabled=isLoading; }));
+        Object.values(this.elements.clearButtons).forEach(btn => btn.disabled = isLoading);
+        if (this.elements.applyButton) this.elements.applyButton.disabled = isLoading;
+        if (this.elements.resetButton) this.elements.resetButton.disabled = isLoading;
+        if (this.elements.customPagination.prevButton) this.elements.customPagination.prevButton.disabled = isLoading || this.currentPage <= 1;
+        if (this.elements.customPagination.nextButton) this.elements.customPagination.nextButton.disabled = isLoading || this.currentPage >= this.totalPages;
+        if (this.elements.customPagination.loadMoreButton) this.elements.customPagination.loadMoreButton.disabled = isLoading || this.currentPage >= this.totalPages;
+        if (this.config.showLoader && this.elements.loaderOverlay) { this.elements.loaderOverlay.classList.toggle('is-active', isLoading); }
+        if (isLoading) this.elements.widget?.querySelector('.cf-error-message')?.remove();
+    }
+
+    // _formatDate больше не нужен, так как рендеринг происходит в Taptop
+    // _formatDate(dateValue) { ... }
+
+    // _renderResults больше не нужен, так как рендеринг происходит в Taptop
+    // _renderResults(items = [], append = false) { ... }
+
+    // _renderSingleItem больше не нужен, так как рендеринг происходит в Taptop
+    // _renderSingleItem(item) { ... }
+
+    _renderPaginationControls(totalItems) {
+        const container = this.elements.taptopPaginationContainer; if (!container) return;
+        container.querySelectorAll('.cf-pagination__button, .cf-pagination__info, .cf-pagination__numbers, .cf-pagination__number, .cf-pagination__ellipsis').forEach(el => el.remove());
+        this.elements.customPagination = {};
+        this.totalPages = Math.ceil(totalItems / this.config.itemsPerPage);
+        const showPagination = this.totalPages > 1 && this.config.paginationType !== 'none';
+        container.classList.toggle('is-removed', !showPagination);
+        if (!showPagination) return;
+        const isFirst = this.currentPage <= 1; const isLast = this.currentPage >= this.totalPages;
+        const createButton = (text, direction, disabled, cssClass) => { const btn=document.createElement('button');btn.className=\`cf-pagination__button \${cssClass}\`;btn.textContent=text;btn.disabled=disabled||this.isLoading;btn.dataset.direction=direction;return btn; };
+        const createPageNumber = (page) => { const el=document.createElement(page===this.currentPage?'span':'a');el.className='cf-pagination__number';el.textContent=page;if(page===this.currentPage)el.classList.add('is-active');else el.dataset.page=page;el.setAttribute('aria-label',\`Страница \${page}\`);if(page===this.currentPage)el.setAttribute('aria-current','page');return el; };
+        const createEllipsis = () => { const el=document.createElement('span');el.className='cf-pagination__ellipsis';el.textContent='...';return el; };
+        if (this.config.paginationType === 'prev_next') { const prev=createButton('Назад','-1',isFirst,'cf-pagination__prev');const next=createButton('Вперед','1',isLast,'cf-pagination__next');const info=document.createElement('span');info.className='cf-pagination__info';info.textContent=\`\${this.currentPage} / \${this.totalPages}\`;container.appendChild(prev);container.appendChild(info);container.appendChild(next);this.elements.customPagination={prevButton:prev,nextButton:next}; }
+        else if (this.config.paginationType === 'load_more') { if (!isLast) { const loadMore=createButton('Загрузить еще','+1',this.isLoading,'cf-pagination__load-more');loadMore.dataset.action='load_more';container.appendChild(loadMore);this.elements.customPagination.loadMoreButton=loadMore;} }
+        else if (this.config.paginationType === 'numbers') { const prev=createButton('‹','-1',isFirst,'cf-pagination__prev');const next=createButton('›','1',isLast,'cf-pagination__next');container.appendChild(prev);const numbersContainer=document.createElement('span');numbersContainer.className='cf-pagination__numbers';const maxVisible=5;const sideCount=Math.floor((maxVisible-3)/2);const showEllipsisThreshold=maxVisible-1;if(this.totalPages<=showEllipsisThreshold+2){for(let i=1;i<=this.totalPages;i++){numbersContainer.appendChild(createPageNumber(i));}}else{numbersContainer.appendChild(createPageNumber(1));if(this.currentPage>sideCount+2){numbersContainer.appendChild(createEllipsis());}const start=Math.max(2,this.currentPage-sideCount);const end=Math.min(this.totalPages-1,this.currentPage+sideCount);for(let i=start;i<=end;i++){numbersContainer.appendChild(createPageNumber(i));}if(this.currentPage<this.totalPages-sideCount-1){numbersContainer.appendChild(createEllipsis());}numbersContainer.appendChild(createPageNumber(this.totalPages));}container.appendChild(numbersContainer);container.appendChild(next);this.elements.customPagination={prevButton:prev,nextButton:next}; }
+    }
+
+    _handleCustomPaginationClick(event) {
+        const button = event.target.closest('.cf-pagination__button');
+        const pageLink = event.target.closest('.cf-pagination__number[data-page]');
+        if ((!button && !pageLink) || this.isLoading) return;
+        event.preventDefault();
+        let newPage = this.currentPage; let appendResults = false;
+        if (button) { const action = button.dataset.action; const direction = parseInt(button.dataset.direction, 10); if (action === 'load_more') { newPage = this.currentPage + 1; appendResults = true; } else if (!isNaN(direction)) { newPage = this.currentPage + direction; } else { return; } }
+        else if (pageLink) { newPage = parseInt(pageLink.dataset.page, 10); if (isNaN(newPage)) return; }
+        else { return; }
+        if (newPage >= 1 && newPage <= this.totalPages && newPage !== this.currentPage || appendResults) {
+            if (this.elements.widget && !appendResults) { window.scrollTo({ top: this.elements.widget.offsetTop - 80, behavior: 'smooth' }); }
+            if (appendResults) { this.currentPage = newPage; } // Обновляем страницу ДО запроса для load_more
+            this.fetchAndRenderItems(this.currentFilters, newPage, appendResults);
+        }
+    }
+
+    _showErrorMessage(message) {
+        const cssClass='cf-error-message';
+        let div=this.elements.widget?.querySelector('.'+cssClass);
+        if(!div && this.elements.widget){
+            div=document.createElement('div'); div.className=cssClass;
+            const beforeEl = this.elements.targetContainer || this.elements.widget.firstChild;
+            this.elements.widget.insertBefore(div, beforeEl);
+        }
+        if(div) div.textContent=message;
+    }
+
+  } // Конец класса TaptopCollectionFilter
+
+  // Инициализация фильтра
+  try {
+    new TaptopCollectionFilter(${runtimeConfigJSON});
+  } catch (e) {
+    console.error("[CF] Ошибка инициализации фильтра:", e);
+    const widget = document.querySelector('.${
+      settings.targetSelector || "collection"
+    }');
+    if (widget) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'cf-error-message';
+        errorDiv.textContent = 'Ошибка инициализации скрипта фильтра. Проверьте настройки генератора и консоль браузера (F12).';
+        widget.insertBefore(errorDiv, widget.firstChild);
+    }
+  }
+
+}); // Конец DOMContentLoaded
+</script>
     `;
 
-    // Возвращаем объединенный CSS и JS
-    return `${styleBlock}\n<script type="module">\n${scriptContent}\n</script>\n`;
+    return scriptCode;
   }
-
-  /**
-   * Удаляет слушатели событий с элемента превью.
-   * @private
-   */
-  _removePreviewTrigger() {
-    if (!this.previewTriggerElement || !this.previewFlipCard) return;
-    const card = this.previewFlipCard;
-
-    // Удаляем слушатели с this.previewTriggerElement (он же this.previewFlipCard)
-    if (this._previewClickAction)
-      this.previewTriggerElement.removeEventListener(
-        "click",
-        this._previewClickAction
-      );
-    if (this._previewHoverEnter)
-      this.previewTriggerElement.removeEventListener(
-        "mouseenter",
-        this._previewHoverEnter
-      );
-    if (this._previewHoverLeave)
-      this.previewTriggerElement.removeEventListener(
-        "mouseleave",
-        this._previewHoverLeave
-      );
-    if (this._previewKeydownAction)
-      this.previewTriggerElement.removeEventListener(
-        "keydown",
-        this._previewKeydownAction
-      );
-
-    // Удаляем слушатели с самого компонента card (this.previewFlipCard)
-    if (this._previewComponentFlippingListener)
-      card.removeEventListener(
-        "flipping",
-        this._previewComponentFlippingListener
-      );
-    if (this._previewComponentFlippedListener)
-      card.removeEventListener(
-        "flipped",
-        this._previewComponentFlippedListener
-      );
-    if (this._previewComponentClickFlippedListener)
-      card.removeEventListener(
-        "flipped",
-        this._previewComponentClickFlippedListener
-      );
-
-    // Обнуляем сохраненные функции
-    this._previewClickAction = null;
-    this._previewHoverEnter = null;
-    this._previewHoverLeave = null;
-    this._previewKeydownAction = null;
-    this._previewComponentFlippingListener = null;
-    this._previewComponentFlippedListener = null;
-    this._previewComponentClickFlippedListener = null;
-  }
-} // Конец класса CardFlipGenerator
+}
