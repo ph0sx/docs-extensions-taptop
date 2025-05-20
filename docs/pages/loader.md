@@ -28,7 +28,7 @@
             <option value="spinner" selected>Spinner (Круг)</option>
             <option value="dots">Dots (Точки)</option>
             <option value="bars">Bars (Полосы)</option>
-            <option value="custom">Custom CSS (с css-loaders.com или аналогичных)</option>
+            <option value="custom">Custom CSS</option>
           </select>
         </div>
       </div>
