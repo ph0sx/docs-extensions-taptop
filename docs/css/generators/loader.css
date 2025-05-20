@@ -140,3 +140,10 @@
 #loader-generator input[type="color"]:hover {
   border-color: var(--primary-color);
 }
+
+#loader-generator #loader-custom-css {
+  min-height: 150px; 
+  resize: vertical; 
+  font-family: monospace; 
+  font-size: 13px;
+}

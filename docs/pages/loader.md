@@ -47,6 +47,7 @@
             <option value="spinner" selected>Spinner (Круг)</option>
             <option value="dots">Dots (Точки)</option>
             <option value="bars">Bars (Полосы)</option>
+            <option value="custom">Custom CSS (с css-loaders.com)</option>
           </select>
           <div class="helper-text">Выберите стиль анимации лоадера.</div>
         </div>
@@ -57,10 +58,17 @@
           <input type="color" id="loader-bg-color" value="#ffffff">
           <div class="helper-text">Цвет фона, перекрывающего страницу. Рекомендуется непрозрачный.</div>
         </div>
-        <div class="setting-group">
+        <div class="setting-group " id="loader-animation-color-group">
           <label for="loader-animation-color">Цвет анимации:</label>
           <input type="color" id="loader-animation-color" value="#4483f5">
-           <div class="helper-text">Основной цвет анимированных элементов.</div>
+          <div class="helper-text" id="loader-animation-color-helper">Основной цвет анимированных элементов. Не применяется для "Custom CSS".</div>
+        </div>
+      </div>
+            <div class="settings-row" id="loader-custom-css-group" style="display: none;">
+        <div class="setting-group">
+          <label for="loader-custom-css">CSS-код загрузчика:</label>
+          <textarea id="loader-custom-css" class="text-input" rows="10" placeholder="/* HTML: <div class=&quot;loader&quot;></div> */\n.loader {\n  /* ... стили вашего лоадера ... */\n}"></textarea>
+          <div class="helper-text">Вставьте CSS, скопированный с сайта <a href="https://css-loaders.com/" target="_blank" rel="noopener noreferrer">css-loaders.com</a> (или аналогичного, использующего класс <code>.loader</code> для основного элемента). Мы автоматически адаптируем класс <code>.loader</code>. Если ваш CSS использует другой основной класс, замените его на <code>.loader</code> перед вставкой.</div>
         </div>
       </div>
     </div>
