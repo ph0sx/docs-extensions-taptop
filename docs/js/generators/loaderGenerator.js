@@ -372,7 +372,7 @@ export class LoaderGenerator extends BaseGenerator {
                         <div class="taptop-loader__dot"></div>
                     </div>`;
         animationCss = `
-                    .${animationContainerClass} > .taptop-loader__dot { /* Уточнили селектор */
+                    .${animationContainerClass} > .taptop-loader__dot { 
                         width: 12px; height: 12px; margin: 0 5px; background-color: ${animationColor};
                         border-radius: 50%; display: inline-block;
                         animation: taptop-loader-dots-bounce 1.4s infinite ease-in-out both;
@@ -415,7 +415,7 @@ export class LoaderGenerator extends BaseGenerator {
           customCssCode,
           "loader",
           TARGET_CLASS
-        ); // Пользовательский CSS
+        ); 
         break;
       case "spinner":
       default:
@@ -489,14 +489,9 @@ export class LoaderGenerator extends BaseGenerator {
         setTimeout(() => {
             attemptToHideLoader(); // Попытаться скрыть, если страница уже загрузилась
         }, config.minDisplayTime - (Date.now() - startTime) > 0 ? config.minDisplayTime - (Date.now() - startTime) : 0);
-    } else {
-        // Если minDisplayTime = 0, и 'load' еще не сработал, он скроет лоадер.
-        // Если 'load' уже сработал (теоретически возможно для очень быстрых страниц и minDisplayTime=0),
-        // то attemptToHideLoader уже был вызван.
-    }
+    } 
     
     // Fallback на случай, если событие 'load' по какой-то причине не сработает (очень редкий случай)
-    // или если есть что-то, что блокирует 'load' надолго.
     setTimeout(() => {
         if (!pageLoaded && loaderElement.parentElement) { // Если он еще не удален
             console.warn('Taptop Loader: Fallback timeout triggered. Forcing hide.');
@@ -517,27 +512,22 @@ export class LoaderGenerator extends BaseGenerator {
     if (!this.elements.previewArea || !this.elements.previewAnimationContainer)
       return;
 
-    const data = this.collectData(); // Получаем текущие настройки
+    const data = this.collectData(); 
     if (!data && this.elements.animationTypeSelect?.value === "custom") {
-      // Если сбор данных не удался для custom (например, пустое поле CSS),
-      // то не обновляем превью или показываем ошибку там.
-      // Сейчас collectData вернет null и showErrorModal, так что превью не должно сломаться.
-      // Очистим кастомные стили на всякий случай.
       const existingCustomStyleTag = document.getElementById(
         CUSTOM_PREVIEW_STYLE_ID
       );
       if (existingCustomStyleTag) existingCustomStyleTag.innerHTML = "";
-      this.elements.previewAnimationContainer.innerHTML = ""; // Очищаем анимацию
+      this.elements.previewAnimationContainer.innerHTML = ""; 
       return;
     }
 
-    // Если data null, но тип не custom, используем дефолты (хотя это не должно происходить при валидации)
     const { animationType, bgColor, animationColor, customCssCode } =
       data || this.configDefaults;
 
     this.elements.previewArea.style.backgroundColor = bgColor;
     const animContainer = this.elements.previewAnimationContainer;
-    animContainer.innerHTML = ""; // Очищаем предыдущую анимацию
+    animContainer.innerHTML = ""; 
 
     // Удаляем или очищаем тег <style> для кастомного CSS, если он больше не нужен
     const existingCustomStyleTag = document.getElementById(
@@ -548,7 +538,7 @@ export class LoaderGenerator extends BaseGenerator {
     }
 
     // Удаляем все классы типов анимации перед добавлением нового
-    animContainer.className = "loader-preview__animation"; // Сбрасываем на базовый класс
+    animContainer.className = "loader-preview__animation"; 
 
     if (animationType === "custom") {
       animContainer.innerHTML = `<div class="${TARGET_CLASS}"></div>`;
@@ -589,8 +579,8 @@ export class LoaderGenerator extends BaseGenerator {
         case "spinner":
         default:
           animContainer.classList.add("taptop-loader-preview--spinner");
-          animContainer.style.borderColor = "rgba(0,0,0,0.1)"; // Фоновый цвет бордера
-          animContainer.style.borderLeftColor = animationColor; // Активный цвет
+          animContainer.style.borderColor = "rgba(0,0,0,0.1)"; 
+          animContainer.style.borderLeftColor = animationColor; 
           break;
       }
     }
