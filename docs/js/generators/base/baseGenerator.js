@@ -186,6 +186,7 @@ export class BaseGenerator {
    */
   generateAndCopyCode() {
     const settings = this.collectData(); // Сами дочерние классы решают, что здесь собирать
+    if (!settings) return;
     const code = this.generateCode(settings);
 
     if (this.elements.jsCode) {

@@ -191,6 +191,7 @@ export async function initAllGenerators() {
       beforeAfterSliderModule,
       cardFlipModule,
       loaderModule,
+      counterModule,
     ] = await Promise.all([
       import("../cookieGenerator.js").catch((e) => {
         console.error("Ошибка загрузки cookieGenerator:", e);
@@ -226,6 +227,9 @@ export async function initAllGenerators() {
       }),
       import("../loaderGenerator.js").catch((e) => {
         console.error("Ошибка загрузки loaderGenerator:", e);
+      }),
+      import("../CounterGenerator.js").catch((e) => {
+        console.error("Ошибка загрузки CounterGenerator:", e);
       }),
     ]);
 
@@ -302,6 +306,15 @@ export async function initAllGenerators() {
         "loader",
         LoaderGenerator,
         "#loader-generator"
+      );
+    }
+
+    if (counterModule) {
+      const { CounterGenerator } = counterModule;
+      generatorsManager.register(
+        "counter",
+        CounterGenerator,
+        "#counter-generator"
       );
     }
 

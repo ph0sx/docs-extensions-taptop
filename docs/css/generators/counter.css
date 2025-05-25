@@ -1,0 +1,60 @@
+/* docs/css/generators/counter.css */
+.counter-rule-card .settings-section {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.counter-rule-card .settings-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.counter-rule-card .settings-section-title {
+  font-size: 15px; /* Немного меньше чем в других генераторах для компактности */
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  /* Убираем стандартную черту, так как секции уже разделены */
+  /* border-bottom: 1px solid var(--border-color); */
+}
+
+.counter-rule-card .settings-row {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(230px, 1fr)
+  ); /* Адаптивные колонки */
+  gap: 15px 20px; /* Уменьшен вертикальный gap */
+  margin-bottom: 15px;
+}
+.counter-rule-card .settings-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Стили для строки с выбором символа разделителя (по умолчанию она скрыта через style="display: none;") */
+.counter-separator-symbol-row {
+  /* Можно добавить стили, если display: block/flex будет применен JS */
+}
+
+.counter-rule-card .checkbox-container {
+  margin-top: 5px; /* Небольшой отступ сверху для чекбоксов, если они идут после лейбла группы */
+  margin-bottom: 0;
+}
+
+.counter-rule-card .checkbox-container + .helper-text {
+  margin-left: 35px; /* Отступ для helper-text под чекбоксом */
+}
+
+/* Адаптивность для очень маленьких экранов */
+@media (max-width: 500px) {
+  .counter-rule-card .settings-row {
+    grid-template-columns: 1fr; /* Одна колонка */
+  }
+}
+
+.counter-easing-group.hidden-by-odometer {
+  display: none !important; /* Используем !important для надежности, если JS будет менять display напрямую */
+}
