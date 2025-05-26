@@ -564,6 +564,7 @@ const easingFunctions = {
     function formatNumber(number, decimals, useSeparator, separatorSymbol) {
       const num = parseFloat(number);
       if (isNaN(num)) return String(number);
+      if (separatorSymbol === ' ') separatorSymbol = '\u00A0'; // непереносимый пробел
 
       let fixedNum = num.toFixed(decimals);
       let parts = fixedNum.split('.');
@@ -613,15 +614,32 @@ const easingFunctions = {
       }
 
       _initOdometer() {
-  this.element.innerHTML = '';
-  const integerPartNode = document.createElement('span');
-  integerPartNode.className = 'taptop-odometer-integer-part';
-  this.element.appendChild(integerPartNode);
+ // Очищаем контейнер
+this.element.innerHTML = '';
 
-  const [startStr] = String(this.config.startValue).split('.');
-  const [endStr]   = String(this.config.endValue  ).split('.');
-  const startInt   = parseInt(startStr, 10) || 0;
-  const endInt     = parseInt(endStr,   10) || 0;
+/* ---------- prefix ---------- */
+if (this.config.prefix) {
+  const prefixSpan = document.createElement('span');
+  prefixSpan.className = 'taptop-counter-prefix';
+  prefixSpan.textContent = this.config.prefix;
+  this.element.appendChild(prefixSpan);          // сначала префикс
+}
+
+/* ---------- основной узел одометра ---------- */
+const integerPartNode = document.createElement('span');
+integerPartNode.className = 'taptop-odometer-integer-part';
+this.element.appendChild(integerPartNode);       // затем одометр
+
+/* ---------- подготовка чисел ---------- */
+const [startIntStr, startDecStr = ''] = String(this.config.startValue).split('.');
+const [endIntStr  ]                  = String(this.config.endValue  ).split('.');
+const startInt = parseInt(startIntStr, 10) || 0;
+const endInt   = parseInt(endIntStr,   10) || 0;
+
+/* ---------- разделитель тысяч ---------- */
+const separatorChar = this.config.useThousandsSeparator
+      ? (this.config.thousandsSeparator === ' ' ? '\u00A0' : this.config.thousandsSeparator)
+      : undefined;
 
   try {
     this.flipInstance = new Flip({
@@ -631,9 +649,7 @@ const easingFunctions = {
       duration:   (this.config.duration || 2000) / 1000,
       delay:      (this.config.delay    ||    0) / 1000,
       direct:     false,
-      separator:  this.config.useThousandsSeparator
-                   ? this.config.thousandsSeparator
-                   : undefined,
+      separator:  separatorChar,
       separateEvery: this.config.useThousandsSeparator ? 3 : undefined,
     });
   } catch (e) {
@@ -643,10 +659,15 @@ const easingFunctions = {
     return;
   }
 
+
+
+
           if (this.config.decimals > 0) {
               this.decimalDisplayElement = document.createElement('span');
               this.decimalDisplayElement.className = 'taptop-odometer-decimal-part';
-              const decimalValue = decimalPartStrInput ? ('.' + decimalPartStrInput.padEnd(this.config.decimals, '0').slice(0, this.config.decimals)) : ('.' + '0'.repeat(this.config.decimals));
+              const decimalValue = startDecStr
+  ? ('.' + startDecStr.padEnd(this.config.decimals, '0').slice(0, this.config.decimals))
+  : ('.' + '0'.repeat(this.config.decimals));
               this.decimalDisplayElement.textContent = decimalValue;
               this.element.appendChild(this.decimalDisplayElement);
           }
@@ -761,11 +782,14 @@ const easingFunctions = {
         const style = document.createElement('style');
         style.id = styleId;
         style.textContent = \`
-          .taptop-counter-prefix, 
-          .taptop-counter-suffix,
-          .taptop-odometer-decimal-part {
+          .taptop-counter-prefix,
+          .taptop-counter-suffix {
             display: inline-block;
             margin: 0 0.2em;
+          }
+          .taptop-odometer-decimal-part {
+            display: inline-block;
+            margin: 0;            /* убираем отступ перед десятичной точкой */
           }
           .taptop-odometer-integer-part { 
             display: inline-block;
@@ -785,6 +809,10 @@ const easingFunctions = {
             line-height: inherit; 
             text-align: center; 
             user-select: none; 
+          }
+          .taptop-odometer-integer-part .sprtr {
+            display: inline-block;
+            white-space: pre;   /* сохраняем ширину пробела */
           }
         \`;
         document.head.appendChild(style);
