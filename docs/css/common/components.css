@@ -326,3 +326,115 @@
     justify-content: center;
   }
 }
+
+/* === Tooltip Styles === */
+.label-with-tooltip {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Расстояние между лейблом и иконкой */
+  margin-bottom: 8px; /* Стандартный отступ для label */
+}
+
+/* Если label сам по себе (не для чекбокса/радио) */
+.label-with-tooltip > label:not(.checkbox-container):not(.radio-container) {
+  margin-bottom: 0; /* Убираем нижний отступ у простого label внутри */
+}
+
+.tooltip-icon {
+  position: relative; /* Для позиционирования псевдоэлемента-подсказки */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  color: var(--text-light);
+  line-height: 1; /* Чтобы иконка не влияла на высоту строки */
+}
+
+.tooltip-icon svg {
+  width: 15px;
+  height: 15px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.tooltip-icon:hover svg {
+  opacity: 1;
+  color: var(--primary-color);
+}
+
+.tooltip-icon::before { /* Фон подсказки */
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%; /* Позиционирование над иконкой */
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px); /* Центрирование и отступ */
+  
+  background-color: #333; /* Темный фон */
+  color: white; /* Белый текст */
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: normal; /* Обычный вес для подсказки */
+  line-height: 1.4;
+  white-space: normal; /* Позволить перенос для длинного текста */
+  
+  width: max-content; /* Ширина по содержимому */
+  max-width: 280px; /* Максимальная ширина */
+  
+  text-align: left;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out, visibility 0s linear 0.2s, transform 0.2s ease-in-out;
+  z-index: 100; /* Выше других элементов */
+  box-shadow: var(--shadow-md);
+}
+
+.tooltip-icon::after { /* Стрелочка для подсказки */
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(0px); /* Подсказка над стрелкой */
+  
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+  
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out, visibility 0s linear 0.2s, transform 0.2s ease-in-out;
+  z-index: 101; /* Выше фона подсказки */
+}
+
+.tooltip-icon:hover::before,
+.tooltip-icon:hover::after {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s; /* Убираем задержку при появлении */
+  transform: translateX(-50%) translateY(-8px); /* Основное положение */
+}
+
+.tooltip-icon:hover::after {
+   transform: translateX(-50%) translateY(-3px); /* Сдвигаем стрелку чуть ниже, чтобы она "выглядывала" */
+}
+
+/* Адаптация для чекбоксов/радио, чтобы иконка была на одном уровне с текстом */
+.checkbox-container .label-with-tooltip,
+.radio-container .label-with-tooltip {
+  margin-bottom: 0; /* Убираем отступ, если label-with-tooltip внутри checkbox-container */
+}
+
+/* Дополнительные стили для helper-text под чекбоксами/радио с тултипами */
+.setting-group .checkbox-container + .helper-text,
+.setting-group .radio-container + .helper-text {
+    margin-left: 35px; /* Стандартный отступ для helper-text под чекбоксом/радио */
+}
+/* Если helper-text идет после div.label-with-tooltip, содержащего checkbox-container */
+.setting-group .label-with-tooltip + .helper-text {
+    margin-left: 35px;
+}
+/* Если helper-text идет после div.label-with-tooltip, НЕ содержащего checkbox-container */
+.setting-group .label-with-tooltip:not(:has(.checkbox-container)) + .helper-text {
+    margin-left: 0;
+}
+

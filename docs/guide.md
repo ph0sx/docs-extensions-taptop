@@ -9,3 +9,4 @@
 - [Слайдер до/после](/pages/before-after-slider.md)
 - [Переворот карточки](/pages/card-flip.md)
 - [Индикатор загрузки (Loader)](/pages/loader.md)
+- [Анимированный счётчик](/pages/counter.md)

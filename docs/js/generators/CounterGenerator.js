@@ -1,6 +1,4 @@
 import { BaseGenerator } from "./base/baseGenerator.js";
-// easingFunctions будет вставлен напрямую в генерируемый код, поэтому здесь не импортируем
-// import { easingFunctions } from "../utils/easingFunctions.js"; // Только для справки
 
 export class CounterGenerator extends BaseGenerator {
   constructor() {
@@ -145,7 +143,7 @@ export class CounterGenerator extends BaseGenerator {
       thousandsSeparator: ",",
       playOnView: true,
       loop: false,
-      odometerEffect: true,
+      odometerEffect: false,
       easing: "easeOutQuad",
     };
     this.config.rules.push(newRule);
@@ -496,33 +494,30 @@ export class CounterGenerator extends BaseGenerator {
 
     const scriptParts = [];
 
-    // 1) Ссылка, которая точно существует, и сразу отдаётся как ES-модуль
     const numberFlipCDN = "https://cdn.jsdelivr.net/npm/number-flip@1.2.3/+esm";
 
-    /* --- исправленный загрузчик --- */
     const libraryLoaderCode = `
-  async function loadNumberFlipLibrary(callback) {
-    if (typeof window.Flip === 'function') {
-      callback();          // библиотека уже есть
-      return;
-    }
+        async function loadNumberFlipLibrary(callback) {
+          if (typeof window.Flip === 'function') {
+            callback(); 
+            return;
+          }
 
-    try {
-      // Загружаем ESM-сборку
-      const mod = await import('${numberFlipCDN}');
-      /*  +esm всегда экспортирует default  */
-      window.Flip = window.Flip || mod.Flip || mod.default;
+          try {
 
-      if (typeof window.Flip !== 'function') {
-        console.warn('Taptop Counter: number-flip загружен, но Flip не найден – будет простой счётчик.');
-      }
-    } catch (err) {
-      console.error('Taptop Counter: ошибка загрузки number-flip →', err);
-    }
+            const mod = await import('${numberFlipCDN}');
+            window.Flip = window.Flip || mod.Flip || mod.default;
 
-    callback();             // в любом случае инициализируем остальной код
-  }
-`;
+            if (typeof window.Flip !== 'function') {
+              console.warn('Taptop Counter: number-flip загружен, но Flip не найден – будет простой счётчик.');
+            }
+          } catch (err) {
+            console.error('Taptop Counter: ошибка загрузки number-flip →', err);
+          }
+
+          callback();
+        }
+    `;
 
     if (needsNumberFlip) {
       scriptParts.push(libraryLoaderCode);
@@ -531,48 +526,47 @@ export class CounterGenerator extends BaseGenerator {
     // easingFunctions (если есть ХОТЯ БЫ ОДНО правило)
     if (settings.rules.length > 0) {
       const easingFunctionsScript = `
-const easingFunctions = {
-  linear: (t, b, c, d) => c * (t / d) + b,
-  easeInQuad: (t, b, c, d) => { t /= d; return c * t * t + b; },
-  easeOutQuad: (t, b, c, d) => { t /= d; return -c * t * (t - 2) + b; },
-  easeInOutQuad: (t, b, c, d) => { t /= d / 2; if (t < 1) return c / 2 * t * t + b; t--; return -c / 2 * (t * (t - 2) - 1) + b; },
-  easeInCubic: (t, b, c, d) => { t /= d; return c * t * t * t + b; },
-  easeOutCubic: (t, b, c, d) => { t /= d; t--; return c * (t * t * t + 1) + b; },
-  easeInOutCubic: (t, b, c, d) => { t /= d / 2; if (t < 1) return c / 2 * t * t * t + b; t -= 2; return c / 2 * (t * t * t + 2) + b; },
-  easeInQuart: (t, b, c, d) => { t /= d; return c * t * t * t * t + b; },
-  easeOutQuart: (t, b, c, d) => { t /= d; t--; return -c * (t * t * t * t - 1) + b; },
-  easeInOutQuart: (t, b, c, d) => { t /= d / 2; if (t < 1) return c / 2 * t * t * t * t + b; t -= 2; return -c / 2 * (t * t * t * t - 2) + b; },
-  easeInQuint: (t, b, c, d) => { t /= d; return c * t * t * t * t * t + b; },
-  easeOutQuint: (t, b, c, d) => { t /= d; t--; return c * (t * t * t * t * t + 1) + b; },
-  easeInOutQuint: (t, b, c, d) => { t /= d / 2; if (t < 1) return c / 2 * t * t * t * t * t + b; t -= 2; return c / 2 * (t * t * t * t * t + 2) + b; },
-  easeInSine: (t, b, c, d) => -c * Math.cos(t / d * (Math.PI / 2)) + c + b,
-  easeOutSine: (t, b, c, d) => c * Math.sin(t / d * (Math.PI / 2)) + b,
-  easeInOutSine: (t, b, c, d) => -c / 2 * (Math.cos(Math.PI * t / d) - 1) + b,
-  easeInExpo: (t, b, c, d) => c * Math.pow(2, 10 * (t / d - 1)) + b,
-  easeOutExpo: (t, b, c, d) => c * (-Math.pow(2, -10 * t / d) + 1) + b,
-  easeInOutExpo: (t, b, c, d) => { t /= d / 2; if (t < 1) return c / 2 * Math.pow(2, 10 * (t - 1)) + b; t--; return c / 2 * (-Math.pow(2, -10 * t) + 2) + b; },
-  easeInCirc: (t, b, c, d) => { t /= d; return -c * (Math.sqrt(1 - t * t) - 1) + b; },
-  easeOutCirc: (t, b, c, d) => { t /= d; t--; return c * Math.sqrt(1 - t * t) + b; },
-  easeInOutCirc: (t, b, c, d) => { t /= d / 2; if (t < 1) return -c / 2 * (Math.sqrt(1 - t * t) - 1) + b; t -= 2; return c / 2 * (Math.sqrt(1 - t * t) + 1) + b; }
-};`;
+      const easingFunctions = {
+        linear: (t, b, c, d) => c * (t / d) + b,
+        easeInQuad: (t, b, c, d) => { t /= d; return c * t * t + b; },
+        easeOutQuad: (t, b, c, d) => { t /= d; return -c * t * (t - 2) + b; },
+        easeInOutQuad: (t, b, c, d) => { t /= d / 2; if (t < 1) return c / 2 * t * t + b; t--; return -c / 2 * (t * (t - 2) - 1) + b; },
+        easeInCubic: (t, b, c, d) => { t /= d; return c * t * t * t + b; },
+        easeOutCubic: (t, b, c, d) => { t /= d; t--; return c * (t * t * t + 1) + b; },
+        easeInOutCubic: (t, b, c, d) => { t /= d / 2; if (t < 1) return c / 2 * t * t * t + b; t -= 2; return c / 2 * (t * t * t + 2) + b; },
+        easeInQuart: (t, b, c, d) => { t /= d; return c * t * t * t * t + b; },
+        easeOutQuart: (t, b, c, d) => { t /= d; t--; return -c * (t * t * t * t - 1) + b; },
+        easeInOutQuart: (t, b, c, d) => { t /= d / 2; if (t < 1) return c / 2 * t * t * t * t + b; t -= 2; return -c / 2 * (t * t * t * t - 2) + b; },
+        easeInQuint: (t, b, c, d) => { t /= d; return c * t * t * t * t * t + b; },
+        easeOutQuint: (t, b, c, d) => { t /= d; t--; return c * (t * t * t * t * t + 1) + b; },
+        easeInOutQuint: (t, b, c, d) => { t /= d / 2; if (t < 1) return c / 2 * t * t * t * t * t + b; t -= 2; return c / 2 * (t * t * t * t * t + 2) + b; },
+        easeInSine: (t, b, c, d) => -c * Math.cos(t / d * (Math.PI / 2)) + c + b,
+        easeOutSine: (t, b, c, d) => c * Math.sin(t / d * (Math.PI / 2)) + b,
+        easeInOutSine: (t, b, c, d) => -c / 2 * (Math.cos(Math.PI * t / d) - 1) + b,
+        easeInExpo: (t, b, c, d) => c * Math.pow(2, 10 * (t / d - 1)) + b,
+        easeOutExpo: (t, b, c, d) => c * (-Math.pow(2, -10 * t / d) + 1) + b,
+        easeInOutExpo: (t, b, c, d) => { t /= d / 2; if (t < 1) return c / 2 * Math.pow(2, 10 * (t - 1)) + b; t--; return c / 2 * (-Math.pow(2, -10 * t) + 2) + b; },
+        easeInCirc: (t, b, c, d) => { t /= d; return -c * (Math.sqrt(1 - t * t) - 1) + b; },
+        easeOutCirc: (t, b, c, d) => { t /= d; t--; return c * Math.sqrt(1 - t * t) + b; },
+        easeInOutCirc: (t, b, c, d) => { t /= d / 2; if (t < 1) return -c / 2 * (Math.sqrt(1 - t * t) - 1) + b; t -= 2; return c / 2 * (Math.sqrt(1 - t * t) + 1) + b; }
+      };`;
       scriptParts.push(easingFunctionsScript);
     }
 
-    // formatNumber (если есть ХОТЯ БЫ ОДНО правило)
     if (settings.rules.length > 0) {
       const formatNumberFunction = `
-    function formatNumber(number, decimals, useSeparator, separatorSymbol) {
-      const num = parseFloat(number);
-      if (isNaN(num)) return String(number);
-      if (separatorSymbol === ' ') separatorSymbol = '\u00A0'; // непереносимый пробел
+        function formatNumber(number, decimals, useSeparator, separatorSymbol) {
+          const num = parseFloat(number);
+          if (isNaN(num)) return String(number);
+          if (separatorSymbol === ' ') separatorSymbol = '\u00A0'; // непереносимый пробел
 
-      let fixedNum = num.toFixed(decimals);
-      let parts = fixedNum.split('.');
-      if (useSeparator && parts[0].length > 3) {
-        parts[0] = parts[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g, separatorSymbol);
-      }
-      return parts.join('.');
-    }`;
+          let fixedNum = num.toFixed(decimals);
+          let parts = fixedNum.split('.');
+          if (useSeparator && parts[0].length > 3) {
+            parts[0] = parts[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g, separatorSymbol);
+          }
+          return parts.join('.');
+        }`;
       scriptParts.push(formatNumberFunction);
     }
 
@@ -614,54 +608,51 @@ const easingFunctions = {
       }
 
       _initOdometer() {
- // Очищаем контейнер
-this.element.innerHTML = '';
+          this.element.innerHTML = '';
 
-/* ---------- prefix ---------- */
-if (this.config.prefix) {
-  const prefixSpan = document.createElement('span');
-  prefixSpan.className = 'taptop-counter-prefix';
-  prefixSpan.textContent = this.config.prefix;
-  this.element.appendChild(prefixSpan);          // сначала префикс
-}
+          /* ---------- prefix ---------- */
+          if (this.config.prefix) {
+            const prefixSpan = document.createElement('span');
+            prefixSpan.className = 'taptop-counter-prefix';
+            prefixSpan.textContent = this.config.prefix;
+            this.element.appendChild(prefixSpan);
+          }
 
-/* ---------- основной узел одометра ---------- */
-const integerPartNode = document.createElement('span');
-integerPartNode.className = 'taptop-odometer-integer-part';
-this.element.appendChild(integerPartNode);       // затем одометр
+          /* ---------- основной узел одометра ---------- */
+          const integerPartNode = document.createElement('span');
+          integerPartNode.className = 'taptop-odometer-integer-part';
+          this.element.appendChild(integerPartNode);
 
-/* ---------- подготовка чисел ---------- */
-const [startIntStr, startDecStr = ''] = String(this.config.startValue).split('.');
-const [endIntStr  ]                  = String(this.config.endValue  ).split('.');
-const startInt = parseInt(startIntStr, 10) || 0;
-const endInt   = parseInt(endIntStr,   10) || 0;
+          /* ---------- подготовка чисел ---------- */
+          const [startIntStr, startDecStr = ''] = String(this.config.startValue).split('.');
+          const [endIntStr] = String(this.config.endValue  ).split('.');
+          const startInt = parseInt(startIntStr, 10) || 0;
+          const endInt = parseInt(endIntStr,10) || 0;
 
-/* ---------- разделитель тысяч ---------- */
-const separatorChar = this.config.useThousandsSeparator
-      ? (this.config.thousandsSeparator === ' ' ? '\u00A0' : this.config.thousandsSeparator)
-      : undefined;
+          /* ---------- разделитель тысяч ---------- */
+          const separatorChar = this.config.useThousandsSeparator
+                ? (this.config.thousandsSeparator === ' ' ? '\u00A0' : this.config.thousandsSeparator)
+                : undefined;
 
-  try {
-    this.flipInstance = new Flip({
-      node:       integerPartNode,
-      from:       startInt,
-      to:         endInt,                      // ← добавлено
-      duration:   (this.config.duration || 2000) / 1000,
-      delay:      (this.config.delay    ||    0) / 1000,
-      direct:     false,
-      separator:  separatorChar,
-      separateEvery: this.config.useThousandsSeparator ? 3 : undefined,
-    });
-  } catch (e) {
-    console.error(\`Error initializing Flip for \${this.config.targetClass}:\`, e, this.config);
-    this.config.odometerEffect = false;
-    this._initSimpleCounter();
-    return;
-  }
+          try {
+            this.flipInstance = new Flip({
+              node:       integerPartNode,
+              from:       startInt,
+              to:         endInt,                      // ← добавлено
+              duration:   (this.config.duration || 2000) / 1000,
+              delay:      (this.config.delay    ||    0) / 1000,
+              direct:     false,
+              separator:  separatorChar,
+              separateEvery: this.config.useThousandsSeparator ? 3 : undefined,
+            });
+          } catch (e) {
+            console.error(\`Error initializing Flip for \${this.config.targetClass}:\`, e, this.config);
+            this.config.odometerEffect = false;
+            this._initSimpleCounter();
+            return;
+          }
 
-
-
-
+          /* ---------- дробная часть ---------- */
           if (this.config.decimals > 0) {
               this.decimalDisplayElement = document.createElement('span');
               this.decimalDisplayElement.className = 'taptop-odometer-decimal-part';
@@ -672,6 +663,7 @@ const separatorChar = this.config.useThousandsSeparator
               this.element.appendChild(this.decimalDisplayElement);
           }
 
+          /* ---------- suffix ---------- */
           if (this.config.suffix) {
             const suffixSpan = document.createElement('span');
             suffixSpan.className = 'taptop-counter-suffix';
@@ -770,11 +762,11 @@ const separatorChar = this.config.useThousandsSeparator
           const formattedValue = formatNumber(value, this.config.decimals, this.config.useThousandsSeparator, this.config.thousandsSeparator);
           let output = '';
           if (this.config.prefix) output += \`<span class="taptop-counter-prefix">\${this.config.prefix}</span>\`;
-          output += formattedValue;
+          output += \`<span class="taptop-counter-number">\${formattedValue}</span>\`;
           if (this.config.suffix) output += \`<span class="taptop-counter-suffix">\${this.config.suffix}</span>\`;
           this.element.innerHTML = output;
       }
-    } // Конец класса TaptopCounterInstance
+    } 
 
     const initializeAllCounters = () => {
       const styleId = 'taptop-counter-styles';
@@ -789,7 +781,7 @@ const separatorChar = this.config.useThousandsSeparator
           }
           .taptop-odometer-decimal-part {
             display: inline-block;
-            margin: 0;            /* убираем отступ перед десятичной точкой */
+            margin: 0;
           }
           .taptop-odometer-integer-part { 
             display: inline-block;
@@ -812,7 +804,11 @@ const separatorChar = this.config.useThousandsSeparator
           }
           .taptop-odometer-integer-part .sprtr {
             display: inline-block;
-            white-space: pre;   /* сохраняем ширину пробела */
+            white-space: pre;   
+          }
+          .taptop-counter-number {
+            display: inline-block;
+            white-space: nowrap;  
           }
         \`;
         document.head.appendChild(style);
@@ -834,14 +830,11 @@ const separatorChar = this.config.useThousandsSeparator
       });
     };
 
-
-    console.log(${needsNumberFlip});
     // Логика вызова инициализации:
-    if (${needsNumberFlip}) { // Используем переменную, определенную при генерации
+    if (${needsNumberFlip}) { 
         if (typeof loadNumberFlipLibrary === 'function') {
             loadNumberFlipLibrary(initializeAllCounters);
         } else {
-            // Этого не должно произойти, если needsNumberFlip=true, т.к. libraryLoaderCode должен был быть добавлен
             console.error('Taptop Counter: loadNumberFlipLibrary function is not defined, but was needed.');
             document.addEventListener('DOMContentLoaded', initializeAllCounters); // Попытка инициализации без number-flip
         }
