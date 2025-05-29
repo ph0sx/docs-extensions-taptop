@@ -64,9 +64,13 @@ export class DragDropGenerator extends BaseGenerator {
     this.elements.draggingCursorContainer = document.getElementById(
       "dnd-dragging-cursor-container"
     );
-    this.elements.dragOpacityInput =
-      document.getElementById("dnd-drag-opacity");
-    this.elements.dragScaleInput = document.getElementById("dnd-drag-scale");
+    // ИЗМЕНЕНО: ID для слайдеров и добавлены их display-элементы
+    this.elements.dragOpacitySlider =
+      document.getElementById("dnd-drag-opacity-slider");
+    this.elements.dragOpacityValueDisplay =
+      document.getElementById("dnd-drag-opacity-value");
+    this.elements.dragScaleSlider = document.getElementById("dnd-drag-scale-slider");
+    this.elements.dragScaleValueDisplay = document.getElementById("dnd-drag-scale-value");
     this.elements.axisSelect = document.getElementById("dnd-axis");
     this.elements.inertiaCheckbox = document.getElementById("dnd-inertia");
     this.elements.dropzoneRulesContainer = document.getElementById(
@@ -95,8 +99,8 @@ export class DragDropGenerator extends BaseGenerator {
         this.elements.customContainmentSelectorInput,
         this.elements.hoverCursorSelect,
         this.elements.draggingCursorSelect,
-        this.elements.dragOpacityInput,
-        this.elements.dragScaleInput,
+        this.elements.dragOpacitySlider, // ИЗМЕНЕНО
+        this.elements.dragScaleSlider,   // ИЗМЕНЕНО
         this.elements.axisSelect,
         this.elements.inertiaCheckbox,
         this.elements.dropzoneRulesContainer,
@@ -139,24 +143,33 @@ export class DragDropGenerator extends BaseGenerator {
       this.elements.customContainmentSelectorInput, // containmentTypeSelect обрабатывается отдельно
       this.elements.hoverCursorSelect,
       this.elements.draggingCursorSelect,
-      this.elements.dragOpacityInput,
-      this.elements.dragScaleInput,
+      this.elements.dragOpacitySlider, // ИЗМЕНЕНО
+      this.elements.dragScaleSlider,   // ИЗМЕНЕНО
       this.elements.axisSelect,
       this.elements.inertiaCheckbox,
     ];
-
     elementsToTrackForConfigUpdate.forEach((element) => {
       if (element) {
-        const eventType =
-          element.type === "checkbox" || element.tagName === "SELECT"
-            ? "change"
-            : "input";
-        element.addEventListener(eventType, this._boundHandleConfigInputChange);
+        // НОВОЕ: специальная обработка для слайдеров, чтобы обновить this.config и display
+        if (element.type === 'range') {
+          element.addEventListener('input', (e) => {
+            this._handleConfigInputChange(e); // Обновляем this.config
+            if (e.target.id === 'dnd-drag-opacity-slider') {
+              this._updateSliderDisplay(this.elements.dragOpacitySlider, this.elements.dragOpacityValueDisplay);
+            } else if (e.target.id === 'dnd-drag-scale-slider') {
+              this._updateSliderDisplay(this.elements.dragScaleSlider, this.elements.dragScaleValueDisplay, 'x');
+            }
+          });
+        } else {
+          const eventType =
+            element.type === "checkbox" || element.tagName === "SELECT"
+              ? "change"
+              : "input";
+          element.addEventListener(eventType, this._boundHandleConfigInputChange);
+        }
       }
     });
 
-    // Инициализируем кастомные селекты
-    this._initCustomSelects();
 
     if (this.elements.addDropzoneRuleButton) {
       this.elements.addDropzoneRuleButton.addEventListener(
@@ -176,15 +189,27 @@ export class DragDropGenerator extends BaseGenerator {
     }
   }
 
+  // НОВЫЙ МЕТОД
+  _updateSliderDisplay(sliderElement, displayElement, suffix = '') {
+    if (sliderElement && displayElement) {
+      const value = parseFloat(sliderElement.value).toFixed(sliderElement.id === 'dnd-drag-opacity-slider' ? 2 : 1);
+      displayElement.textContent = value + suffix;
+    }
+  }
+
   /**
    * Общий обработчик для обновления this.config при изменении инпутов/селектов.
    * @param {Event} event
    */
   _handleConfigInputChange(event) {
     const target = event.target;
-    let value = target.type === "checkbox" ? target.checked : target.value;
-    const configKey = target.id
+    let value = target.type === "checkbox" ? target.checked : (target.type === "range" ? parseFloat(target.value) : target.value) ; // НОВОЕ: parseFloat для range
+
+    // НОВОЕ: Адаптируем configKey для слайдеров, убирая '-slider'
+    const elementId = target.id;
+    const configKey = elementId
       .replace(/^dnd-/, "")
+      .replace(/-slider$/, "") // Удаляем '-slider' с конца, если есть
       .replace(/-([a-z])/g, (g) => g[1].toUpperCase());
 
     if (this.config.hasOwnProperty(configKey)) {
@@ -225,8 +250,8 @@ export class DragDropGenerator extends BaseGenerator {
       this.elements.customContainmentSelectorInput,
       this.elements.hoverCursorSelect,
       this.elements.draggingCursorSelect,
-      this.elements.dragOpacityInput,
-      this.elements.dragScaleInput,
+      this.elements.dragOpacitySlider, // ИЗМЕНЕНО
+      this.elements.dragScaleSlider,   // ИЗМЕНЕНО
       this.elements.axisSelect,
       this.elements.inertiaCheckbox,
     ];
@@ -289,10 +314,14 @@ export class DragDropGenerator extends BaseGenerator {
       this.config.customContainmentSelector || "";
     this.elements.hoverCursorSelect.value = this.config.hoverCursor || "";
     this.elements.draggingCursorSelect.value = this.config.draggingCursor || "";
-    this.elements.dragOpacityInput.value =
+    // ИЗМЕНЕНО: Установка значений для слайдеров и их дисплеев
+    this.elements.dragOpacitySlider.value =
       this.config.dragOpacity === undefined ? 1 : this.config.dragOpacity;
-    this.elements.dragScaleInput.value =
+    this._updateSliderDisplay(this.elements.dragOpacitySlider, this.elements.dragOpacityValueDisplay);
+
+    this.elements.dragScaleSlider.value =
       this.config.dragScale === undefined ? 1 : this.config.dragScale;
+    this._updateSliderDisplay(this.elements.dragScaleSlider, this.elements.dragScaleValueDisplay, 'x');
     this.elements.axisSelect.value = this.config.axis || "xy";
     this.elements.inertiaCheckbox.checked = this.config.inertia || false;
 
@@ -446,6 +475,8 @@ export class DragDropGenerator extends BaseGenerator {
     let finalContainmentSelector = null;
     if (containmentType === "parent") {
       finalContainmentSelector = "parent";
+    } else if (containmentType === "viewport") { // НОВОЕ условие
+      finalContainmentSelector = "viewport"; // Используем специальное строковое значение
     } else if (containmentType === "custom") {
       const customSelectorRaw = (
         this.config.customContainmentSelector || ""
@@ -472,8 +503,9 @@ export class DragDropGenerator extends BaseGenerator {
       this.showErrorModal(
         "Прозрачность при перетаскивании должна быть числом от 0.0 до 1.0."
       );
-      // Восстанавливаем дефолтное значение в UI и конфиге, чтобы пользователь видел ошибку и мог исправить
-      this.elements.dragOpacityInput.value = 1;
+      // Восстанавливаем дефолтное значение в UI и конфиге
+      this.elements.dragOpacitySlider.value = 1;
+      this._updateSliderDisplay(this.elements.dragOpacitySlider, this.elements.dragOpacityValueDisplay);
       this.config.dragOpacity = 1;
       return null;
     }
@@ -482,7 +514,8 @@ export class DragDropGenerator extends BaseGenerator {
       this.showErrorModal(
         "Масштаб при перетаскивании должен быть числом от 0.5 до 2.0."
       );
-      this.elements.dragScaleInput.value = 1;
+      this.elements.dragScaleSlider.value = 1;
+      this._updateSliderDisplay(this.elements.dragScaleSlider, this.elements.dragScaleValueDisplay, 'x');
       this.config.dragScale = 1;
       return null;
     }
@@ -709,12 +742,15 @@ function initTaptopDragDrop(config) {
   };
 
   if (config.containmentSelector) {
-    draggableOptions.modifiers.push(
-      interact.modifiers.restrictRect({
-        restriction: config.containmentSelector, 
-        endOnly: false
-      })
-    );
+    // НОВОЕ: Обработка viewport
+    if (config.containmentSelector === "viewport") {
+      // Для Interact.js ограничение по вьюпорту достигается
+      // отсутствием явного restriction или использованием restrictEdges к window.
+      // Для restrictRect, если restriction не указан, он может ограничиваться документом/окном.
+      draggableOptions.modifiers.push(interact.modifiers.restrictRect({ endOnly: false }));
+    } else {
+      draggableOptions.modifiers.push(interact.modifiers.restrictRect({ restriction: config.containmentSelector, endOnly: false }));
+    }
   }
   
   if (config.axis === 'x') {
