@@ -16,8 +16,8 @@ export class DragDropGenerator extends BaseGenerator {
       draggableSelector: "",
       containmentType: "none",
       customContainmentSelector: "",
-      hoverCursor: "",
-      draggingCursor: "", // Это значение будет обновляться
+      hoverCursor: "grab",
+      draggingCursor: "grabbing", // Это значение будет обновляться
       dragOpacity: 1,
       dragScale: 1,
       axis: "xy",
@@ -312,8 +312,8 @@ export class DragDropGenerator extends BaseGenerator {
       this.config.containmentType || "none";
     this.elements.customContainmentSelectorInput.value =
       this.config.customContainmentSelector || "";
-    this.elements.hoverCursorSelect.value = this.config.hoverCursor || "";
-    this.elements.draggingCursorSelect.value = this.config.draggingCursor || "";
+    this.elements.hoverCursorSelect.value = this.config.hoverCursor || "grab";
+    this.elements.draggingCursorSelect.value = this.config.draggingCursor || "grabbing";
     // ИЗМЕНЕНО: Установка значений для слайдеров и их дисплеев
     this.elements.dragOpacitySlider.value =
       this.config.dragOpacity === undefined ? 1 : this.config.dragOpacity;
@@ -490,8 +490,8 @@ export class DragDropGenerator extends BaseGenerator {
       finalContainmentSelector = "." + customSelectorRaw.replace(/^\./, "");
     }
 
-    const hoverCursor = (this.config.hoverCursor || "").trim();
-    const draggingCursorValue = (this.config.draggingCursor || "").trim();
+    const hoverCursor = (this.config.hoverCursor || "grab").trim();
+    const draggingCursorValue = (this.config.draggingCursor || "grabbing").trim();
     // специальное значение "[отсутствует]" заменяем на "no-change" для передачи в конфиг
     const draggingCursor =
       draggingCursorValue === "[отсутствует]"
@@ -599,6 +599,19 @@ export class DragDropGenerator extends BaseGenerator {
     
     return `
 <script>
+${
+  // НОВОЕ: Определяем функцию getViewportRect глобально, если выбран viewport
+  settings.containmentSelector === "viewport" ? `
+function getViewportRect() {
+  return {
+    x: 0,
+    y: 0,
+    width: window.innerWidth,
+    height: window.innerHeight
+  };
+}
+` : ""
+}
 document.addEventListener('DOMContentLoaded', function() {
   const dragDropConfig = ${configJson};
 
@@ -742,12 +755,11 @@ function initTaptopDragDrop(config) {
   };
 
   if (config.containmentSelector) {
-    // НОВОЕ: Обработка viewport
+    // ИЗМЕНЕНО: Явное указание restriction для viewport
     if (config.containmentSelector === "viewport") {
-      // Для Interact.js ограничение по вьюпорту достигается
-      // отсутствием явного restriction или использованием restrictEdges к window.
-      // Для restrictRect, если restriction не указан, он может ограничиваться документом/окном.
-      draggableOptions.modifiers.push(interact.modifiers.restrictRect({ endOnly: false }));
+      // Передаем имя функции, которая будет вычислять границы вьюпорта
+      // Сама функция getViewportRect была добавлена в тело скрипта выше
+      draggableOptions.modifiers.push(interact.modifiers.restrictRect({ restriction: getViewportRect, endOnly: false }));
     } else {
       draggableOptions.modifiers.push(interact.modifiers.restrictRect({ restriction: config.containmentSelector, endOnly: false }));
     }

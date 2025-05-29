@@ -88,8 +88,7 @@
               </span>
             </div>
             <select id="dnd-hover-cursor" class="select-styled">
-              <option value="" selected>✥ По умолчанию</option>
-              <option value="grab">🖐️ Схватить (grab)</option>
+              <option value="grab" selected>🖐️ Схватить (grab) - По умолч.</option>
               <option value="pointer">👉 Указатель (pointer)</option>
               <option value="move">✥ Перемещение (move)</option>
               <option value="help">❓ Помощь (help)</option>
@@ -106,8 +105,7 @@
               </span>
             </div>
             <select id="dnd-dragging-cursor" class="select-styled">
-              <option value="" selected>✥ По умолчанию (grabbing)</option>
-              <option value="grabbing">✊ Захвачено (grabbing)</option>
+              <option value="grabbing" selected>✊ Захвачено (grabbing) - По умолч.</option>
               <option value="move">✥ Перемещение (move)</option>
               <option value="no-change">Без изменений от hover</option>
               <option value="none">🚫 Скрыть курсор (none)</option>
