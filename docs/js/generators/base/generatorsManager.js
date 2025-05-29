@@ -192,6 +192,7 @@ export async function initAllGenerators() {
       cardFlipModule,
       loaderModule,
       counterModule,
+      dragDropModule
     ] = await Promise.all([
       import("../cookieGenerator.js").catch((e) => {
         console.error("Ошибка загрузки cookieGenerator:", e);
@@ -231,6 +232,9 @@ export async function initAllGenerators() {
       import("../CounterGenerator.js").catch((e) => {
         console.error("Ошибка загрузки CounterGenerator:", e);
       }),
+      import("../DragDropGenerator.js").catch((e) => {
+        console.error("Ошибка загрузки counterGenerator:", e);
+      })
     ]);
 
     // Регистрируем генераторы
@@ -315,6 +319,15 @@ export async function initAllGenerators() {
         "counter",
         CounterGenerator,
         "#counter-generator"
+      );
+    }
+
+    if (dragDropModule) {
+      const { DragDropGenerator } = dragDropModule;
+      generatorsManager.register(
+        "dragDrop",
+        DragDropGenerator,
+        "#drag-drop-generator"
       );
     }
 

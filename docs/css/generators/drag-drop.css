@@ -1,0 +1,170 @@
+/* Кастомные селекты для курсоров с SVG иконками */
+.custom-select {
+  position: relative;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  min-height: 20px;
+}
+
+.custom-select-trigger:hover {
+  border-color: #3290ff;
+}
+
+.custom-select.open .custom-select-trigger {
+  border-color: #3290ff;
+  box-shadow: 0 0 0 2px rgba(50, 144, 255, 0.1);
+}
+
+.cursor-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  opacity: 0.8;
+}
+
+.cursor-text {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-arrow {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  opacity: 0.6;
+  transition: transform 0.2s ease;
+}
+
+.custom-select.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.custom-select-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.custom-select.open .custom-select-options {
+  display: block;
+}
+
+.custom-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease;
+}
+
+.custom-option:hover {
+  background-color: #f5f5f5;
+}
+
+.custom-option.selected {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.custom-option.selected .cursor-icon {
+  opacity: 1;
+}
+
+.custom-option:last-child {
+  border-radius: 0 0 4px 4px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .custom-select-trigger,
+  .custom-option {
+    padding: 12px;
+    font-size: 16px; /* Увеличиваем шрифт для лучшей читаемости на мобильных */
+  }
+  
+  .cursor-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .custom-select-options {
+    max-height: 300px;
+  }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+  .custom-select-trigger,
+  .custom-select-options {
+    background: #2d2d2d;
+    border-color: #404040;
+    color: #e0e0e0;
+  }
+  
+  .custom-option:hover {
+    background-color: #404040;
+  }
+  
+  .custom-option.selected {
+    background-color: #1e3a8a;
+    color: #93c5fd;
+  }
+}
+
+/* Анимация появления опций */
+.custom-select-options {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.custom-select.open .custom-select-options {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Стили для скролла в опциях */
+.custom-select-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-select-options::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.custom-select-options::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.custom-select-options::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

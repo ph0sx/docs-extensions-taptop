@@ -1,0 +1,173 @@
+<div id="drag-drop-generator" class="generator-container">
+  <div class="generator-header">
+    <div class="generator-title">Настройка Перетаскивания Элементов (Drag & Drop)</div>
+    <div class="generator-subtitle">Определите, какие элементы можно перетаскивать, как они будут себя вести, и куда их можно сбрасывать.</div>
+  </div>
+
+  <div class="settings-block">
+    <div class="settings-section">
+      <div class="settings-section-title">1. Настройки перетаскиваемых элементов</div>
+      <div class="settings-row">
+        <div class="setting-group">
+          <label for="dnd-draggable-selector">CSS-класс элементов для перетаскивания <span class="required-indicator">*</span></label>
+          <input type="text" id="dnd-draggable-selector" class="text-input" placeholder="Например: draggable-item">
+          <div class="helper-text">Укажите CSS-класс без точки, который назначен элементам, которые должны стать перетаскиваемыми.</div>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="setting-group">
+  <label for="dnd-containment-type">Ограничить перемещение:</label>
+  <select id="dnd-containment-type" class="select-styled">
+    <option value="none" selected>Нет ограничений (может выходить за пределы экрана)</option>
+    <option value="parent">Родительским элементом</option>
+    <option value="custom">Пользовательским селектором</option>
+  </select>
+</div>
+<div class="setting-group" id="dnd-custom-containment-group" style="display: none;">
+  <label for="dnd-custom-containment-selector">CSS-селектор контейнера-ограничителя:</label>
+  <input type="text" id="dnd-custom-containment-selector" class="text-input" placeholder="Например: drag-area">
+  <div class="helper-text">Укажите CSS-класс (например, <code>my-container</code>) или ID (например, <code>#myContainer</code>).</div>
+</div>
+        <div class="setting-group">
+          <label for="dnd-hover-cursor">Курсор при наведении на элемент:</label>
+          <select id="dnd-hover-cursor" class="select-styled">
+            <option value="" selected>✥ По умолчанию</option>
+            <option value="grab">🖐️ Схватить (grab)</option>
+            <option value="move">✥ Перемещение (move)</option>
+            <option value="pointer">👉 Указатель (pointer)</option>
+            <option value="help">❓ Помощь (help)</option>
+            <option value="wait">⏳ Ожидание (wait)</option>
+            <option value="crosshair">十字 Перекрестие (crosshair)</option>
+          </select>
+          <div class="helper-text">Стиль курсора при наведении мыши на перетаскиваемый элемент (до захвата).</div>
+        </div>
+                <div class="setting-group">
+          <label for="dnd-dragging-cursor">Курсор во время перетаскивания:</label>
+          <select id="dnd-dragging-cursor" class="select-styled">
+            <option value="" selected>✥ По умолчанию (grabbing или как у элемента)</option>
+            <option value="grabbing">✊ Захвачено (grabbing)</option>
+            <option value="move">✥ Перемещение (move)</option>
+            <option value="none">🚫 Скрыть курсор (none)</option>
+            <option value="pointer">👉 Указатель (pointer)</option>
+            <option value="no-change"  >Без изменений от hover</option> </select>
+          <div class="helper-text">Стиль курсора непосредственно в процессе перетаскивания.</div>
+         </div>
+        </div>
+        <div class="setting-group">
+          <label for="dnd-axis">Разрешенные оси перемещения (опционально)</label>
+          <select id="dnd-axis" class="select-styled">
+            <option value="xy" selected>Горизонтально и вертикально (xy)</option>
+            <option value="x">Только горизонтально (x)</option>
+            <option value="y">Только вертикально (y)</option>
+          </select>
+          <div class="helper-text">Определяет, в каком направлении можно перемещать элемент.</div>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="setting-group">
+          <label class="checkbox-container">
+            <input type="checkbox" id="dnd-inertia">
+            <span class="checkmark"></span>
+            <span class="checkbox-option-label">Включить эффект инерции</span>
+          </label>
+          <div class="helper-text" style="margin-left: 35px;">Придает движению элемента плавное затухание после отпускания.</div>
+        </div>
+      </div>
+    </div>
+<div class="settings-block">      
+<div class="settings-section">
+        <div class="settings-section-title">2. Стилизация элемента при перетаскивании</div>
+        <div class="settings-row">
+            <div class="setting-group">
+                <label for="dnd-drag-opacity">Прозрачность (0.0 - 1.0):</label>
+                <input type="number" id="dnd-drag-opacity" class="number-input" min="0" max="1" step="0.1" value="1">
+                <div class="helper-text">1.0 - непрозрачный. 0.5 - полупрозрачный.</div>
+            </div>
+            <div class="setting-group">
+                <label for="dnd-drag-scale">Масштаб (0.5 - 2.0):</label>
+                <input type="number" id="dnd-drag-scale" class="number-input" min="0.5" max="2" step="0.05" value="1">
+                <div class="helper-text">1.0 - без изменений. 1.1 - увеличение на 10%.</div>
+            </div>
+        </div>
+        <div class="helper-text">Эти стили будут применены к элементу в дополнение к классу <code>.is-dragging</code>. Класс <code>.is-dragging</code> вы можете стилизовать самостоятельно в Taptop для других эффектов (например, тени).</div>
+    </div>
+  </div>
+
+  <div class="settings-block">
+    <div class="settings-section">
+      <div class="settings-section-title">2. Настройка зон сброса (Dropzones)</div>
+      <div id="dnd-dropzone-rules-container">
+        </div>
+      <button id="dnd-add-dropzone-rule-button" class="add-rule-button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Добавить зону сброса
+      </button>
+    </div>
+  </div>
+
+  <div class="action-section">
+    <button id="generate-btn" class="generate-button">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="button-text">Сгенерировать код</span>
+    </button>
+  </div>
+
+  <div id="success-modal" class="modal">
+    <div class="modal-content">
+      <button class="close-modal">&times;</button>
+      <div class="modal-header">
+        <div class="success-icon">✓</div>
+        <h3>Код успешно скопирован!</h3>
+      </div>
+      <div class="instruction-block">
+        <h4>Инструкция по подключению:</h4>
+        <ol>
+          <li>Откройте настройки страницы в Taptop (иконка шестеренки).</li>
+          <li>В блоке <strong>"Перед тегом body"</strong> вставьте сгенерированный код.</li>
+          <li>Убедитесь, что на странице есть элементы с указанными CSS-классами.</li>
+          <li>Сохраните настройки и опубликуйте страницу.</li>
+        </ol>
+      </div>
+      <button class="close-button">Понятно</button>
+    </div>
+  </div>
+</div>
+
+<template id="dnd-dropzone-rule-template">
+  <div class="rule-card dnd-dropzone-rule-card" data-rule-id="">
+    <div class="rule-header">
+      <div class="rule-title">Зона сброса <span class="rule-badge rule-number">1</span></div>
+      <button class="remove-rule-button" type="button" aria-label="Удалить зону сброса">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="rule-body">
+      <div class="settings-row">
+        <div class="setting-group">
+          <label for="dnd-dropzone-selector-template">CSS-класс зоны сброса <span class="required-indicator">*</span></label>
+          <input type="text" class="text-input dnd-dropzone-selector" id="dnd-dropzone-selector-template" name="dropzoneSelector" placeholder="Например: drop-target-area">
+          <div class="helper-text">Укажите CSS-класс элемента, который будет служить зоной для сброса.</div>
+        </div>
+        <div class="setting-group">
+          <label for="dnd-accept-draggables-template">CSS-класс(ы) принимаемых элементов <span class="required-indicator">*</span></label>
+          <input type="text" class="text-input dnd-accept-draggables" id="dnd-accept-draggables-template" name="acceptDraggables" placeholder="Например: draggable-item, card">
+          <div class="helper-text">Укажите CSS-класс (или несколько через запятую) перетаскиваемых элементов, которые можно сбросить в эту зону.</div>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="setting-group">
+          <label for="dnd-ondragenter-class-template">CSS-класс для зоны при перетаскивании над ней (опционально)</label>
+          <input type="text" class="text-input dnd-ondragenter-class" id="dnd-ondragenter-class-template" name="onDragEnterClass" placeholder="Например: drop-active">
+          <div class="helper-text">Этот класс будет добавлен зоне, когда совместимый элемент перетаскивается над ней.</div>
+        </div>
+        <div class="setting-group">
+          <label for="dnd-candrop-class-template">CSS-класс для перетаскиваемого элемента над зоной (опционально)</label>
+          <input type="text" class="text-input dnd-candrop-class" id="dnd-candrop-class-template" name="canDropClass" placeholder="Например: can-be-dropped">
+          <div class="helper-text">Этот класс будет добавлен перетаскиваемому элементу, когда он находится над этой зоной и может быть сброшен.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
