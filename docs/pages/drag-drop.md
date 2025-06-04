@@ -11,12 +11,12 @@
         <div class="setting-group">
           <div class="label-with-tooltip">
             <label for="dnd-draggable-selector">CSS-класс элементов для перетаскивания <span class="required-indicator">*</span></label>
-            <span class="tooltip-icon" data-tooltip="Укажите CSS-класс (без точки), который назначен элементам, которые должны стать перетаскиваемыми. Например: draggable-item">
+            <span class="tooltip-icon" data-tooltip="Укажите CSS-класс (без точки), который назначен элементам, которые должны стать перетаскиваемыми. Можно указать несколько классов через запятую. Например: draggable-item, card">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 17V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="7.5" r="0.5" fill="currentColor" stroke="currentColor" stroke-width="0.5"/></svg>
             </span>
           </div>
-          <input type="text" id="dnd-draggable-selector" class="text-input" placeholder="Например: draggable-item">
-          <div class="helper-text">Укажите CSS-класс без точки, который назначен элементам, которые должны стать перетаскиваемыми.</div>
+          <input type="text" id="dnd-draggable-selector" class="text-input" placeholder="Например: draggable-item, card, widget">
+          <div class="helper-text">Укажите CSS-класс (или несколько классов через запятую, без точек), который назначен элементам, которые должны стать перетаскиваемыми.</div>
         </div>
       </div>
       <div class="settings-row">
@@ -92,9 +92,7 @@
               <option value="grab" selected>🖐️ Схватить (grab) - По умолч.</option>
               <option value="pointer">👉 Указатель (pointer)</option>
               <option value="move">✥ Перемещение (move)</option>
-              <option value="help">❓ Помощь (help)</option>
-              <option value="wait">⏳ Ожидание (wait)</option>
-              <option value="crosshair">十字 Перекрестие (crosshair)</option>
+              <option value="auto">Стиль браузера</option>
             </select>
             <div class="helper-text">Стиль курсора при наведении (до захвата).</div>
           </div>
@@ -110,7 +108,7 @@
               <option value="move">✥ Перемещение (move)</option>
               <option value="no-change">Без изменений от hover</option>
               <option value="none">🚫 Скрыть курсор (none)</option>
-              <option value="pointer">👉 Указатель (pointer)</option>
+              <option value="auto">Стиль браузера</option>
             </select>
             <div class="helper-text">Стиль курсора в процессе перетаскивания.</div>
           </div>

@@ -1,11 +1,14 @@
 // Файл: js/generators/DragDropGenerator.js
 import { BaseGenerator } from "./base/baseGenerator.js";
+import { parseCommaList } from "../utils/parseCommaList.js"; // НОВОЕ: Импорт утилиты
 
 const DEFAULT_DROPZONE_RULE = {
   dropzoneSelector: "",
   acceptDraggables: "",
   onDragEnterClass: "",
   canDropClass: "",
+  onDropDraggableClass: "", // НОВОЕ
+  onDropDownzoneClass: ""   // НОВОЕ
 };
 
 export class DragDropGenerator extends BaseGenerator {
@@ -55,8 +58,9 @@ export class DragDropGenerator extends BaseGenerator {
     );
     this.elements.hoverCursorSelect =
       document.getElementById("dnd-hover-cursor");
-    this.elements.hoverCursorContainer =
-      document.getElementById("dnd-hover-cursor-container");
+    this.elements.hoverCursorContainer = document.getElementById(
+      "dnd-hover-cursor-container"
+    );
     this.elements.draggingCursorSelect = document.getElementById(
       "dnd-dragging-cursor"
     );
@@ -64,12 +68,18 @@ export class DragDropGenerator extends BaseGenerator {
       "dnd-dragging-cursor-container"
     );
     // ИЗМЕНЕНО: ID для слайдеров и добавлены их display-элементы
-    this.elements.dragOpacitySlider =
-      document.getElementById("dnd-drag-opacity-slider");
-    this.elements.dragOpacityValueDisplay =
-      document.getElementById("dnd-drag-opacity-value");
-    this.elements.dragScaleSlider = document.getElementById("dnd-drag-scale-slider");
-    this.elements.dragScaleValueDisplay = document.getElementById("dnd-drag-scale-value");
+    this.elements.dragOpacitySlider = document.getElementById(
+      "dnd-drag-opacity-slider"
+    );
+    this.elements.dragOpacityValueDisplay = document.getElementById(
+      "dnd-drag-opacity-value"
+    );
+    this.elements.dragScaleSlider = document.getElementById(
+      "dnd-drag-scale-slider"
+    );
+    this.elements.dragScaleValueDisplay = document.getElementById(
+      "dnd-drag-scale-value"
+    );
     this.elements.axisSelect = document.getElementById("dnd-axis");
     this.elements.inertiaCheckbox = document.getElementById("dnd-inertia");
     this.elements.dropzoneRulesContainer = document.getElementById(
@@ -99,7 +109,7 @@ export class DragDropGenerator extends BaseGenerator {
         this.elements.hoverCursorSelect,
         this.elements.draggingCursorSelect,
         this.elements.dragOpacitySlider, // ИЗМЕНЕНО
-        this.elements.dragScaleSlider,   // ИЗМЕНЕНО
+        this.elements.dragScaleSlider, // ИЗМЕНЕНО
         this.elements.axisSelect,
         this.elements.inertiaCheckbox,
         this.elements.dropzoneRulesContainer,
@@ -143,20 +153,27 @@ export class DragDropGenerator extends BaseGenerator {
       this.elements.hoverCursorSelect,
       this.elements.draggingCursorSelect,
       this.elements.dragOpacitySlider, // ИЗМЕНЕНО
-      this.elements.dragScaleSlider,   // ИЗМЕНЕНО
+      this.elements.dragScaleSlider, // ИЗМЕНЕНО
       this.elements.axisSelect,
       this.elements.inertiaCheckbox,
     ];
     elementsToTrackForConfigUpdate.forEach((element) => {
       if (element) {
         // НОВОЕ: специальная обработка для слайдеров, чтобы обновить this.config и display
-        if (element.type === 'range') {
-          element.addEventListener('input', (e) => {
+        if (element.type === "range") {
+          element.addEventListener("input", (e) => {
             this._handleConfigInputChange(e); // Обновляем this.config
-            if (e.target.id === 'dnd-drag-opacity-slider') {
-              this._updateSliderDisplay(this.elements.dragOpacitySlider, this.elements.dragOpacityValueDisplay);
-            } else if (e.target.id === 'dnd-drag-scale-slider') {
-              this._updateSliderDisplay(this.elements.dragScaleSlider, this.elements.dragScaleValueDisplay, 'x');
+            if (e.target.id === "dnd-drag-opacity-slider") {
+              this._updateSliderDisplay(
+                this.elements.dragOpacitySlider,
+                this.elements.dragOpacityValueDisplay
+              );
+            } else if (e.target.id === "dnd-drag-scale-slider") {
+              this._updateSliderDisplay(
+                this.elements.dragScaleSlider,
+                this.elements.dragScaleValueDisplay,
+                "x"
+              );
             }
           });
         } else {
@@ -164,11 +181,13 @@ export class DragDropGenerator extends BaseGenerator {
             element.type === "checkbox" || element.tagName === "SELECT"
               ? "change"
               : "input";
-          element.addEventListener(eventType, this._boundHandleConfigInputChange);
+          element.addEventListener(
+            eventType,
+            this._boundHandleConfigInputChange
+          );
         }
       }
     });
-
 
     if (this.elements.addDropzoneRuleButton) {
       this.elements.addDropzoneRuleButton.addEventListener(
@@ -189,9 +208,11 @@ export class DragDropGenerator extends BaseGenerator {
   }
 
   // НОВЫЙ МЕТОД
-  _updateSliderDisplay(sliderElement, displayElement, suffix = '') {
+  _updateSliderDisplay(sliderElement, displayElement, suffix = "") {
     if (sliderElement && displayElement) {
-      const value = parseFloat(sliderElement.value).toFixed(sliderElement.id === 'dnd-drag-opacity-slider' ? 2 : 1);
+      const value = parseFloat(sliderElement.value).toFixed(
+        sliderElement.id === "dnd-drag-opacity-slider" ? 2 : 1
+      );
       displayElement.textContent = value + suffix;
     }
   }
@@ -202,7 +223,12 @@ export class DragDropGenerator extends BaseGenerator {
    */
   _handleConfigInputChange(event) {
     const target = event.target;
-    let value = target.type === "checkbox" ? target.checked : (target.type === "range" ? parseFloat(target.value) : target.value) ; // НОВОЕ: parseFloat для range
+    let value =
+      target.type === "checkbox"
+        ? target.checked
+        : target.type === "range"
+        ? parseFloat(target.value)
+        : target.value; // НОВОЕ: parseFloat для range
 
     // НОВОЕ: Адаптируем configKey для слайдеров, убирая '-slider'
     const elementId = target.id;
@@ -250,7 +276,7 @@ export class DragDropGenerator extends BaseGenerator {
       this.elements.hoverCursorSelect,
       this.elements.draggingCursorSelect,
       this.elements.dragOpacitySlider, // ИЗМЕНЕНО
-      this.elements.dragScaleSlider,   // ИЗМЕНЕНО
+      this.elements.dragScaleSlider, // ИЗМЕНЕНО
       this.elements.axisSelect,
       this.elements.inertiaCheckbox,
     ];
@@ -312,15 +338,23 @@ export class DragDropGenerator extends BaseGenerator {
     this.elements.customContainmentSelectorInput.value =
       this.config.customContainmentSelector || "";
     this.elements.hoverCursorSelect.value = this.config.hoverCursor || "grab";
-    this.elements.draggingCursorSelect.value = this.config.draggingCursor || "grabbing";
+    this.elements.draggingCursorSelect.value =
+      this.config.draggingCursor || "grabbing";
     // ИЗМЕНЕНО: Установка значений для слайдеров и их дисплеев
     this.elements.dragOpacitySlider.value =
       this.config.dragOpacity === undefined ? 1 : this.config.dragOpacity;
-    this._updateSliderDisplay(this.elements.dragOpacitySlider, this.elements.dragOpacityValueDisplay);
+    this._updateSliderDisplay(
+      this.elements.dragOpacitySlider,
+      this.elements.dragOpacityValueDisplay
+    );
 
     this.elements.dragScaleSlider.value =
       this.config.dragScale === undefined ? 1 : this.config.dragScale;
-    this._updateSliderDisplay(this.elements.dragScaleSlider, this.elements.dragScaleValueDisplay, 'x');
+    this._updateSliderDisplay(
+      this.elements.dragScaleSlider,
+      this.elements.dragScaleValueDisplay,
+      "x"
+    );
     this.elements.axisSelect.value = this.config.axis || "xy";
     this.elements.inertiaCheckbox.checked = this.config.inertia || false;
 
@@ -390,6 +424,17 @@ export class DragDropGenerator extends BaseGenerator {
         baseName: "candrop-class",
         propName: "canDropClass",
         inputName: "canDropClass",
+      },
+      // НОВОЕ: Добавляем новые поля
+      {
+        baseName: "ondrop-draggable-class",
+        propName: "onDropDraggableClass", 
+        inputName: "onDropDraggableClass",
+      },
+      {
+        baseName: "ondrop-dropzone-class",
+        propName: "onDropDownzoneClass",
+        inputName: "onDropDownzoneClass",
       },
     ];
 
@@ -465,16 +510,36 @@ export class DragDropGenerator extends BaseGenerator {
 
     const draggableSelectorRaw = (this.config.draggableSelector || "").trim();
     if (!draggableSelectorRaw) {
-      this.showErrorModal("Укажите CSS-класс для перетаскиваемых элементов.");
+      this.showErrorModal("Укажите CSS-класс (или классы через запятую) для перетаскиваемых элементов.");
       return null;
     }
-    const draggableSelector = "." + draggableSelectorRaw.replace(/^\./, "");
+
+    // НОВОЕ: Обработка нескольких классов для draggableSelector
+    const draggableClassesArray = parseCommaList(draggableSelectorRaw); // Используем parseCommaList
+    if (draggableClassesArray.length === 0) {
+      this.showErrorModal("Укажите хотя бы один CSS-класс для перетаскиваемых элементов.");
+      return null;
+    }
+    // Валидируем каждый класс и добавляем точку
+    const validatedDraggableSelectors = draggableClassesArray.map(cls => {
+      if (!/^[a-zA-Z0-9_-]+$/.test(cls)) { // Простая валидация имени класса
+        this.showErrorModal(`Недопустимое имя класса: "${cls}". Используйте только буквы, цифры, дефис и подчеркивание.`);
+        return null; // Помечаем как невалидный
+      }
+      return "." + cls.replace(/^\./, ""); // Удаляем точку, если есть, и добавляем свою
+    });
+
+    if (validatedDraggableSelectors.some(s => s === null)) {
+      return null; // Если хоть один класс невалиден, прерываем
+    }
+    const draggableSelector = validatedDraggableSelectors.join(","); // Формируем мультиселектор
 
     const containmentType = this.config.containmentType || "none";
     let finalContainmentSelector = null;
     if (containmentType === "parent") {
       finalContainmentSelector = "parent";
-    } else if (containmentType === "viewport") { // НОВОЕ условие
+    } else if (containmentType === "viewport") {
+      // НОВОЕ условие
       finalContainmentSelector = "viewport"; // Используем специальное строковое значение
     } else if (containmentType === "custom") {
       const customSelectorRaw = (
@@ -490,7 +555,9 @@ export class DragDropGenerator extends BaseGenerator {
     }
 
     const hoverCursor = (this.config.hoverCursor || "grab").trim();
-    const draggingCursorValue = (this.config.draggingCursor || "grabbing").trim();
+    const draggingCursorValue = (
+      this.config.draggingCursor || "grabbing"
+    ).trim();
     // специальное значение "[отсутствует]" заменяем на "no-change" для передачи в конфиг
     const draggingCursor =
       draggingCursorValue === "[отсутствует]"
@@ -504,7 +571,10 @@ export class DragDropGenerator extends BaseGenerator {
       );
       // Восстанавливаем дефолтное значение в UI и конфиге
       this.elements.dragOpacitySlider.value = 1;
-      this._updateSliderDisplay(this.elements.dragOpacitySlider, this.elements.dragOpacityValueDisplay);
+      this._updateSliderDisplay(
+        this.elements.dragOpacitySlider,
+        this.elements.dragOpacityValueDisplay
+      );
       this.config.dragOpacity = 1;
       return null;
     }
@@ -514,7 +584,11 @@ export class DragDropGenerator extends BaseGenerator {
         "Масштаб при перетаскивании должен быть числом от 0.5 до 2.0."
       );
       this.elements.dragScaleSlider.value = 1;
-      this._updateSliderDisplay(this.elements.dragScaleSlider, this.elements.dragScaleValueDisplay, 'x');
+      this._updateSliderDisplay(
+        this.elements.dragScaleSlider,
+        this.elements.dragScaleValueDisplay,
+        "x"
+      );
       this.config.dragScale = 1;
       return null;
     }
@@ -554,7 +628,8 @@ export class DragDropGenerator extends BaseGenerator {
         dropzoneValidationFailed = true;
         return;
       }
-      const normalizedAcceptDraggables = "." + acceptDraggablesRaw.replace(/^\./, "");
+      const normalizedAcceptDraggables =
+        "." + acceptDraggablesRaw.replace(/^\./, "");
 
       const onDragEnterClassRaw = (ruleConfig.onDragEnterClass || "").trim();
       const onDragEnterClass = onDragEnterClassRaw
@@ -566,11 +641,34 @@ export class DragDropGenerator extends BaseGenerator {
         ? canDropClassRaw.replace(/^\./, "")
         : null;
 
+      // НОВОЕ: Валидация и обработка новых полей
+      const onDropDraggableClassRaw = (ruleConfig.onDropDraggableClass || "").trim();
+      if (onDropDraggableClassRaw && !/^[a-zA-Z0-9_-]+$/.test(onDropDraggableClassRaw)) {
+        this.showErrorModal(`Неверный формат CSS-класса для элемента после сброса в правиле #${index + 1}. Используйте только буквы, цифры, дефисы и подчеркивания.`);
+        dropzoneValidationFailed = true;
+        return;
+      }
+      const onDropDraggableClass = onDropDraggableClassRaw
+        ? onDropDraggableClassRaw.replace(/^\./, "")
+        : null;
+
+      const onDropDownzoneClassRaw = (ruleConfig.onDropDownzoneClass || "").trim();
+      if (onDropDownzoneClassRaw && !/^[a-zA-Z0-9_-]+$/.test(onDropDownzoneClassRaw)) {
+        this.showErrorModal(`Неверный формат CSS-класса для зоны после сброса в правиле #${index + 1}. Используйте только буквы, цифры, дефисы и подчеркивания.`);
+        dropzoneValidationFailed = true;
+        return;
+      }
+      const onDropDownzoneClass = onDropDownzoneClassRaw
+        ? onDropDownzoneClassRaw.replace(/^\./, "")
+        : null;
+
       settings.dropzones.push({
         dropzoneSelector: dropzoneSelector,
         acceptDraggables: normalizedAcceptDraggables,
         onDragEnterClass: onDragEnterClass,
         canDropClass: canDropClass,
+        onDropDraggableClass: onDropDraggableClass,
+        onDropDownzoneClass: onDropDownzoneClass,
       });
     });
 
@@ -582,22 +680,30 @@ export class DragDropGenerator extends BaseGenerator {
 
   generateCode(settings) {
     if (!settings) return "/* Ошибка: настройки не предоставлены. */";
-    
-    const interactCdn = "https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js";
-    
+
+    const interactCdn =
+      "https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js";
+
     const inertiaOptions = settings.inertia
-      ? JSON.stringify({ resistance: 20, minSpeed: 200, endSpeed: 50, allowResume: true, smoothEndDuration: 500 })
+      ? JSON.stringify({
+          resistance: 20,
+          minSpeed: 200,
+          endSpeed: 50,
+          allowResume: true,
+          smoothEndDuration: 500,
+        })
       : "false";
 
     // CSS для hoverCursor больше не генерируем здесь, будем делать через JS
-    
+
     const configJson = JSON.stringify(settings, null, 2);
-    
+
     return `
 <script>
 ${
   // НОВОЕ: Определяем функцию getViewportRect глобально, если выбран viewport
-  settings.containmentSelector === "viewport" ? `
+  settings.containmentSelector === "viewport"
+    ? `
 function getViewportRect() {
   return {
     x: 0,
@@ -606,7 +712,8 @@ function getViewportRect() {
     height: window.innerHeight
   };
 }
-` : ""
+`
+    : ""
 }
 document.addEventListener('DOMContentLoaded', function() {
   const dragDropConfig = ${configJson};
@@ -731,7 +838,7 @@ function initTaptopDragDrop(config) {
         if (target.hasOwnProperty('taptopSavedOpacity')) {
           target.style.opacity = target.taptopSavedOpacity;
          delete target.taptopSavedOpacity;
-+        }
+        }
 
   // Восстанавливаем курсор body
   if (document.body.hasOwnProperty('taptopSavedBodyCursor')) {
@@ -835,7 +942,17 @@ if (config.hoverCursor) {
           if (zoneConfig.onDragEnterClass) dropzoneElement.classList.remove(zoneConfig.onDragEnterClass);
           if (zoneConfig.canDropClass) draggableElement.classList.remove(zoneConfig.canDropClass);
         },
-        ondrop(event) { /* NOP */ },
+        ondrop(event) {
+          const droppedElement = event.relatedTarget; // Перетаскиваемый элемент
+          const dropzoneElement = event.target;    // Дропзона
+
+          if (zoneConfig.onDropDraggableClass) {
+            droppedElement.classList.add(zoneConfig.onDropDraggableClass);
+          }
+          if (zoneConfig.onDropDownzoneClass) {
+            dropzoneElement.classList.add(zoneConfig.onDropDownzoneClass);
+          }
+        },
         ondropdeactivate(event) {
           if (zoneConfig.onDragEnterClass) event.target.classList.remove(zoneConfig.onDragEnterClass);
         }
