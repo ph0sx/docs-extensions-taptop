@@ -76,6 +76,7 @@
         </div>
       </div>
     </div>
+    </div>
 <div class="settings-block">      
 <div class="settings-section">
         <div class="settings-section-title">2. Внешний вид и поведение при перетаскивании</div>
@@ -147,8 +148,8 @@
             </div>
         </div>
         <div class="helper-text">Эти стили будут применены к элементу в дополнение к классу <code>.is-dragging</code>. Класс <code>.is-dragging</code> вы можете стилизовать самостоятельно в Taptop для других эффектов (например, тени).</div>
-    </div>
   </div>
+    </div>
 
   <div class="settings-block">
     <div class="settings-section">
@@ -208,9 +209,9 @@
           <div class="helper-text">Укажите CSS-класс элемента, который будет служить зоной для сброса.</div>
         </div>
         <div class="setting-group">
-          <label for="dnd-accept-draggables-template">CSS-класс(ы) принимаемых элементов <span class="required-indicator">*</span></label>
-          <input type="text" class="text-input dnd-accept-draggables" id="dnd-accept-draggables-template" name="acceptDraggables" placeholder="Например: draggable-item, card">
-          <div class="helper-text">Укажите CSS-класс (или несколько через запятую) перетаскиваемых элементов, которые можно сбросить в эту зону.</div>
+          <label for="dnd-accept-draggables-template">CSS-класс принимаемых элементов <span class="required-indicator">*</span></label>
+          <input type="text" class="text-input dnd-accept-draggables" id="dnd-accept-draggables-template" name="acceptDraggables" placeholder="Например: draggable-item">
+          <div class="helper-text">Укажите CSS-класс перетаскиваемых элементов, которые можно сбросить в эту зону.</div>
         </div>
       </div>
       <div class="settings-row">
@@ -224,6 +225,19 @@
           <input type="text" class="text-input dnd-candrop-class" id="dnd-candrop-class-template" name="canDropClass" placeholder="Например: can-be-dropped">
           <div class="helper-text">Этот класс будет добавлен перетаскиваемому элементу, когда он находится над этой зоной и может быть сброшен.</div>
         </div>
+      </div>
+      <div class="settings-row">
+        <div class="setting-group">
+          <label for="dnd-ondrop-draggable-class-template">CSS-класс для ЭЛЕМЕНТА после сброса (опционально)</label>
+          <input type="text" class="text-input dnd-ondrop-draggable-class" id="dnd-ondrop-draggable-class-template" name="onDropDraggableClass" placeholder="Например: item-placed">
+          <div class="helper-text">Если указан, этот класс будет добавлен к перетаскиваемому элементу после сброса в эту зону.</div>
+        </div>
+        <div class="setting-group">
+          <label for="dnd-ondrop-dropzone-class-template">CSS-класс для ЗОНЫ после сброса (опционально)</label>
+          <input type="text" class="text-input dnd-ondrop-dropzone-class" id="dnd-ondrop-dropzone-class-template" name="onDropDownzoneClass" placeholder="Например: zone-filled">
+          <div class="helper-text">Если указан, этот класс будет добавлен к зоне сброса после сброса в нее элемента.</div>
+        </div>
+      </div>
       </div>
     </div>
   </div>

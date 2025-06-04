@@ -1,6 +1,5 @@
 // Файл: js/generators/DragDropGenerator.js
 import { BaseGenerator } from "./base/baseGenerator.js";
-import { parseCommaList } from "../utils/parseCommaList.js";
 
 const DEFAULT_DROPZONE_RULE = {
   dropzoneSelector: "",
@@ -555,10 +554,7 @@ export class DragDropGenerator extends BaseGenerator {
         dropzoneValidationFailed = true;
         return;
       }
-      const acceptDraggablesArray = parseCommaList(acceptDraggablesRaw);
-      const normalizedAcceptDraggables = acceptDraggablesArray
-        .map((cls) => "." + cls.replace(/^\./, ""))
-        .join(", ");
+      const normalizedAcceptDraggables = "." + acceptDraggablesRaw.replace(/^\./, "");
 
       const onDragEnterClassRaw = (ruleConfig.onDragEnterClass || "").trim();
       const onDragEnterClass = onDragEnterClassRaw
@@ -679,13 +675,17 @@ function initTaptopDragDrop(config) {
     listeners: {
       move: dragMoveListener,
       start(event) {
-  const target = event.target;
-  target.classList.add('is-dragging');
-  
-  // Сохраняем исходные стили
-  target.taptopSavedElementCursor = target.style.cursor || '';
-  target.taptopSavedOpacity = target.style.opacity || '';
-  document.body.taptopSavedBodyCursor = document.body.style.cursor || '';
+        const target = event.target;
+        target.classList.add('is-dragging');
+        
+        // Сохраняем исходные стили
+        target.taptopSavedZIndex = target.style.zIndex || '';
+        target.taptopSavedPosition = target.style.position || '';
+        target.taptopSavedElementCursor = target.style.cursor || '';
+        target.taptopSavedOpacity = target.style.opacity || '';
+        document.body.taptopSavedBodyCursor = document.body.style.cursor || '';
+
+        target.style.zIndex = '9999'; // Высокое значение для отображения поверх
 
   // Устанавливаем курсор при перетаскивании
   if (config.draggingCursor && config.draggingCursor !== "[отсутствует]") {
@@ -712,18 +712,26 @@ function initTaptopDragDrop(config) {
   }
 },
       end(event) {
-  const target = event.target;
-  target.classList.remove('is-dragging');
+        const target = event.target;
+        target.classList.remove('is-dragging');
 
-  // Восстанавливаем курсор и прозрачность элемента
-  if (target.hasOwnProperty('taptopSavedElementCursor')) {
-    target.style.cursor = target.taptopSavedElementCursor;
-    delete target.taptopSavedElementCursor;
-  }
-  if (target.hasOwnProperty('taptopSavedOpacity')) {
-    target.style.opacity = target.taptopSavedOpacity;
-    delete target.taptopSavedOpacity;
-  }
+        // Восстанавливаем исходные стили
+        if (target.hasOwnProperty('taptopSavedZIndex')) {
+          target.style.zIndex = target.taptopSavedZIndex;
+          delete target.taptopSavedZIndex;
+        }
+        if (target.hasOwnProperty('taptopSavedPosition')) {
+          target.style.position = target.taptopSavedPosition;
+          delete target.taptopSavedPosition;
+        }
+        if (target.hasOwnProperty('taptopSavedElementCursor')) {
+          target.style.cursor = target.taptopSavedElementCursor;
+          delete target.taptopSavedElementCursor;
+        }
+        if (target.hasOwnProperty('taptopSavedOpacity')) {
+          target.style.opacity = target.taptopSavedOpacity;
+         delete target.taptopSavedOpacity;
++        }
 
   // Восстанавливаем курсор body
   if (document.body.hasOwnProperty('taptopSavedBodyCursor')) {
