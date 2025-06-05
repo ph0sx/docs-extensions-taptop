@@ -9,7 +9,11 @@ const DEFAULT_DROPZONE_RULE = {
   canDropClass: "",
   onDropDraggableClass: "", // НОВОЕ
   onDropDownzoneClass: "",   // НОВОЕ
-  snapAndLock: false // НОВОЕ: Опция примагничивания и блокировки
+  snapAndLock: false, // НОВОЕ: Опция примагничивания и блокировки
+  dropBehavior: "center", // НОВОЕ: center|fill|hide|custom
+  fillPadding: 0, // НОВОЕ: Отступы при заполнении в пикселях
+  customWidth: "", // НОВОЕ: Кастомная ширина при сбросе
+  customHeight: "" // НОВОЕ: Кастомная высота при сбросе
 };
 
 export class DragDropGenerator extends BaseGenerator {
@@ -451,6 +455,28 @@ export class DragDropGenerator extends BaseGenerator {
         inputName: "snapAndLock",
         type: "checkbox"
       },
+      {
+        baseName: "drop-behavior",
+        propName: "dropBehavior",
+        inputName: "dropBehavior",
+        type: "select"
+      },
+      {
+        baseName: "fill-padding",
+        propName: "fillPadding",
+        inputName: "fillPadding",
+        type: "number"
+      },
+      {
+        baseName: "custom-width",
+        propName: "customWidth",
+        inputName: "customWidth"
+      },
+      {
+        baseName: "custom-height",
+        propName: "customHeight",
+        inputName: "customHeight"
+      },
     ];
 
     fieldsToUpdate.forEach((fieldInfo) => {
@@ -486,6 +512,12 @@ export class DragDropGenerator extends BaseGenerator {
       if (numberElement) numberElement.textContent = index + 1;
       const removeButton = card.querySelector(".remove-rule-button");
       if (removeButton) removeButton.style.display = "";
+      
+      // НОВОЕ: Обновляем видимость секций в зависимости от dropBehavior
+      const dropBehaviorSelect = card.querySelector('.dnd-drop-behavior');
+      if (dropBehaviorSelect) {
+        this._toggleDropBehaviorSections(card, dropBehaviorSelect.value);
+      }
     });
   }
 
@@ -504,6 +536,11 @@ export class DragDropGenerator extends BaseGenerator {
     const fieldName = target.name;
     if (fieldName && rule.hasOwnProperty(fieldName)) {
       rule[fieldName] = target.type === "checkbox" ? target.checked : target.value; // Обработка чекбоксов
+      
+      // НОВОЕ: Обработка изменения dropBehavior для управления видимостью секций
+      if (fieldName === 'dropBehavior') {
+        this._toggleDropBehaviorSections(ruleCard, target.value);
+      }
     }
   }
 
@@ -515,6 +552,20 @@ export class DragDropGenerator extends BaseGenerator {
       );
       const ruleIdToRemove = ruleCard?.dataset.ruleId;
       if (ruleIdToRemove) this._removeDropzoneRule(ruleIdToRemove);
+    }
+  }
+  
+  // НОВОЕ: Метод для управления видимостью секций на основе dropBehavior
+  _toggleDropBehaviorSections(ruleCard, behaviorValue) {
+    const fillOptions = ruleCard.querySelector('.dnd-fill-options');
+    const customOptions = ruleCard.querySelector('.dnd-custom-options');
+    
+    if (fillOptions) {
+      fillOptions.style.display = behaviorValue === 'fill' ? '' : 'none';
+    }
+    
+    if (customOptions) {
+      customOptions.style.display = behaviorValue === 'custom' ? '' : 'none';
     }
   }
 
@@ -683,6 +734,50 @@ export class DragDropGenerator extends BaseGenerator {
         : null;
       
       const snapAndLock = !!ruleConfig.snapAndLock; // НОВОЕ: Сбор опции snapAndLock
+      
+      // НОВОЕ: Валидация и сбор новых опций поведения при сбросе
+      const dropBehavior = (ruleConfig.dropBehavior || "center").trim();
+      const fillPadding = parseInt(ruleConfig.fillPadding) || 0;
+      
+      let customWidth = null;
+      let customHeight = null;
+      
+      if (dropBehavior === "custom") {
+        const customWidthRaw = (ruleConfig.customWidth || "").trim();
+        const customHeightRaw = (ruleConfig.customHeight || "").trim();
+        
+        if (customWidthRaw) {
+          const widthMatch = customWidthRaw.match(/^(\d+)(px|%|em|rem|vw|vh)?$/);
+          if (!widthMatch) {
+            this.showErrorModal(`Неверный формат ширины в правиле #${index + 1}. Используйте формат: 100, 100px, 50%, 10em и т.д.`);
+            dropzoneValidationFailed = true;
+            return;
+          }
+          customWidth = widthMatch[2] ? customWidthRaw : customWidthRaw + "px";
+        }
+        
+        if (customHeightRaw) {
+          const heightMatch = customHeightRaw.match(/^(\d+)(px|%|em|rem|vw|vh)?$/);
+          if (!heightMatch) {
+            this.showErrorModal(`Неверный формат высоты в правиле #${index + 1}. Используйте формат: 100, 100px, 50%, 10em и т.д.`);
+            dropzoneValidationFailed = true;
+            return;
+          }
+          customHeight = heightMatch[2] ? customHeightRaw : customHeightRaw + "px";
+        }
+        
+        if (!customWidth && !customHeight) {
+          this.showErrorModal(`Для режима "Кастомные размеры" в правиле #${index + 1} необходимо указать хотя бы ширину или высоту.`);
+          dropzoneValidationFailed = true;
+          return;
+        }
+      }
+      
+      if (fillPadding < 0 || fillPadding > 100) {
+        this.showErrorModal(`Отступы заполнения в правиле #${index + 1} должны быть от 0 до 100 пикселей.`);
+        dropzoneValidationFailed = true;
+        return;
+      }
 
       settings.dropzones.push({
         dropzoneSelector: dropzoneSelector,
@@ -692,6 +787,10 @@ export class DragDropGenerator extends BaseGenerator {
         onDropDraggableClass: onDropDraggableClass,
         onDropDownzoneClass: onDropDownzoneClass,
         snapAndLock: snapAndLock, // НОВОЕ
+        dropBehavior: dropBehavior, // НОВОЕ
+        fillPadding: fillPadding, // НОВОЕ
+        customWidth: customWidth, // НОВОЕ
+        customHeight: customHeight // НОВОЕ
       });
     });
 
@@ -848,6 +947,30 @@ function initTaptopDragDrop(config) {
               target.classList.remove(zoneCfg.onDropDraggableClass);
             }
           });
+        }
+        
+        // ИСПРАВЛЕНИЕ #3: Восстанавливаем оригинальные стили при новом перетаскивании
+        if (target.dataset.taptopOriginalWidth !== undefined) {
+          target.style.width = target.dataset.taptopOriginalWidth;
+          target.style.height = target.dataset.taptopOriginalHeight;
+          target.style.display = target.dataset.taptopOriginalDisplay;
+          target.style.boxSizing = target.dataset.taptopOriginalBoxSizing;
+          
+          // Очищаем скопированные стили border
+          target.style.borderRadius = '';
+          target.style.borderTopLeftRadius = '';
+          target.style.borderTopRightRadius = '';
+          target.style.borderBottomLeftRadius = '';
+          target.style.borderBottomRightRadius = '';
+          target.style.borderWidth = '';
+          target.style.borderStyle = '';
+          target.style.borderColor = '';
+          
+          // Удаляем сохраненные данные
+          delete target.dataset.taptopOriginalWidth;
+          delete target.dataset.taptopOriginalHeight;
+          delete target.dataset.taptopOriginalDisplay;
+          delete target.dataset.taptopOriginalBoxSizing;
         }
 
   // Устанавливаем курсор при перетаскивании
@@ -1007,6 +1130,11 @@ if (config.hoverCursor) {
           const droppedElement = event.relatedTarget; // Перетаскиваемый элемент
           const dropzoneElement = event.target;    // Дропзона
 
+          // ИСПРАВЛЕНИЕ #2: Убираем canDropClass сразу после сброса
+          if (zoneConfig.canDropClass) {
+            droppedElement.classList.remove(zoneConfig.canDropClass);
+          }
+
           if (zoneConfig.onDropDraggableClass) {
             droppedElement.classList.add(zoneConfig.onDropDraggableClass);
           }
@@ -1019,9 +1147,10 @@ if (config.hoverCursor) {
             droppedElement.dataset.taptopActiveDropzoneClass = zoneConfig.onDropDownzoneClass;
           }
 
-          if (zoneConfig.snapAndLock) {
+          // НОВОЕ: Расширенная система позиционирования и изменения размеров
+          if (zoneConfig.snapAndLock || zoneConfig.dropBehavior !== 'center') {
             const dzRect = dropzoneElement.getBoundingClientRect();
-            const drRect = droppedElement.getBoundingClientRect(); // Используем текущие размеры элемента
+            const drRect = droppedElement.getBoundingClientRect();
 
             // Текущие значения data-x/data-y (смещения от исходной позиции)
             const currentDraggableDataX = parseFloat(droppedElement.getAttribute('data-x')) || 0;
@@ -1031,24 +1160,112 @@ if (config.hoverCursor) {
             const draggableCurrentPageX = drRect.left + window.pageXOffset - currentDraggableDataX;
             const draggableCurrentPageY = drRect.top + window.pageYOffset - currentDraggableDataY;
 
-            // Целевые абсолютные координаты верхнего левого угла элемента для центрирования в дропзоне
-            const targetPageX = dzRect.left + window.pageXOffset + (dzRect.width / 2) - (drRect.width / 2);
-            const targetPageY = dzRect.top + window.pageYOffset + (dzRect.height / 2) - (drRect.height / 2);
+            // Сохраняем исходные размеры и стили для возможного восстановления
+            if (!droppedElement.dataset.taptopOriginalWidth) {
+              droppedElement.dataset.taptopOriginalWidth = droppedElement.style.width || '';
+              droppedElement.dataset.taptopOriginalHeight = droppedElement.style.height || '';
+              droppedElement.dataset.taptopOriginalDisplay = droppedElement.style.display || '';
+              droppedElement.dataset.taptopOriginalBoxSizing = droppedElement.style.boxSizing || '';
+            }
 
-            // Новые значения для data-x и data-y будут разницей между целевой позицией и исходной позицией элемента
-            const newDataX = targetPageX - draggableCurrentPageX;
-            const newDataY = targetPageY - draggableCurrentPageY;
+            let targetPageX, targetPageY, newDataX, newDataY;
+            let newTransform = '';
 
-            droppedElement.setAttribute('data-x', newDataX);
-            droppedElement.setAttribute('data-y', newDataY);
-            let newTransform = \`translate(\${newDataX}px, \${newDataY}px)\`;
-            droppedElement.style.transform = newTransform;
-            droppedElement.setAttribute('data-taptop-draggable-locked', 'true');
-            droppedElement.style.cursor = 'none'; // Курсор убирается
+            switch (zoneConfig.dropBehavior) {
+              case 'fill':
+                // Заполняем всю дропзону с учетом отступов и центрируем
+                const padding = zoneConfig.fillPadding || 0;
+                const newWidth = dzRect.width - padding * 2;
+                const newHeight = dzRect.height - padding * 2;
+                
+                // Устанавливаем размеры
+                droppedElement.style.width = newWidth + 'px';
+                droppedElement.style.height = newHeight + 'px';
+                droppedElement.style.boxSizing = 'border-box';
+                
+                // ИСПРАВЛЕНИЕ #3: Копируем важные стили из дропзоны
+                const dropzoneStyles = window.getComputedStyle(dropzoneElement);
+                const stylesToCopy = [
+                  'borderRadius', 'borderTopLeftRadius', 'borderTopRightRadius', 
+                  'borderBottomLeftRadius', 'borderBottomRightRadius',
+                  'borderWidth', 'borderStyle', 'borderColor'
+                ];
+                
+                stylesToCopy.forEach(styleProp => {
+                  const value = dropzoneStyles.getPropertyValue(styleProp.replace(/([A-Z])/g, '-$1').toLowerCase());
+                  if (value && value !== 'initial' && value !== 'inherit' && value !== 'unset') {
+                    droppedElement.style[styleProp] = value;
+                  }
+                });
+                
+                // Центрируем элемент с новыми размерами
+                targetPageX = dzRect.left + window.pageXOffset + padding;
+                targetPageY = dzRect.top + window.pageYOffset + padding;
+                
+                newDataX = targetPageX - draggableCurrentPageX;
+                newDataY = targetPageY - draggableCurrentPageY;
+                break;
+
+              case 'hide':
+                // Скрываем элемент
+                droppedElement.style.display = 'none';
+                // Позиционирование не требуется, но data-x/y обнуляем
+                newDataX = 0;
+                newDataY = 0;
+                break;
+
+              case 'custom':
+                // Применяем кастомные размеры и центрируем
+                if (zoneConfig.customWidth) {
+                  droppedElement.style.width = zoneConfig.customWidth;
+                }
+                if (zoneConfig.customHeight) {
+                  droppedElement.style.height = zoneConfig.customHeight;
+                }
+                
+                // Получаем новые размеры элемента после изменения
+                const newRect = droppedElement.getBoundingClientRect();
+                targetPageX = dzRect.left + window.pageXOffset + (dzRect.width / 2) - (newRect.width / 2);
+                targetPageY = dzRect.top + window.pageYOffset + (dzRect.height / 2) - (newRect.height / 2);
+                
+                newDataX = targetPageX - draggableCurrentPageX;
+                newDataY = targetPageY - draggableCurrentPageY;
+                break;
+
+              default: // 'center' или snapAndLock
+                // Стандартное центрирование
+                targetPageX = dzRect.left + window.pageXOffset + (dzRect.width / 2) - (drRect.width / 2);
+                targetPageY = dzRect.top + window.pageYOffset + (dzRect.height / 2) - (drRect.height / 2);
+                
+                newDataX = targetPageX - draggableCurrentPageX;
+                newDataY = targetPageY - draggableCurrentPageY;
+                break;
+            }
+
+            // Применяем позиционирование (кроме случая скрытия)
+            if (zoneConfig.dropBehavior !== 'hide') {
+              droppedElement.setAttribute('data-x', newDataX);
+              droppedElement.setAttribute('data-y', newDataY);
+              newTransform = \`translate(\${newDataX}px, \${newDataY}px)\`;
+              droppedElement.style.transform = newTransform;
+            }
+
+            // Блокировка только при snapAndLock (ИСПРАВЛЕНИЕ #4: Отделяем логику блокировки)
+            if (zoneConfig.snapAndLock) {
+              droppedElement.setAttribute('data-taptop-draggable-locked', 'true');
+              droppedElement.style.cursor = 'none';
+            }
           }
         },
         ondropdeactivate(event) {
-          if (zoneConfig.onDragEnterClass) event.target.classList.remove(zoneConfig.onDragEnterClass);
+          const dropzoneElement = event.target;
+          const draggableElement = event.relatedTarget;
+          
+          if (zoneConfig.onDragEnterClass) dropzoneElement.classList.remove(zoneConfig.onDragEnterClass);
+          // ИСПРАВЛЕНИЕ #2: Убираем canDropClass и здесь на всякий случай
+          if (zoneConfig.canDropClass && draggableElement) {
+            draggableElement.classList.remove(zoneConfig.canDropClass);
+          }
         }
       });
     });
