@@ -240,12 +240,13 @@
         <div class="setting-group">
           <div class="label-with-tooltip">
             <label for="dnd-drop-behavior-template">Поведение элемента после сброса:</label>
-            <span class="tooltip-icon" data-tooltip="Определяет, что произойдет с элементом после сброса в эту зону. 'По центру' - элемент будет отцентрирован в зоне. 'Скрыть элемент' - элемент станет невидимым.">
+            <span class="tooltip-icon" data-tooltip="Определяет, что произойдет с элементом после сброса в эту зону. 'Ничего не делать' - элемент остается там, где его сбросили. 'По центру' - элемент автоматически перемещается в центр зоны. 'Скрыть элемент' - элемент становится невидимым.">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 17V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="7.5" r="0.5" fill="currentColor" stroke="currentColor" stroke-width="0.5"/></svg>
             </span>
           </div>
           <select class="select-styled dnd-drop-behavior" id="dnd-drop-behavior-template" name="dropBehavior">
-            <option value="center" selected>📍 По центру зоны (стандартно)</option>
+            <option value="none">⚫ Ничего не делать (оставить где сбросили)</option>
+            <option value="center" selected>📍 По центру зоны</option>
             <option value="hide">👻 Скрыть элемент</option>
           </select>
           <div class="helper-text">Выберите, что произойдет с элементом после сброса.</div>

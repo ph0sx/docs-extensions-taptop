@@ -10,7 +10,7 @@ const DEFAULT_DROPZONE_RULE = {
   onDropDraggableClass: "",
   onDropDownzoneClass: "",
   snapAndLock: false,
-  dropBehavior: "center" // center|hide
+  dropBehavior: "center" // none|center|hide
 };
 
 export class DragDropGenerator extends BaseGenerator {
@@ -1058,7 +1058,7 @@ if (config.hoverCursor) {
             droppedElement.dataset.taptopActiveDropzoneClass = zoneConfig.onDropDownzoneClass;
           }
 
-          if (zoneConfig.snapAndLock || zoneConfig.dropBehavior === 'hide') {
+          if (zoneConfig.snapAndLock || zoneConfig.dropBehavior === 'center' || zoneConfig.dropBehavior === 'hide') {
             const dzRect = dropzoneElement.getBoundingClientRect();
             const drRect = droppedElement.getBoundingClientRect();
 
@@ -1086,13 +1086,17 @@ if (config.hoverCursor) {
               droppedElement.style.display = 'none';
               newDataX = 0;
               newDataY = 0;
-            } else {
-              // Стандартное центрирование
+            } else if (zoneConfig.dropBehavior === 'center') {
+              // Центрирование элемента в зоне
               targetPageX = dzRect.left + window.pageXOffset + (dzRect.width / 2) - (drRect.width / 2);
               targetPageY = dzRect.top + window.pageYOffset + (dzRect.height / 2) - (drRect.height / 2);
               
               newDataX = targetPageX - draggableCurrentPageX;
               newDataY = targetPageY - draggableCurrentPageY;
+            } else {
+              // Для 'none' или если snapAndLock без dropBehavior - оставляем элемент где есть
+              newDataX = currentDraggableDataX;
+              newDataY = currentDraggableDataY;
             }
 
             // Применяем позиционирование (кроме случая скрытия)
@@ -1106,7 +1110,22 @@ if (config.hoverCursor) {
             // Блокировка при snapAndLock
             if (zoneConfig.snapAndLock) {
               droppedElement.setAttribute('data-taptop-draggable-locked', 'true');
-              droppedElement.style.cursor = 'none';
+              // Принудительно сбрасываем курсор на обычный и удаляем сохраненные значения
+              droppedElement.style.cursor = 'default';
+              // Очищаем сохраненные курсоры от hover-логики
+              if (droppedElement.hasOwnProperty('taptopPreHoverCursor')) {
+                delete droppedElement.taptopPreHoverCursor;
+              }
+              if (droppedElement.hasOwnProperty('taptopInitialInlineCursor')) {
+                delete droppedElement.taptopInitialInlineCursor;
+              }
+              // Принудительно диспатчим mouseleave событие для сброса hover-состояния
+              const mouseLeaveEvent = new MouseEvent('mouseleave', {
+                bubbles: true,
+                cancelable: true,
+                view: window
+              });
+              droppedElement.dispatchEvent(mouseLeaveEvent);
             }
           }
         },
