@@ -240,53 +240,15 @@
         <div class="setting-group">
           <div class="label-with-tooltip">
             <label for="dnd-drop-behavior-template">Поведение элемента после сброса:</label>
-            <span class="tooltip-icon" data-tooltip="Определяет, что произойдет с элементом после сброса в эту зону. 'По центру' - элемент будет отцентрирован. 'Заполнить зону' - элемент растянется на всю зону. 'Скрыть элемент' - элемент исчезнет. 'Кастомные размеры' - элемент примет указанные размеры.">
+            <span class="tooltip-icon" data-tooltip="Определяет, что произойдет с элементом после сброса в эту зону. 'По центру' - элемент будет отцентрирован в зоне. 'Скрыть элемент' - элемент станет невидимым.">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 17V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="7.5" r="0.5" fill="currentColor" stroke="currentColor" stroke-width="0.5"/></svg>
             </span>
           </div>
           <select class="select-styled dnd-drop-behavior" id="dnd-drop-behavior-template" name="dropBehavior">
             <option value="center" selected>📍 По центру зоны (стандартно)</option>
-            <option value="fill">🔳 Заполнить всю зону</option>
             <option value="hide">👻 Скрыть элемент</option>
-            <option value="custom">⚙️ Кастомные размеры</option>
           </select>
           <div class="helper-text">Выберите, что произойдет с элементом после сброса.</div>
-        </div>
-      </div>
-      
-      <div class="settings-row dnd-fill-options" style="display: none;">
-        <div class="setting-group">
-          <div class="label-with-tooltip">
-            <label for="dnd-fill-padding-template">Отступы от краев зоны (в пикселях):</label>
-            <span class="tooltip-icon" data-tooltip="Указывает, на сколько пикселей элемент должен отступать от краев дропзоны при заполнении. 0 - элемент точно по размеру зоны.">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 17V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="7.5" r="0.5" fill="currentColor" stroke="currentColor" stroke-width="0.5"/></svg>
-            </span>
-          </div>
-          <input type="number" class="text-input dnd-fill-padding" id="dnd-fill-padding-template" name="fillPadding" min="0" max="100" value="0" placeholder="0">
-          <div class="helper-text">0 = точно по размеру зоны, 10 = отступ 10px со всех сторон</div>
-        </div>
-      </div>
-      
-      <div class="settings-row dnd-custom-options" style="display: none;">
-        <div class="setting-group">
-          <div class="label-with-tooltip">
-            <label for="dnd-custom-width-template">Кастомная ширина элемента:</label>
-            <span class="tooltip-icon" data-tooltip="Укажите ширину, которую должен принять элемент. Поддерживаются форматы: 100, 100px, 50%, 10em, 20rem, 30vw, 40vh">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 17V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="7.5" r="0.5" fill="currentColor" stroke="currentColor" stroke-width="0.5"/></svg>
-            </span>
-          </div>
-          <input type="text" class="text-input dnd-custom-width" id="dnd-custom-width-template" name="customWidth" placeholder="Например: 200px, 50%, 10em">
-          <div class="helper-text">Поддерживаются px, %, em, rem, vw, vh. Оставьте пустым, чтобы не менять ширину.</div>
-        </div>
-        <div class="setting-group">
-          <div class="label-with-tooltip">
-            <label for="dnd-custom-height-template">Кастомная высота элемента:</label>
-            <span class="tooltip-icon" data-tooltip="Укажите высоту, которую должен принять элемент. Поддерживаются форматы: 100, 100px, 50%, 10em, 20rem, 30vw, 40vh">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 17V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="7.5" r="0.5" fill="currentColor" stroke="currentColor" stroke-width="0.5"/></svg>
-            </span>
-          </div>
-          <input type="text" class="text-input dnd-custom-height" id="dnd-custom-height-template" name="customHeight" placeholder="Например: 150px, 30%, 8em">
-          <div class="helper-text">Поддерживаются px, %, em, rem, vw, vh. Оставьте пустым, чтобы не менять высоту.</div>
         </div>
       </div>
       
