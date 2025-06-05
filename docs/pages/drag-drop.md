@@ -236,6 +236,21 @@
           <div class="helper-text">Если указан, этот класс будет добавлен к зоне сброса после сброса в нее элемента.</div>
         </div>
       </div>
+      <div class="settings-row">
+        <div class="setting-group">
+          <div class="label-with-tooltip">
+            <label class="checkbox-container">
+              <input type="checkbox" class="dnd-snap-and-lock" id="dnd-snap-and-lock-template" name="snapAndLock">
+              <span class="checkmark"></span>
+              <span class="checkbox-option-label">Примагнитить элемент к этой зоне и запретить дальнейшее перетаскивание</span>
+            </label>
+            <span class="tooltip-icon" data-tooltip="При включении этой опции элемент будет автоматически отцентрирован в зоне сброса, заблокирован от дальнейшего перетаскивания и курсор над ним будет скрыт.">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 17V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="7.5" r="0.5" fill="currentColor" stroke="currentColor" stroke-width="0.5"/></svg>
+            </span>
+          </div>
+          <div class="helper-text" style="margin-left: 35px;">Элемент будет примагничен к центру зоны, заблокирован от дальнейшего перетаскивания и курсор над ним будет скрыт.</div>
+        </div>
+      </div>
       </div>
     </div>
   </div>

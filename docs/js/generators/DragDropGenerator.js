@@ -8,7 +8,8 @@ const DEFAULT_DROPZONE_RULE = {
   onDragEnterClass: "",
   canDropClass: "",
   onDropDraggableClass: "", // НОВОЕ
-  onDropDownzoneClass: ""   // НОВОЕ
+  onDropDownzoneClass: "",   // НОВОЕ
+  snapAndLock: false // НОВОЕ: Опция примагничивания и блокировки
 };
 
 export class DragDropGenerator extends BaseGenerator {
@@ -201,6 +202,10 @@ export class DragDropGenerator extends BaseGenerator {
         this._boundHandleDropzoneRulesContainerChange
       );
       this.elements.dropzoneRulesContainer.addEventListener(
+        "change",
+        this._boundHandleDropzoneRulesContainerChange
+      );
+      this.elements.dropzoneRulesContainer.addEventListener(
         "click",
         this._boundHandleDropzoneRulesContainerClick
       );
@@ -302,6 +307,10 @@ export class DragDropGenerator extends BaseGenerator {
     if (this.elements.dropzoneRulesContainer) {
       this.elements.dropzoneRulesContainer.removeEventListener(
         "input",
+        this._boundHandleDropzoneRulesContainerChange
+      );
+      this.elements.dropzoneRulesContainer.removeEventListener(
+        "change",
         this._boundHandleDropzoneRulesContainerChange
       );
       this.elements.dropzoneRulesContainer.removeEventListener(
@@ -436,6 +445,12 @@ export class DragDropGenerator extends BaseGenerator {
         propName: "onDropDownzoneClass",
         inputName: "onDropDownzoneClass",
       },
+      {
+        baseName: "snap-and-lock",
+        propName: "snapAndLock",
+        inputName: "snapAndLock",
+        type: "checkbox"
+      },
     ];
 
     fieldsToUpdate.forEach((fieldInfo) => {
@@ -448,7 +463,12 @@ export class DragDropGenerator extends BaseGenerator {
             ruleConfig.id
           }`;
           inputElement.id = newId;
-          inputElement.value = ruleConfig[fieldInfo.propName] || "";
+          // Устанавливаем значение
+          if (fieldInfo.type === "checkbox") {
+            inputElement.checked = !!ruleConfig[fieldInfo.propName];
+          } else {
+            inputElement.value = ruleConfig[fieldInfo.propName] || "";
+          }
           const label = ruleCard.querySelector(`label[for="${originalId}"]`);
           if (label) label.setAttribute("for", newId);
         }
@@ -472,7 +492,7 @@ export class DragDropGenerator extends BaseGenerator {
   _handleDropzoneRulesContainerChange(event) {
     const target = event.target;
     if (
-      target.tagName !== "INPUT" ||
+      (target.tagName !== "INPUT" && target.tagName !== "SELECT") || // Добавил SELECT на всякий случай
       !target.closest(".dnd-dropzone-rule-card")
     )
       return;
@@ -483,7 +503,7 @@ export class DragDropGenerator extends BaseGenerator {
     if (!rule) return;
     const fieldName = target.name;
     if (fieldName && rule.hasOwnProperty(fieldName)) {
-      rule[fieldName] = target.value; // Тримим при сборе в collectData
+      rule[fieldName] = target.type === "checkbox" ? target.checked : target.value; // Обработка чекбоксов
     }
   }
 
@@ -661,6 +681,8 @@ export class DragDropGenerator extends BaseGenerator {
       const onDropDownzoneClass = onDropDownzoneClassRaw
         ? onDropDownzoneClassRaw.replace(/^\./, "")
         : null;
+      
+      const snapAndLock = !!ruleConfig.snapAndLock; // НОВОЕ: Сбор опции snapAndLock
 
       settings.dropzones.push({
         dropzoneSelector: dropzoneSelector,
@@ -669,6 +691,7 @@ export class DragDropGenerator extends BaseGenerator {
         canDropClass: canDropClass,
         onDropDraggableClass: onDropDraggableClass,
         onDropDownzoneClass: onDropDownzoneClass,
+        snapAndLock: snapAndLock, // НОВОЕ
       });
     });
 
@@ -783,6 +806,12 @@ function initTaptopDragDrop(config) {
       move: dragMoveListener,
       start(event) {
         const target = event.target;
+
+        if (target.getAttribute('data-taptop-draggable-locked') === 'true') {
+          event.interaction.stop(); 
+          return; 
+        }
+        
         target.classList.add('is-dragging');
         
         // Сохраняем исходные стили
@@ -793,6 +822,33 @@ function initTaptopDragDrop(config) {
         document.body.taptopSavedBodyCursor = document.body.style.cursor || '';
 
         target.style.zIndex = '9999'; // Высокое значение для отображения поверх
+        if (window.getComputedStyle(target).position === 'static') {
+          target.style.position = 'relative';
+        }
+
+        // ОЧИСТКА КЛАССОВ ОТ ПРЕДЫДУЩИХ СБРОСОВ
+        // Если у элемента есть класс, который был добавлен после сброса в какую-либо дропзону,
+        // удаляем его, так как элемент снова взят в перетаскивание.
+        // Также очищаем класс у предыдущей дропзоны, если элемент из неё убирают.
+        if (target.dataset.taptopActiveDropzoneSelector && target.dataset.taptopActiveDropzoneClass) {
+          const formerDropzoneSelector = target.dataset.taptopActiveDropzoneSelector;
+          const classToRemoveFromZone = target.dataset.taptopActiveDropzoneClass;
+          document.querySelectorAll(formerDropzoneSelector).forEach(zone => {
+            if (zone.classList.contains(classToRemoveFromZone)) {
+              zone.classList.remove(classToRemoveFromZone);
+            }
+          });
+          delete target.dataset.taptopActiveDropzoneSelector;
+          delete target.dataset.taptopActiveDropzoneClass;
+        }
+
+        if (config.dropzones && config.dropzones.length > 0) {
+          config.dropzones.forEach(zoneCfg => {
+            if (zoneCfg.onDropDraggableClass && target.classList.contains(zoneCfg.onDropDraggableClass)) {
+              target.classList.remove(zoneCfg.onDropDraggableClass);
+            }
+          });
+        }
 
   // Устанавливаем курсор при перетаскивании
   if (config.draggingCursor && config.draggingCursor !== "[отсутствует]") {
@@ -849,9 +905,15 @@ function initTaptopDragDrop(config) {
   }
 
   // Финальный перенос
-  const finalX = parseFloat(target.getAttribute('data-x')) || 0;
-  const finalY = parseFloat(target.getAttribute('data-y')) || 0;
-  target.style.transform = \`translate(\${finalX}px, \${finalY}px)\`;
+  // Если элемент не был заблокирован (т.е. snapAndLock не сработал или не был включен для этой зоны),
+  // то применяем его финальный transform на основе data-x/data-y.
+  // Если snapAndLock сработал, transform уже был установлен в ondrop.
+  if (target.getAttribute('data-taptop-draggable-locked') !== 'true') {
+      const finalX = parseFloat(target.getAttribute('data-x')) || 0;
+      const finalY = parseFloat(target.getAttribute('data-y')) || 0;
+      let finalTransform = \`translate(\${finalX}px, \${finalY}px)\`;
+      target.style.transform = finalTransform;
+  }
 
   if (target.hasOwnProperty('isScalingDuringDrag')) {
     delete target.isScalingDuringDrag;
@@ -903,13 +965,13 @@ if (config.hoverCursor) {
     el.taptopInitialInlineCursor = el.style.cursor || '';
 
     el.addEventListener('mouseenter', function() {
-      if (this.classList.contains('is-dragging')) return;
+      if (this.classList.contains('is-dragging') || this.getAttribute('data-taptop-draggable-locked') === 'true') return; // Не меняем курсор для заблокированных
       this.taptopPreHoverCursor = this.style.cursor || '';
       this.style.cursor = config.hoverCursor;
     });
 
     el.addEventListener('mouseleave', function() {
-      if (this.classList.contains('is-dragging')) return;
+      if (this.classList.contains('is-dragging') || this.getAttribute('data-taptop-draggable-locked') === 'true') return; // Не меняем курсор для заблокированных
       if (this.hasOwnProperty('taptopPreHoverCursor')) {
         this.style.cursor = this.taptopPreHoverCursor;
         delete this.taptopPreHoverCursor;
@@ -923,7 +985,6 @@ if (config.hoverCursor) {
   interact(draggableCssSelector).draggable(draggableOptions);
 
   if (config.dropzones && config.dropzones.length > 0) {
-    // ... (логика dropzone остается без изменений) ...
     config.dropzones.forEach(zoneConfig => {
       if (!zoneConfig.dropzoneSelector || !zoneConfig.acceptDraggables) return;
       interact(zoneConfig.dropzoneSelector).dropzone({
@@ -951,6 +1012,39 @@ if (config.hoverCursor) {
           }
           if (zoneConfig.onDropDownzoneClass) {
             dropzoneElement.classList.add(zoneConfig.onDropDownzoneClass);
+            // Сохраняем на элементе информацию о том, в какую зону и с каким классом он попал
+            // Это понадобится, чтобы при следующем перетаскивании этого элемента убрать класс с этой дропзоны
+            // Важно: это свяжет элемент только с последней дропзоной, в которую он был успешно сброшен и которая имеет onDropDownzoneClass
+            droppedElement.dataset.taptopActiveDropzoneSelector = zoneConfig.dropzoneSelector;
+            droppedElement.dataset.taptopActiveDropzoneClass = zoneConfig.onDropDownzoneClass;
+          }
+
+          if (zoneConfig.snapAndLock) {
+            const dzRect = dropzoneElement.getBoundingClientRect();
+            const drRect = droppedElement.getBoundingClientRect(); // Используем текущие размеры элемента
+
+            // Текущие значения data-x/data-y (смещения от исходной позиции)
+            const currentDraggableDataX = parseFloat(droppedElement.getAttribute('data-x')) || 0;
+            const currentDraggableDataY = parseFloat(droppedElement.getAttribute('data-y')) || 0;
+            
+            // Абсолютные координаты верхнего левого угла элемента на странице до применения нового transform
+            const draggableCurrentPageX = drRect.left + window.pageXOffset - currentDraggableDataX;
+            const draggableCurrentPageY = drRect.top + window.pageYOffset - currentDraggableDataY;
+
+            // Целевые абсолютные координаты верхнего левого угла элемента для центрирования в дропзоне
+            const targetPageX = dzRect.left + window.pageXOffset + (dzRect.width / 2) - (drRect.width / 2);
+            const targetPageY = dzRect.top + window.pageYOffset + (dzRect.height / 2) - (drRect.height / 2);
+
+            // Новые значения для data-x и data-y будут разницей между целевой позицией и исходной позицией элемента
+            const newDataX = targetPageX - draggableCurrentPageX;
+            const newDataY = targetPageY - draggableCurrentPageY;
+
+            droppedElement.setAttribute('data-x', newDataX);
+            droppedElement.setAttribute('data-y', newDataY);
+            let newTransform = \`translate(\${newDataX}px, \${newDataY}px)\`;
+            droppedElement.style.transform = newTransform;
+            droppedElement.setAttribute('data-taptop-draggable-locked', 'true');
+            droppedElement.style.cursor = 'none'; // Курсор убирается
           }
         },
         ondropdeactivate(event) {
