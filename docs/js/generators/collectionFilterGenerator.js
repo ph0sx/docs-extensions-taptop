@@ -20,6 +20,7 @@ const UI_TYPES = {
   RADIO: "radio",
   BUTTONS: "buttons",
   CHECKBOX_SET: "checkbox-set",
+  CHECKBOX_GROUP: "checkbox-group",
 };
 
 export class CollectionFilterGenerator extends BaseGenerator {
@@ -217,6 +218,31 @@ export class CollectionFilterGenerator extends BaseGenerator {
         previewImages: {
           default: `${previewPath}Комбинация Поиск и Категория.png`,
         },
+        sortRules: [],
+        sortConfig: { ...defaultSortConfig },
+      },
+      multiCategoryFilter: {
+        name: "Фильтр с мультивыбором категорий",
+        description:
+          "Пример группы чекбоксов для поля 'Тематика'. Позволяет выбрать несколько категорий одновременно.",
+        collectionId: "",
+        fields: [
+          {
+            uniqueId: "mcf1",
+            fieldId: "тематика",
+            label: "Тематика",
+            uiType: UI_TYPES.CHECKBOX_GROUP,
+            elementSelector: "theme-checkboxes",
+            instantFilter: true,
+            clearButtonSelector: "clear-themes",
+          },
+        ],
+        itemsPerPage: 12,
+        ...defaultSelectors,
+        preset: "multiCategoryFilter",
+        paginationType: "load_more",
+        showLoader: true,
+        primaryColor: defaultColor,
         sortRules: [],
         sortConfig: { ...defaultSortConfig },
       },
@@ -1312,6 +1338,9 @@ export class CollectionFilterGenerator extends BaseGenerator {
             case UI_TYPES.CHECKBOX_SET:
               condition = FILTER_TYPES.IS_ON;
               break;
+            case UI_TYPES.CHECKBOX_GROUP:
+              condition = "CLIENT_SIDE_OR"; // Специальный маркер для клиентской фильтрации
+              break;
           }
         }
         const instantFilter =
@@ -1679,7 +1708,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
               this.schema = null;
               this.currentPage = 1;
               this.totalPages = 1;
-              this.currentFilters = [];
+              this.currentFilters = { apiFilters: [], clientFilters: [] };
               this.sortConfig = this.config.sortConfig || { rules: [], commonSelectSelector: null, applyInstantly: true, defaultSortLabel: null };
               this.currentSortParams = null; 
               this.collectionSlug = null;
@@ -2096,7 +2125,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
 
               this.currentPage = 1;
               this.currentFilters = this._collectFilterValues();
-              this.fetchAndRenderItems(this.currentFilters, this.currentPage, false, false); 
+              this.fetchAndRenderItems(this.currentFilters, this.currentPage, false, true); 
             }
 
             resetFilters() {
@@ -2113,6 +2142,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
                   case UI_TYPES.RADIO: let firstRadio = true; controls.forEach((c) => { const radios = c.matches('input[type="radio"]') ? [c] : Array.from(c.querySelectorAll('input[type="radio"]')); radios.forEach((r) => { r.checked = firstRadio && field.firstIsAll; firstRadio = false; }); }); break;
                   case UI_TYPES.BUTTONS: const isTaptopTabs = controls[0].classList.contains("tabs__item"); if (isTaptopTabs) { controls.forEach((tab, i) => { const isActive = i === 0 && field.firstIsAll; tab.classList.toggle("is-opened", isActive); }); } else { controls.forEach((btn, i) => btn.classList.toggle("tp-filter-button-active", i === 0 && field.firstIsAll)); } break;
                   case UI_TYPES.CHECKBOX_SET: const cb = controls[0]?.querySelector('input[type="checkbox"]') || (controls[0]?.matches('input[type="checkbox"]') ? controls[0] : null); if (cb) cb.checked = false; break;
+                  case UI_TYPES.CHECKBOX_GROUP: controls.forEach(control => { if (control.matches('input[type="checkbox"]')) { control.checked = false; } else { const checkboxes = control.querySelectorAll('input[type="checkbox"]'); checkboxes.forEach(cb => cb.checked = false); } }); break;
                   default: if ("value" in controls[0]) controls[0].value = ""; break;
                 }
               });
@@ -2145,8 +2175,8 @@ export class CollectionFilterGenerator extends BaseGenerator {
     console.log('[CF] Сортировка сброшена визуально и в состоянии.');
     
     this.currentPage = 1;
-    this.currentFilters = [];
-    this.fetchAndRenderItems([], this.currentPage, false, true); // usePassedFiltersDirectly = true
+    this.currentFilters = { apiFilters: [], clientFilters: [] };
+    this.fetchAndRenderItems(this.currentFilters, this.currentPage, false, true); // usePassedFiltersDirectly = true
             }
 
             _handleClearFieldClick(event, fieldIdOrNameToClear) {
@@ -2171,7 +2201,8 @@ export class CollectionFilterGenerator extends BaseGenerator {
 
             _collectFilterValues() {
               const apiFilters = [];
-              if (!Array.isArray(this.config.fields)) return apiFilters;
+              const clientFilters = [];
+              if (!Array.isArray(this.config.fields)) return { apiFilters, clientFilters };
               this.config.fields.forEach((field) => {
                 if (!field.elementSelector || !field.condition) return;
                 const realFieldId = this._getRealFieldId(field.fieldIdOrName);
@@ -2179,6 +2210,33 @@ export class CollectionFilterGenerator extends BaseGenerator {
                 const controls = this.elements.filterControls[field.fieldIdOrName];
                 if (!controls || controls.length === 0) return;
                 let value = null, skipFilter = false;
+                
+                // === НОВАЯ ЛОГИКА ДЛЯ ГРУППЫ ЧЕКБОКСОВ ===
+                if (field.uiType === UI_TYPES.CHECKBOX_GROUP) {
+                  const checkedValues = [];
+                  // Собираем значения из всех отмеченных чекбоксов
+                  controls.forEach(control => {
+                    if (control.matches('input[type="checkbox"]') && control.checked) {
+                      checkedValues.push((control.value || control.getAttribute('data-value') || '').trim());
+                    } else {
+                      const checkboxes = control.querySelectorAll('input[type="checkbox"]:checked');
+                      checkboxes.forEach(cb => {
+                        checkedValues.push((cb.value || cb.getAttribute('data-value') || '').trim());
+                      });
+                    }
+                  });
+                  if (checkedValues.length > 0) {
+                    clientFilters.push({
+                      fieldIdOrName: field.fieldIdOrName,
+                      realFieldId: realFieldId,
+                      values: checkedValues.filter(v => v !== ''),
+                      logic: 'OR'
+                    });
+                  }
+                  return; // Переходим к следующему полю
+                }
+                // === КОНЕЦ НОВОЙ ЛОГИКИ ===
+                
                 switch (field.uiType) {
                   case UI_TYPES.INPUT: value = controls[0].value?.trim(); break;
                   case UI_TYPES.SELECT: value = controls[0].value?.trim(); skipFilter = controls[0].selectedIndex === 0 && field.firstIsAll; break;
@@ -2196,7 +2254,33 @@ export class CollectionFilterGenerator extends BaseGenerator {
                   }
                 }
               });
-              return apiFilters;
+              return { apiFilters, clientFilters };
+            }
+
+            _applyClientSideFilters(items, clientFilters) {
+              if (!clientFilters || clientFilters.length === 0) {
+                return items; // Если нет клиентских фильтров, возвращаем как есть
+              }
+
+              return items.filter(item => {
+                // Проверяем, проходит ли элемент ВСЕ клиентские фильтры (логика AND между фильтрами)
+                return clientFilters.every(filter => {
+                  const realFieldId = filter.realFieldId;
+                  
+                  // Находим поле элемента в его данных
+                  const itemField = item.fields?.find(f => f.field_id === realFieldId);
+                  const fieldValue = itemField?.value || itemField?.text || '';
+
+                  if (!fieldValue || typeof fieldValue !== 'string') {
+                    return false; // Если у элемента нет такого поля, он не проходит фильтр
+                  }
+                  
+                  // Проверяем, содержит ли текстовое поле элемента ХОТЯ БЫ ОДНО из выбранных значений (логика OR)
+                  return filter.values.some(filterValue => 
+                      fieldValue.toLowerCase().includes(filterValue.toLowerCase())
+                  );
+                });
+              });
             }
 
             async fetchAndRenderItems(filters = [], page = 1, append = false, usePassedFiltersDirectly = false) {
@@ -2241,11 +2325,14 @@ export class CollectionFilterGenerator extends BaseGenerator {
               if (!append) this.currentPage = page;
               if (this.fetchTimeout) clearTimeout(this.fetchTimeout);
 
-              const actualFilters = usePassedFiltersDirectly ? filters : this._collectFilterValues();
+              const filtersData = usePassedFiltersDirectly ? filters : this._collectFilterValues();
+              const apiFilters = filtersData.apiFilters || (Array.isArray(filtersData) ? filtersData : []);
+              const clientFilters = filtersData.clientFilters || [];
+              
               const apiUrl = new URL(this.config.apiEndpoint, window.location.origin);
               apiUrl.searchParams.set('method', 'mosaic/collectionSearch');
               apiUrl.searchParams.set('param[collection_id]', this.config.collectionId);
-              if (actualFilters.length > 0) apiUrl.searchParams.set('param[filters]', JSON.stringify(actualFilters));
+              if (apiFilters.length > 0) apiUrl.searchParams.set('param[filters]', JSON.stringify(apiFilters));
               apiUrl.searchParams.set('param[page]', this.currentPage);
               apiUrl.searchParams.set('param[per_page]', this.config.itemsPerPage);
 
@@ -2278,8 +2365,13 @@ export class CollectionFilterGenerator extends BaseGenerator {
                 if (data.error) throw new Error(\`Ошибка API collectionSearch: \${data.error.message}\`);
                 const totalItems = data.result?.page?.all_items_count ?? 0;
                 const itemsReceived = data.result?.page?.items || [];
+                
+                // !!! ВОТ КЛЮЧЕВОЕ ИЗМЕНЕНИЕ !!!
+                // Применяем клиентскую фильтрацию к результатам, полученным от API
+                const finalItems = this._applyClientSideFilters(itemsReceived, clientFilters);
+                
                 this.latestTotalItemsCount = totalItems;
-                this._renderResults(itemsReceived, append);
+                this._renderResults(finalItems, append);
                 this._renderPaginationControls(this.latestTotalItemsCount);
               } catch (error) {
                 clearTimeout(this.fetchTimeout); this.fetchTimeout = null;
