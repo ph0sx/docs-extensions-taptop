@@ -1,4 +1,5 @@
 import { BaseGenerator } from "./base/baseGenerator.js";
+import { enhancedMinify } from "../utils/enhanced-minify.js";
 
 // --- Константы Типов Фильтров (из документации API) ---
 const FILTER_TYPES = {
@@ -2612,5 +2613,23 @@ export class CollectionFilterGenerator extends BaseGenerator {
       </script>
     `;
     return scriptCode;
+  }
+
+  /**
+   * Переопределённый метод copyAndNotify с усиленной минификацией для коллекций
+   * Использует enhancedMinify вместо стандартного minifyCode для более агрессивного сжатия
+   */
+  async copyAndNotify(code) {
+    const minified = await enhancedMinify(code);
+
+    try {
+      await navigator.clipboard.writeText(minified);
+      this.showSuccessModal();
+    } catch (err) {
+      console.error("Ошибка при копировании через Clipboard API:", err);
+      this.fallbackCopy(minified);
+    }
+
+    return minified;
   }
 }
