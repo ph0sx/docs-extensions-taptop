@@ -15,6 +15,10 @@ cookieGenerator.md
 multilandingGenerator.md
 smoothScrollGenerator.md
 timeVisibilityGenerator.md
+docs/README.md
+interactjsdoc
+CLAUDE.md
+
 
 # IDE файлы
 .vscode/settings.json
@@ -27,4 +31,6 @@ timeVisibilityGenerator.md
 *.tmp
 *.temp
 .ignore
-docs/README.md
+node_modules
+
+
