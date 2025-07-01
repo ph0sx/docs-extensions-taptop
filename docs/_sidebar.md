@@ -9,7 +9,6 @@
 - [Переворот карточки](/pages/card-flip.md)
 - [Индикатор загрузки (Loader)](/pages/loader.md)
 - [Анимированный счётчик](/pages/counter.md)
-- [Перетаскивание элементов](/pages/drag-drop.md)
 
 
 
