@@ -1977,14 +1977,14 @@ export class CollectionFilterGenerator extends BaseGenerator {
               }
 
             if (commonSelectSelector) {
-                const selectElement = document.querySelector('.' + commonSelectSelector);
-                if (selectElement && selectElement.tagName === 'SELECT') {
+                const selectElement = document.querySelector('select.' + commonSelectSelector);
+                if (selectElement) {
                     this.elements.sortControlElements.commonSelect = selectElement;
                     selectElement.addEventListener('change', this._boundHandleSortChange);
                     this.elements.sortControlElements.allActiveElements.push(selectElement);
                     console.log(\`[CF Sort] Общий <select> (\${commonSelectSelector}) для сортировки найден.\`);
                 } else {
-                    console.warn(\`[CF Sort] Общий <select> "\${commonSelectSelector}" не найден или не <select>.\`);
+                    console.warn(\`[CF Sort] Общий <select> "\${commonSelectSelector}" не найден.\`);
                 }
             }
 
@@ -2078,7 +2078,7 @@ export class CollectionFilterGenerator extends BaseGenerator {
         
         if (this.sortConfig.applyInstantly || !this.elements.applyButton) {
             this.currentPage = 1; 
-            this.fetchAndRenderItems(this.currentFilters, this.currentPage);
+            this.fetchAndRenderItems(this.currentFilters, this.currentPage, false, false);
         } else {
             console.log('[CF Sort] Сортировка будет применена с фильтрами.');
         }
@@ -2424,7 +2424,6 @@ export class CollectionFilterGenerator extends BaseGenerator {
               if (this.config.showLoader && this.elements.loaderOverlay) { this.elements.loaderOverlay.classList.toggle("is-active", isLoading); }
               if (isLoading) this.elements.widget?.querySelector(".cf-error-message")?.remove();
               
-              // Блокировка/разблокировка элементов сортировки
               if (this.elements.sortControlElements.commonSelect) {
                   this.elements.sortControlElements.commonSelect.disabled = isLoading;
               }
