@@ -1675,8 +1675,16 @@ export class CollectionFilterGenerator extends BaseGenerator {
         .${
           runtimeConfig.targetSelector || "collection"
         }.cf-loading .collection__list { opacity: 0.4 !important; transition: none !important; pointer-events: none; }
-        .collection__pagination.is-removed { display: none !important; }
-        .collection__pagination-pages, .collection__pagination-load, .collection__pagination-page-by-page { display: none !important; }
+        .${
+          runtimeConfig.targetSelector || "collection"
+        } .collection__pagination.is-removed { display: none !important; }
+        .${
+          runtimeConfig.targetSelector || "collection"
+        } .collection__pagination-pages, .${
+          runtimeConfig.targetSelector || "collection"
+        } .collection__pagination-load, .${
+          runtimeConfig.targetSelector || "collection"
+        } .collection__pagination-page-by-page { display: none !important; }
         .cf-error-message { color: red; padding: 10px; border: 1px solid red; margin: 10px 0; border-radius: 4px; background: rgba(255, 0, 0, 0.05); }
         /* --- Стили для активной опции сортировки (если используются отдельные кнопки/ссылки) --- */
         .active-sort-option {
