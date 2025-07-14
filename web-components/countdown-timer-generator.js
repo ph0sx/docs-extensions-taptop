@@ -78,11 +78,9 @@ class CountdownTimerGenerator extends HTMLElement {
 
       .countdown-timer-generator {
         --primary-color: #4483f5;
-        --primary-hover: #3a70d1;
         --primary-light: rgba(68, 131, 245, 0.15);
         --primary-gradient: linear-gradient(90deg, #4483f5 0%, #5e6ffd 100%);
         --text-dark: #333333;
-        --text-medium: #555555;
         --text-light: #777777;
         --border-color: #dddddd;
         --bg-light: #f8f9fa;
@@ -96,11 +94,9 @@ class CountdownTimerGenerator extends HTMLElement {
         padding: 15px;
         border-radius: var(--radius-md);
         width: 100%;
-        max-width: 100%;
         box-shadow: var(--shadow-md);
         border: 1px solid rgba(0, 0, 0, 0.05);
         color: var(--text-dark);
-        overflow: hidden;
         min-width: 350px;
       }
 
@@ -114,19 +110,14 @@ class CountdownTimerGenerator extends HTMLElement {
         border-radius: var(--radius-md);
         box-shadow: var(--shadow-sm);
         width: 100%;
-        max-width: 100%;
         max-height: calc(100vh - 65px - 76px - 55px - 97px - 55px);
         overflow: auto;
-        min-height: 0;
       }
 
       .setting-group {
-        width: 100%;
-        flex-shrink: 1;
-
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 15px;
       }
 
       .setting-group label {
@@ -139,7 +130,6 @@ class CountdownTimerGenerator extends HTMLElement {
 
       .text-input, .number-input, .select-styled {
         width: 100%;
-        max-width: 100%;
         padding: 8px 10px;
         border-radius: var(--radius-sm);
         border: 1px solid var(--border-color);
@@ -166,22 +156,37 @@ class CountdownTimerGenerator extends HTMLElement {
         padding-right: 32px;
       }
 
-      .helper-text {
+      .helper-text, p.helper-text {
         font-size: 13px;
         color: var(--text-light);
         line-height: 1.4;
+        margin: 0;
+        margin-top: -5px;
+      }
+
+      .helper-text:not(:last-child), 
+      p.helper-text:not(:last-child) {
+        margin-bottom: 15px;
       }
 
       .required-indicator {
         color: #e74c3c;
       }
 
-      .section-title {
+      fieldset {
+        border: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      legend {
         font-size: 16px;
         font-weight: 600;
         color: var(--text-dark);
         padding-bottom: 8px;
         border-bottom: 2px solid var(--bg-light);
+        width: 100%;
+        margin-bottom: 15px;
       }
 
       .action-section {
@@ -244,7 +249,7 @@ class CountdownTimerGenerator extends HTMLElement {
       .radio-group {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 15px;
       }
 
       .radio-container {
@@ -320,28 +325,20 @@ class CountdownTimerGenerator extends HTMLElement {
 
       .duration-row {
         display: flex;
-        gap: 10px;
+        gap: 15px;
         flex-wrap: wrap;
       }
 
       .settings-column {
-        display:flex;
-       flex-direction:column; 
-       gap:10px;
-      }
-
-      .settings-column .setting-group {
-        gap: 10px;
         display: flex;
         flex-direction: column;
+        gap: 15px;
       }
 
       .duration-row .setting-group {
         flex: 1;
         min-width: 80px;
         gap: 10px;
-        display: flex;
-        flex-direction: column;
       }
 
       .icon-eye-off {
@@ -358,161 +355,173 @@ class CountdownTimerGenerator extends HTMLElement {
 
   getTemplate() {
     return `
-      <div class="countdown-timer-generator">
+      <form class="countdown-timer-generator">
         <div class="form-grid">
-          <div class="section-title">1. Тип таймера</div>
-          
-          <div class="setting-group">
-            <div class="radio-group">
-              <label class="radio-container">
-                <input type="radio" name="timerType" value="fixed" checked>
-                <span class="radio-checkmark"></span>
-                До конкретной даты и времени
-              </label>
-              <label class="radio-container">
-                <input type="radio" name="timerType" value="evergreen">
-                <span class="radio-checkmark"></span>
-                Для каждого посетителя (Вечнозеленый)
-              </label>
-            </div>
-            <div class="helper-text">Выберите, будет ли таймер отсчитывать до одной фиксированной даты для всех, или будет запускаться индивидуально для каждого посетителя.</div>
-          </div>
-
-          <div class="section-title">2. Настройки времени</div>
-
-          <div class="time-settings-group" id="fixed-date-settings">
-            <div class="helper-text" style="margin-bottom: 15px;">Таймер будет отсчитывать время до указанной даты и времени по выбранному часовому поясу.</div>
+          <fieldset>
+            <legend>1. Тип таймера</legend>
             
+            <div class="setting-group">
+              <div class="radio-group">
+                <label class="radio-container">
+                  <input type="radio" name="timerType" value="fixed" checked>
+                  <span class="radio-checkmark"></span>
+                  До конкретной даты и времени
+                </label>
+                <label class="radio-container">
+                  <input type="radio" name="timerType" value="evergreen">
+                  <span class="radio-checkmark"></span>
+                  Для каждого посетителя (Вечнозеленый)
+                </label>
+              </div>
+              <div class="helper-text">Выберите, будет ли таймер отсчитывать до одной фиксированной даты для всех, или будет запускаться индивидуально для каждого посетителя.</div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>2. Настройки времени</legend>
+
+            <div class="time-settings-group" id="fixed-date-settings">
+              <p class="helper-text">Таймер будет отсчитывать время до указанной даты и времени по выбранному часовому поясу.</p>
+              
+              <div class="settings-column">
+                <div class="setting-group">
+                  <label for="timer-end-date">Дата окончания:</label>
+                  <input type="date" id="timer-end-date" class="text-input">
+                </div>
+                
+                <div class="setting-group">
+                  <label for="timer-end-time">Время окончания (с секундами):</label>
+                  <input type="time" id="timer-end-time" class="text-input" step="1" value="00:00:00">
+                </div>
+                
+                <div class="setting-group">
+                  <label for="timer-timezone">Часовой пояс:</label>
+                  <select class="select-styled" id="timer-timezone" name="timezone">
+                    <option value="auto" selected>Автоматически (часовой пояс посетителя)</option>
+                    <optgroup label="Россия и ближнее зарубежье">
+                      <option value="2">UTC+2 (Калининград)</option>
+                      <option value="3">UTC+3 (Москва)</option>
+                      <option value="4">UTC+4 (Самара)</option>
+                      <option value="5">UTC+5 (Екатеринбург)</option>
+                      <option value="6">UTC+6 (Омск)</option>
+                      <option value="7">UTC+7 (Красноярск)</option>
+                      <option value="8">UTC+8 (Иркутск)</option>
+                      <option value="9">UTC+9 (Якутск)</option>
+                      <option value="10">UTC+10 (Владивосток)</option>
+                      <option value="11">UTC+11 (Магадан)</option>
+                      <option value="12">UTC+12 (Камчатка)</option>
+                    </optgroup>
+                    <optgroup label="Западное полушарие">
+                      <option value="-12">UTC-12</option>
+                      <option value="-11">UTC-11</option>
+                      <option value="-10">UTC-10</option>
+                      <option value="-9">UTC-9</option>
+                      <option value="-8">UTC-8</option>
+                      <option value="-7">UTC-7</option>
+                      <option value="-6">UTC-6</option>
+                      <option value="-5">UTC-5</option>
+                      <option value="-4">UTC-4</option>
+                      <option value="-3">UTC-3</option>
+                      <option value="-2">UTC-2</option>
+                      <option value="-1">UTC-1</option>
+                    </optgroup>
+                    <optgroup label="Центральный регион">
+                      <option value="0">UTC+0 (Лондон)</option>
+                      <option value="1">UTC+1 (Берлин)</option>
+                    </optgroup>
+                    <optgroup label="Азия и Океания">
+                      <option value="4">UTC+4</option>
+                      <option value="5.5">UTC+5:30</option>
+                      <option value="8">UTC+8</option>
+                      <option value="9">UTC+9</option>
+                      <option value="9.5">UTC+9:30</option>
+                      <option value="10">UTC+10</option>
+                      <option value="12">UTC+12</option>
+                      <option value="13">UTC+13</option>
+                    </optgroup>
+                  </select>
+                  <div class="helper-text">Убедитесь, что дата/время установлены по выбранному часовому поясу.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="time-settings-group hidden" id="evergreen-settings">
+              <p class="helper-text">Укажите длительность таймера. Он будет запущен индивидуально для каждого посетителя при первом заходе на страницу.</p>
+              
+              <div class="duration-row">
+                <div class="setting-group">
+                  <label for="timer-duration-days">Дни:</label>
+                  <input type="number" id="timer-duration-days" class="number-input" value="0" min="0">
+                </div>
+                <div class="setting-group">
+                  <label for="timer-duration-hours">Часы:</label>
+                  <input type="number" id="timer-duration-hours" class="number-input" value="1" min="0" max="23">
+                </div>
+                <div class="setting-group">
+                  <label for="timer-duration-minutes">Минуты:</label>
+                  <input type="number" id="timer-duration-minutes" class="number-input" value="0" min="0" max="59">
+                </div>
+                <div class="setting-group">
+                  <label for="timer-duration-seconds">Секунды:</label>
+                  <input type="number" id="timer-duration-seconds" class="number-input" value="0" min="0" max="59">
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>3. Настройки классов</legend>
+
             <div class="settings-column">
-            <div class="setting-group">
-              <label for="timer-end-date">Дата окончания:</label>
-              <input type="date" id="timer-end-date" class="text-input">
-            </div>
-            
-            <div class="setting-group">
-              <label for="timer-end-time">Время окончания (с секундами):</label>
-              <input type="time" id="timer-end-time" class="text-input" step="1" value="00:00:00">
-            </div>
-            
-            <div class="setting-group">
-              <label for="timer-timezone">Часовой пояс:</label>
-              <select class="select-styled" id="timer-timezone" name="timezone">
-                <option value="auto" selected>Автоматически (часовой пояс посетителя)</option>
-                <optgroup label="Россия и ближнее зарубежье">
-                  <option value="2">UTC+2 (Калининград)</option>
-                  <option value="3">UTC+3 (Москва)</option>
-                  <option value="4">UTC+4 (Самара)</option>
-                  <option value="5">UTC+5 (Екатеринбург)</option>
-                  <option value="6">UTC+6 (Омск)</option>
-                  <option value="7">UTC+7 (Красноярск)</option>
-                  <option value="8">UTC+8 (Иркутск)</option>
-                  <option value="9">UTC+9 (Якутск)</option>
-                  <option value="10">UTC+10 (Владивосток)</option>
-                  <option value="11">UTC+11 (Магадан)</option>
-                  <option value="12">UTC+12 (Камчатка)</option>
-                </optgroup>
-                <optgroup label="Западное полушарие">
-                  <option value="-12">UTC-12</option>
-                  <option value="-11">UTC-11</option>
-                  <option value="-10">UTC-10</option>
-                  <option value="-9">UTC-9</option>
-                  <option value="-8">UTC-8</option>
-                  <option value="-7">UTC-7</option>
-                  <option value="-6">UTC-6</option>
-                  <option value="-5">UTC-5</option>
-                  <option value="-4">UTC-4</option>
-                  <option value="-3">UTC-3</option>
-                  <option value="-2">UTC-2</option>
-                  <option value="-1">UTC-1</option>
-                </optgroup>
-                <optgroup label="Центральный регион">
-                  <option value="0">UTC+0 (Лондон)</option>
-                  <option value="1">UTC+1 (Берлин)</option>
-                </optgroup>
-                <optgroup label="Азия и Океания">
-                  <option value="4">UTC+4</option>
-                  <option value="5.5">UTC+5:30</option>
-                  <option value="8">UTC+8</option>
-                  <option value="9">UTC+9</option>
-                  <option value="9.5">UTC+9:30</option>
-                  <option value="10">UTC+10</option>
-                  <option value="12">UTC+12</option>
-                  <option value="13">UTC+13</option>
-                </optgroup>
-              </select>
-              <div class="helper-text">Убедитесь, что дата/время установлены по выбранному часовому поясу.</div>
-            </div>
-          </div>
-            </div>
+              <div class="setting-group">
+                <label for="timer-display-class">CSS-класс элемента таймера <span class="required-indicator">*</span></label>
+                <input type="text" id="timer-display-class" class="text-input" placeholder="Например: timer-text" required>
+                <div class="helper-text">Класс элемента (например, текстового блока), где будут отображаться цифры Д:Ч:М:С.</div>
+              </div>
 
-          <div class="time-settings-group hidden" id="evergreen-settings">
-            <div class="helper-text" style="margin-bottom: 15px;">Укажите длительность таймера. Он будет запущен индивидуально для каждого посетителя при первом заходе на страницу.</div>
-            
-            <div class="duration-row">
               <div class="setting-group">
-                <label for="timer-duration-days">Дни:</label>
-                <input type="number" id="timer-duration-days" class="number-input" value="0" min="0">
+                <label for="timer-hide-classes">CSS-классы блоков для СКРЫТИЯ</label>
+                <input type="text" id="timer-hide-classes" class="text-input" placeholder="Например: offer-block, old-price">
+                <div class="helper-text">Классы блоков, которые нужно скрыть по окончании таймера. Оставьте пустым, если ничего скрывать не нужно.</div>
               </div>
+
               <div class="setting-group">
-                <label for="timer-duration-hours">Часы:</label>
-                <input type="number" id="timer-duration-hours" class="number-input" value="1" min="0" max="23">
-              </div>
-              <div class="setting-group">
-                <label for="timer-duration-minutes">Минуты:</label>
-                <input type="number" id="timer-duration-minutes" class="number-input" value="0" min="0" max="59">
-              </div>
-              <div class="setting-group">
-                <label for="timer-duration-seconds">Секунды:</label>
-                <input type="number" id="timer-duration-seconds" class="number-input" value="0" min="0" max="59">
+                <label for="timer-show-classes">CSS-классы блоков для ПОКАЗА (опционально)</label>
+                <input type="text" id="timer-show-classes" class="text-input" placeholder="Например: expired-message, subscribe-form">
+                <div class="helper-text">Классы блоков, которые нужно показать по окончании таймера. <strong>Важно!</strong> Блокам в Taptop нужно присвоить отдельный класс и через панель стилей установить <code>Отображение: Скрыть элемент <span class="icon-eye-off"></span></code>.</div>
               </div>
             </div>
-          </div>
+          </fieldset>
 
-          <div class="section-title">3. Настройки классов</div>
+          <fieldset>
+            <legend>4. Дополнительные опции по завершении</legend>
 
-          <div class="setting-group">
-            <label for="timer-display-class">CSS-класс элемента таймера <span class="required-indicator">*</span></label>
-            <input type="text" id="timer-display-class" class="text-input" placeholder="Например: timer-text" required>
-            <div class="helper-text">Класс элемента (например, текстового блока), где будут отображаться цифры Д:Ч:М:С.</div>
-          </div>
+            <div class="settings-column">
+              <div class="setting-group">
+                <label class="checkbox-container">
+                  <input type="checkbox" id="timer-hide-self">
+                  <span class="checkbox-option-label">Скрыть элемент таймера</span>
+                </label>
+                <div class="helper-text">Скрывает элемент, в котором отображаются цифры таймера, когда отсчет дойдет до нуля.</div>
+              </div>
 
-          <div class="setting-group">
-            <label for="timer-hide-classes">CSS-классы блоков для СКРЫТИЯ</label>
-            <input type="text" id="timer-hide-classes" class="text-input" placeholder="Например: offer-block, old-price">
-            <div class="helper-text">Классы блоков, которые нужно скрыть по окончании таймера. Оставьте пустым, если ничего скрывать не нужно.</div>
-          </div>
+              <div class="setting-group">
+                <label for="timer-completion-text">Текст по завершении (опционально)</label>
+                <input type="text" id="timer-completion-text" class="text-input" placeholder="Например: Акция завершена!">
+                <div class="helper-text">Этот текст будет показан в элементе таймера вместо "00:00:00".</div>
+              </div>
 
-          <div class="setting-group">
-            <label for="timer-show-classes">CSS-классы блоков для ПОКАЗА (опционально)</label>
-            <input type="text" id="timer-show-classes" class="text-input" placeholder="Например: expired-message, subscribe-form">
-            <div class="helper-text">Классы блоков, которые нужно показать по окончании таймера. <strong>Важно!</strong> Блокам в Taptop нужно присвоить отдельный класс и через панель стилей установить <code>Отображение: Скрыть элемент <span class="icon-eye-off"></span></code>.</div>
-          </div>
-
-          <div class="section-title">4. Дополнительные опции по завершении</div>
-
-          <div class="setting-group">
-            <label class="checkbox-container">
-              <input type="checkbox" id="timer-hide-self">
-              <span class="checkbox-option-label">Скрыть элемент таймера</span>
-            </label>
-            <div class="helper-text">Скрывает элемент, в котором отображаются цифры таймера, когда отсчет дойдет до нуля.</div>
-          </div>
-
-          <div class="setting-group">
-            <label for="timer-completion-text">Текст по завершении (опционально)</label>
-            <input type="text" id="timer-completion-text" class="text-input" placeholder="Например: Акция завершена!">
-            <div class="helper-text">Этот текст будет показан в элементе таймера вместо "00:00:00".</div>
-          </div>
-
-          <div class="setting-group">
-            <label for="timer-redirect-path">Перенаправить на путь (опционально)</label>
-            <input type="text" id="timer-redirect-path" class="text-input" placeholder="Например: /sale-over или /catalog">
-            <div class="helper-text">Укажите путь на вашем сайте (начинается с /), куда перенаправить пользователя после окончания таймера.</div>
-          </div>
+              <div class="setting-group">
+                <label for="timer-redirect-path">Перенаправить на путь (опционально)</label>
+                <input type="text" id="timer-redirect-path" class="text-input" placeholder="Например: /sale-over или /catalog">
+                <div class="helper-text">Укажите путь на вашем сайте (начинается с /), куда перенаправить пользователя после окончания таймера.</div>
+              </div>
+            </div>
+          </fieldset>
         </div>
 
         <div class="action-section">
-          <button class="generate-button" id="generate-btn">
+          <button type="button" class="generate-button" id="generate-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M16 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M8 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -520,7 +529,7 @@ class CountdownTimerGenerator extends HTMLElement {
             <span>Сгенерировать код</span>
           </button>
         </div>
-      </div>
+      </form>
     `;
   }
 
@@ -800,11 +809,6 @@ let elementsToHide = [];
 let intervalId = null;
 let targetTimestamp = 0;
 
-/**
- * Форматирует оставшееся время в строку HH:MM:SS или DD:HH:MM:SS.
- * @param {number} timeLeftMs - Оставшееся время в миллисекундах.
- * @returns {string} Форматированная строка времени.
- */
 function formatTimeLeft(timeLeftMs) {
   if (timeLeftMs < 0) timeLeftMs = 0;
   const days = Math.floor(timeLeftMs / ONE_DAY);
@@ -819,52 +823,33 @@ function formatTimeLeft(timeLeftMs) {
   return output;
 }
 
-/**
- * Скрывает целевые элементы из списка elementsToHide.
- */
 function hideTargetElements() {
   elementsToHide.forEach(el => {
     if (el && el.style) {
       el.style.setProperty('display', 'none', 'important');
-    } else if (el) {
-         console.warn('[Countdown Timer] Не удалось применить стиль display:none к элементу для скрытия:', el);
     }
   });
-  console.log('[Countdown Timer] Блоки для скрытия обработаны.');
 }
 
-/**
- * Показывает целевые элементы, удаляя классы, указанные в config.showClasses.
- */
 function showTargetElements() {
     if (!config.showClasses || config.showClasses.length === 0) return;
 
     const selector = config.showClasses.map(cls => '.' + cls.trim()).join(',');
     try {
         const elements = document.querySelectorAll(selector);
-        if (elements.length === 0) {
-           console.warn('[Countdown Timer] Блоки для показа с селектором "' + selector + '" не найдены.');
-           return;
-        }
+        if (elements.length === 0) return;
 
         elements.forEach(el => {
           config.showClasses.forEach(cls => {
              const className = cls.trim();
              if (el.classList.contains(className)) {
                el.classList.remove(className);
-               console.log(\`[Countdown Timer] Removed hiding class '\${className}' from element:\`, el);
              }
           });
         });
-        console.log('[Countdown Timer] Блоки для показа обработаны (удалением классов).');
-    } catch (e) {
-        console.error('[Countdown Timer] Ошибка при поиске или удалении классов для показа:', e);
-    }
+    } catch (e) {}
 }
 
-/**
- * Применяет все действия по завершении таймера.
- */
 function handleTimerCompletion() {
     if (intervalId) {
       clearInterval(intervalId);
@@ -878,26 +863,13 @@ function handleTimerCompletion() {
 
     if (config.hideTimerOnEnd && timerDisplayElement.style) {
         timerDisplayElement.style.setProperty('display', 'none', 'important');
-        console.log('[Countdown Timer] Элемент таймера скрыт.');
     }
 
-    if (config.redirectPath) {
-          if (config.redirectPath.startsWith('/')) {
-             const currentOrigin = window.location.origin; 
-             const nextUrl = currentOrigin + config.redirectPath;
-             console.log('[Countdown Timer] Перенаправление на:', nextUrl);
-             window.location.href = nextUrl;
-          } else {
-               console.log('[Countdown Timer] Перенаправление на:', config.redirectPath);
-              window.location.pathname = config.redirectPath;
-             console.error('[Countdown Timer] Неверный формат пути для перенаправления (должен начинаться с /):', config.redirectPath);
-          }
-       }
+    if (config.redirectPath && config.redirectPath.startsWith('/')) {
+        window.location.href = window.location.origin + config.redirectPath;
+    }
 }
 
-/**
- * Обновляет отображение таймера и проверяет завершение.
- */
 function updateTimerDisplay() {
   if (!timerDisplayElement) {
       if(intervalId) clearInterval(intervalId);
@@ -913,31 +885,21 @@ function updateTimerDisplay() {
   timerDisplayElement.textContent = formatTimeLeft(timeLeft);
 }
 
-/**
- * Рассчитывает целевое время для фиксированного таймера.
- * @returns {number} Timestamp UTC или 0 при ошибке.
- */
 function calculateFixedTargetTime() {
-   if (!config.endDate || !config.endTime) {
-      console.error('[Countdown Timer] Не указана дата или время для фиксированного таймера.');
-      return 0;
-    }
+   if (!config.endDate || !config.endTime) return 0;
+   
     const localEndTimeString = config.endDate + 'T' + config.endTime;
     const localEndDate = new Date(localEndTimeString);
 
-    if (isNaN(localEndDate.getTime())) {
-      console.error('[Countdown Timer] Неверный формат даты/времени:', localEndTimeString);
-      return 0;
-    }
+    if (isNaN(localEndDate.getTime())) return 0;
 
     if (config.timezone === 'auto') {
       return localEndDate.getTime();
     } else {
       try {
         const targetOffsetMinutes = parseFloat(config.timezone) * 60;
-        if (isNaN(targetOffsetMinutes)) {
-            throw new Error('Неверное значение часового пояса: ' + config.timezone);
-        }
+        if (isNaN(targetOffsetMinutes)) return 0;
+        
         const year = localEndDate.getFullYear();
         const month = localEndDate.getMonth();
         const day = localEndDate.getDate();
@@ -947,17 +909,12 @@ function calculateFixedTargetTime() {
         const assumedUtcTime = Date.UTC(year, month, day, hours, minutes, seconds);
         return assumedUtcTime - (targetOffsetMinutes * 60000);
       } catch (e) {
-        console.error('[Countdown Timer] Ошибка при расчете времени для часового пояса:', e);
         return localEndDate.getTime() - (localEndDate.getTimezoneOffset() * 60000);
       }
     }
 }
 
-/**
-   * Получает или рассчитывает целевое время для вечнозеленого таймера.
-   * @returns {number} Timestamp UTC или 0 при ошибке.
-   */
-  function calculateOrGetEvergreenTargetTime() {
+function calculateOrGetEvergreenTargetTime() {
       const storageKey = config.storageKey || 'taptopTimerEnd_' + config.displayClass;
       const now = Date.now();
       let targetTime = 0;
@@ -968,7 +925,6 @@ function calculateFixedTargetTime() {
 
          if (!isNaN(storedEndTimeParsed)) {
            targetTime = storedEndTimeParsed;
-           console.log(\`[Countdown Timer] Вечнозеленый: Найдено сохраненное время окончания: \${new Date(targetTime).toISOString()}\`);
          } else {
            const durationMillis =
              (config.durationDays * ONE_DAY) +
@@ -976,21 +932,14 @@ function calculateFixedTargetTime() {
              (config.durationMinutes * ONE_MINUTE) +
              (config.durationSeconds * ONE_SECOND);
 
-           if (durationMillis <= 0) {
-              console.error('[Countdown Timer] Вечнозеленый: Длительность должна быть больше нуля.');
-              return 0;
-           }
+           if (durationMillis <= 0) return 0;
 
            targetTime = now + durationMillis;
            try {
               localStorage.setItem(storageKey, targetTime.toString());
-              console.log(\`[Countdown Timer] Вечнозеленый: Установлено и сохранено новое время окончания: \${new Date(targetTime).toISOString()}\`);
-           } catch (e) {
-              console.warn('[Countdown Timer] Не удалось сохранить время в localStorage:', e);
-           }
+           } catch (e) {}
          }
       } catch (e) {
-         console.error('[Countdown Timer] Ошибка при работе с localStorage:', e);
           const durationMillis =
              (config.durationDays * ONE_DAY) +
              (config.durationHours * ONE_HOUR) +
@@ -998,31 +947,20 @@ function calculateFixedTargetTime() {
              (config.durationSeconds * ONE_SECOND);
           if (durationMillis > 0) {
               targetTime = now + durationMillis;
-              console.warn('[Countdown Timer] Вечнозеленый: localStorage недоступен, таймер работает только для текущей сессии.');
           } else {
-              console.error('[Countdown Timer] Вечнозеленый: localStorage недоступен И длительность неверна.');
               return 0;
           }
       }
       return targetTime;
   }
 
-/**
- * Инициализирует таймер.
- */
 function initializeTimer() {
   timerDisplayElement = document.querySelector('.' + config.displayClass);
   elementsToHide = config.hideClasses.length > 0
       ? document.querySelectorAll(config.hideClasses.map(cls => '.' + cls.trim()).join(','))
       : [];
 
-  if (!timerDisplayElement) {
-    console.error('[Countdown Timer] Элемент для отображения таймера (' + config.displayClass + ') не найден!');
-    return;
-  }
-   if (elementsToHide.length === 0 && config.hideClasses.length > 0) {
-     console.warn('[Countdown Timer] Блоки для скрытия (' + config.hideClasses.join(', ') + ') не найдены.');
-   }
+  if (!timerDisplayElement) return;
 
   if (config.timerType === 'fixed') {
     targetTimestamp = calculateFixedTargetTime();
@@ -1031,19 +969,16 @@ function initializeTimer() {
   }
 
   if (targetTimestamp <= 0) {
-    console.error('[Countdown Timer] Не удалось рассчитать целевое время. Таймер не запущен.');
     timerDisplayElement.textContent = formatTimeLeft(0);
     return;
   }
 
   const now = Date.now();
   if (targetTimestamp <= now) {
-    console.log('[Countdown Timer] Целевое время уже прошло, применяем конечные действия.');
     handleTimerCompletion();
   } else {
     updateTimerDisplay();
     intervalId = setInterval(updateTimerDisplay, ONE_SECOND);
-    console.log('[Countdown Timer] Таймер запущен.');
   }
 }
 
@@ -1078,17 +1013,8 @@ initializeTimer();
     textarea.style.position = "fixed";
     textarea.style.left = "-9999px";
     document.body.appendChild(textarea);
-
-    try {
-      textarea.select();
-      const success = document.execCommand("copy");
-      if (!success) {
-        throw new Error("Не удалось скопировать код в буфер обмена");
-      }
-      console.log("Код скопирован в буфер обмена (fallback)");
-    } finally {
-      document.body.removeChild(textarea);
-    }
+    textarea.select();
+    document.body.removeChild(textarea);
   }
 
   showSuccessPopup() {
