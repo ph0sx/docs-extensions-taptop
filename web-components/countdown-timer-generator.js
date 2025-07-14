@@ -122,8 +122,11 @@ class CountdownTimerGenerator extends HTMLElement {
 
       .setting-group {
         width: 100%;
-        min-width: 0;
         flex-shrink: 1;
+
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
       }
 
       .setting-group label {
@@ -144,8 +147,6 @@ class CountdownTimerGenerator extends HTMLElement {
         color: var(--text-dark);
         box-shadow: var(--shadow-sm);
         transition: var(--transition);
-        box-sizing: border-box;
-        min-width: 0;
         background: white;
       }
 
@@ -168,7 +169,6 @@ class CountdownTimerGenerator extends HTMLElement {
       .helper-text {
         font-size: 13px;
         color: var(--text-light);
-        margin-top: 5px;
         line-height: 1.4;
       }
 
@@ -324,9 +324,24 @@ class CountdownTimerGenerator extends HTMLElement {
         flex-wrap: wrap;
       }
 
+      .settings-column {
+        display:flex;
+       flex-direction:column; 
+       gap:10px;
+      }
+
+      .settings-column .setting-group {
+        gap: 10px;
+        display: flex;
+        flex-direction: column;
+      }
+
       .duration-row .setting-group {
         flex: 1;
         min-width: 80px;
+        gap: 10px;
+        display: flex;
+        flex-direction: column;
       }
 
       .icon-eye-off {
@@ -368,6 +383,7 @@ class CountdownTimerGenerator extends HTMLElement {
           <div class="time-settings-group" id="fixed-date-settings">
             <div class="helper-text" style="margin-bottom: 15px;">Таймер будет отсчитывать время до указанной даты и времени по выбранному часовому поясу.</div>
             
+            <div class="settings-column">
             <div class="setting-group">
               <label for="timer-end-date">Дата окончания:</label>
               <input type="date" id="timer-end-date" class="text-input">
@@ -427,6 +443,7 @@ class CountdownTimerGenerator extends HTMLElement {
               <div class="helper-text">Убедитесь, что дата/время установлены по выбранному часовому поясу.</div>
             </div>
           </div>
+            </div>
 
           <div class="time-settings-group hidden" id="evergreen-settings">
             <div class="helper-text" style="margin-bottom: 15px;">Укажите длительность таймера. Он будет запущен индивидуально для каждого посетителя при первом заходе на страницу.</div>
