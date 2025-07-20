@@ -421,6 +421,7 @@ class BeforeAfterSliderGenerator extends HTMLElement {
         color: var(--text-light);
         font-size: 14px;
         padding: 20px;
+        position:absolute;
       }
 
       .preview-error {
@@ -436,6 +437,10 @@ class BeforeAfterSliderGenerator extends HTMLElement {
 
       .preview-settings {
         margin-bottom: 15px;
+      }
+
+      img-comparison-slider {
+        outline: none !important;
       }
     `;
   }
@@ -591,8 +596,12 @@ class BeforeAfterSliderGenerator extends HTMLElement {
       imageUrlAfter: this.shadowRoot.getElementById("image-url-after"),
       containerSelector: this.shadowRoot.getElementById("container-selector"),
       initialPosition: this.shadowRoot.getElementById("initial-position"),
-      initialPositionValue: this.shadowRoot.getElementById("initial-position-value"),
-      orientationRadios: this.shadowRoot.querySelectorAll('input[name="orientation"]'),
+      initialPositionValue: this.shadowRoot.getElementById(
+        "initial-position-value"
+      ),
+      orientationRadios: this.shadowRoot.querySelectorAll(
+        'input[name="orientation"]'
+      ),
       hoverMode: this.shadowRoot.getElementById("hover-mode"),
       handleOnlyDrag: this.shadowRoot.getElementById("handle-only-drag"),
       dividerWidth: this.shadowRoot.getElementById("divider-width"),
@@ -605,7 +614,7 @@ class BeforeAfterSliderGenerator extends HTMLElement {
       previewArea: this.shadowRoot.getElementById("preview-area"),
       previewPlaceholder: this.shadowRoot.getElementById("preview-placeholder"),
       previewError: this.shadowRoot.getElementById("preview-error"),
-      generateButton: this.shadowRoot.getElementById("generate-btn")
+      generateButton: this.shadowRoot.getElementById("generate-btn"),
     };
 
     // Поиск внешних элементов модалки
@@ -620,29 +629,65 @@ class BeforeAfterSliderGenerator extends HTMLElement {
     const handlers = {
       handleGenerate: this.generateAndCopyCode.bind(this),
       handlePositionInput: () => this.updatePositionDisplay(),
-      handlePreviewUpdate: () => this.updatePreview()
+      handlePreviewUpdate: () => this.updatePreview(),
     };
 
     this.eventHandlers = handlers;
 
-    this.elements.generateButton?.addEventListener("click", handlers.handleGenerate);
-    this.elements.initialPosition?.addEventListener("input", handlers.handlePositionInput);
-    
+    this.elements.generateButton?.addEventListener(
+      "click",
+      handlers.handleGenerate
+    );
+    this.elements.initialPosition?.addEventListener(
+      "input",
+      handlers.handlePositionInput
+    );
+
     // Обработчики для обновления превью
-    this.elements.imageUrlBefore?.addEventListener("input", handlers.handlePreviewUpdate);
-    this.elements.imageUrlAfter?.addEventListener("input", handlers.handlePreviewUpdate);
-    this.elements.initialPosition?.addEventListener("input", handlers.handlePreviewUpdate);
-    this.elements.orientationRadios?.forEach(radio => {
+    this.elements.imageUrlBefore?.addEventListener(
+      "input",
+      handlers.handlePreviewUpdate
+    );
+    this.elements.imageUrlAfter?.addEventListener(
+      "input",
+      handlers.handlePreviewUpdate
+    );
+    this.elements.initialPosition?.addEventListener(
+      "input",
+      handlers.handlePreviewUpdate
+    );
+    this.elements.orientationRadios?.forEach((radio) => {
       radio.addEventListener("change", handlers.handlePreviewUpdate);
     });
-    this.elements.hoverMode?.addEventListener("change", handlers.handlePreviewUpdate);
-    this.elements.handleOnlyDrag?.addEventListener("change", handlers.handlePreviewUpdate);
-    this.elements.dividerWidth?.addEventListener("input", handlers.handlePreviewUpdate);
-    this.elements.dividerColor?.addEventListener("change", handlers.handlePreviewUpdate);
-    this.elements.handleWidth?.addEventListener("input", handlers.handlePreviewUpdate);
-    this.elements.handleColor?.addEventListener("change", handlers.handlePreviewUpdate);
-    this.elements.hideHandle?.addEventListener("change", handlers.handlePreviewUpdate);
-    
+    this.elements.hoverMode?.addEventListener(
+      "change",
+      handlers.handlePreviewUpdate
+    );
+    this.elements.handleOnlyDrag?.addEventListener(
+      "change",
+      handlers.handlePreviewUpdate
+    );
+    this.elements.dividerWidth?.addEventListener(
+      "input",
+      handlers.handlePreviewUpdate
+    );
+    this.elements.dividerColor?.addEventListener(
+      "change",
+      handlers.handlePreviewUpdate
+    );
+    this.elements.handleWidth?.addEventListener(
+      "input",
+      handlers.handlePreviewUpdate
+    );
+    this.elements.handleColor?.addEventListener(
+      "change",
+      handlers.handlePreviewUpdate
+    );
+    this.elements.hideHandle?.addEventListener(
+      "change",
+      handlers.handlePreviewUpdate
+    );
+
     this.bindModalEvents();
   }
 
@@ -688,8 +733,10 @@ class BeforeAfterSliderGenerator extends HTMLElement {
   }
 
   loadSliderLibrary(callback) {
-    const sliderLibraryUrl = 'https://cdn.jsdelivr.net/npm/img-comparison-slider@8/dist/index.js';
-    const sliderStylesUrl = 'https://cdn.jsdelivr.net/npm/img-comparison-slider@8/dist/styles.css';
+    const sliderLibraryUrl =
+      "https://cdn.jsdelivr.net/npm/img-comparison-slider@8/dist/index.js";
+    const sliderStylesUrl =
+      "https://cdn.jsdelivr.net/npm/img-comparison-slider@8/dist/styles.css";
     let scriptLoaded = false;
     let stylesLoaded = false;
 
@@ -701,8 +748,8 @@ class BeforeAfterSliderGenerator extends HTMLElement {
 
     // Загрузка стилей
     if (!document.querySelector(`link[href="${sliderStylesUrl}"]`)) {
-      const linkTag = document.createElement('link');
-      linkTag.rel = 'stylesheet';
+      const linkTag = document.createElement("link");
+      linkTag.rel = "stylesheet";
       linkTag.href = sliderStylesUrl;
       linkTag.onload = () => {
         stylesLoaded = true;
@@ -719,18 +766,24 @@ class BeforeAfterSliderGenerator extends HTMLElement {
 
     // Загрузка скрипта
     if (!document.querySelector(`script[src="${sliderLibraryUrl}"]`)) {
-      const scriptTag = document.createElement('script');
+      const scriptTag = document.createElement("script");
       scriptTag.src = sliderLibraryUrl;
       scriptTag.defer = true;
       scriptTag.onload = () => {
-        if (window.customElements && typeof window.customElements.whenDefined === 'function') {
-          window.customElements.whenDefined('img-comparison-slider').then(() => {
-            scriptLoaded = true;
-            checkComplete();
-          }).catch(() => {
-            scriptLoaded = true;
-            checkComplete();
-          });
+        if (
+          window.customElements &&
+          typeof window.customElements.whenDefined === "function"
+        ) {
+          window.customElements
+            .whenDefined("img-comparison-slider")
+            .then(() => {
+              scriptLoaded = true;
+              checkComplete();
+            })
+            .catch(() => {
+              scriptLoaded = true;
+              checkComplete();
+            });
         } else {
           setTimeout(() => {
             scriptLoaded = true;
@@ -744,7 +797,10 @@ class BeforeAfterSliderGenerator extends HTMLElement {
       };
       document.head.appendChild(scriptTag);
     } else {
-      if (window.customElements && window.customElements.get('img-comparison-slider')) {
+      if (
+        window.customElements &&
+        window.customElements.get("img-comparison-slider")
+      ) {
         scriptLoaded = true;
       } else {
         setTimeout(() => {
@@ -759,7 +815,8 @@ class BeforeAfterSliderGenerator extends HTMLElement {
   }
 
   updatePreview() {
-    const { previewArea, previewPlaceholder, previewError, previewContainer } = this.elements;
+    const { previewArea, previewPlaceholder, previewError, previewContainer } =
+      this.elements;
     if (!previewArea || !previewContainer) return;
 
     // Собираем текущие настройки
@@ -767,7 +824,9 @@ class BeforeAfterSliderGenerator extends HTMLElement {
       imageUrlBefore: this.elements.imageUrlBefore?.value.trim() || "",
       imageUrlAfter: this.elements.imageUrlAfter?.value.trim() || "",
       initialPosition: parseInt(this.elements.initialPosition?.value, 10) || 50,
-      orientation: this.shadowRoot.querySelector('input[name="orientation"]:checked')?.value || "horizontal",
+      orientation:
+        this.shadowRoot.querySelector('input[name="orientation"]:checked')
+          ?.value || "horizontal",
       hoverMode: this.elements.hoverMode?.checked || false,
       handleOnlyDrag: this.elements.handleOnlyDrag?.checked || false,
       dividerWidth: parseInt(this.elements.dividerWidth?.value, 10) || 1,
@@ -793,20 +852,29 @@ class BeforeAfterSliderGenerator extends HTMLElement {
     // Проверка URL для превью
     const checkPreviewUrl = (url) => {
       if (!url) return true;
-      if (url.startsWith("http:") || url.startsWith("https:") || url.startsWith("/") || url.startsWith("data:")) {
+      if (
+        url.startsWith("http:") ||
+        url.startsWith("https:") ||
+        url.startsWith("/") ||
+        url.startsWith("data:")
+      ) {
         return false;
       }
       return true;
     };
 
     let urlError = false;
-    if (checkPreviewUrl(settings.imageUrlBefore) || checkPreviewUrl(settings.imageUrlAfter)) {
+    if (
+      checkPreviewUrl(settings.imageUrlBefore) ||
+      checkPreviewUrl(settings.imageUrlAfter)
+    ) {
       urlError = true;
     }
 
     if (urlError && (settings.imageUrlBefore || settings.imageUrlAfter)) {
       if (previewError) {
-        previewError.textContent = "Ошибка: URL должен начинаться с http://, https:// или /";
+        previewError.textContent =
+          "Ошибка: URL должен начинаться с http://, https:// или /";
         previewError.style.display = "block";
       }
       const existingSlider = previewArea.querySelector("img-comparison-slider");
@@ -820,9 +888,12 @@ class BeforeAfterSliderGenerator extends HTMLElement {
 
   createPreviewSlider(settings) {
     const { previewArea, previewError } = this.elements;
-    
+
     // Проверяем доступность библиотеки
-    if (!window.customElements || !window.customElements.get('img-comparison-slider')) {
+    if (
+      !window.customElements ||
+      !window.customElements.get("img-comparison-slider")
+    ) {
       if (previewError) {
         previewError.textContent = "Библиотека слайдера не загружена";
         previewError.style.display = "block";
@@ -835,41 +906,48 @@ class BeforeAfterSliderGenerator extends HTMLElement {
     if (existingSlider) existingSlider.remove();
 
     // Создаем новый слайдер
-    const slider = document.createElement('img-comparison-slider');
+    const slider = document.createElement("img-comparison-slider");
     slider.style.width = "100%";
     slider.style.height = "100%";
+    slider.style.outline = "none";
     slider.setAttribute("tabindex", "-1");
-    
+
     // Настройки слайдера
-    slider.setAttribute('value', settings.initialPosition);
-    slider.setAttribute('direction', settings.orientation);
-    if (settings.hoverMode) slider.setAttribute('hover', 'true');
-    if (settings.handleOnlyDrag) slider.setAttribute('handle', 'true');
+    slider.setAttribute("value", settings.initialPosition);
+    slider.setAttribute("direction", settings.orientation);
+    if (settings.hoverMode) slider.setAttribute("hover", "true");
+    if (settings.handleOnlyDrag) slider.setAttribute("handle", "true");
 
     // Применение стилей через CSS переменные
     if (settings.dividerWidth >= 0) {
-      slider.style.setProperty('--divider-width', `${settings.dividerWidth}px`);
+      slider.style.setProperty("--divider-width", `${settings.dividerWidth}px`);
     }
     if (settings.dividerColor) {
-      slider.style.setProperty('--divider-color', settings.dividerColor);
+      slider.style.setProperty("--divider-color", settings.dividerColor);
     }
     if (settings.handleWidth >= 0) {
-      slider.style.setProperty('--default-handle-width', `${settings.handleWidth}px`);
+      slider.style.setProperty(
+        "--default-handle-width",
+        `${settings.handleWidth}px`
+      );
     }
     if (settings.handleColor) {
-      slider.style.setProperty('--default-handle-color', settings.handleColor);
+      slider.style.setProperty("--default-handle-color", settings.handleColor);
     }
-    slider.style.setProperty('--default-handle-opacity', settings.hideHandle ? '0' : '1');
+    slider.style.setProperty(
+      "--default-handle-opacity",
+      settings.hideHandle ? "0" : "1"
+    );
 
     // Создание изображений
-    const imgBefore = document.createElement('img');
-    imgBefore.setAttribute('slot', 'first');
-    imgBefore.setAttribute('src', settings.imageUrlBefore);
-    imgBefore.setAttribute('alt', 'Изображение До');
-    imgBefore.style.width = '100%';
-    imgBefore.style.height = 'auto';
-    imgBefore.style.display = 'block';
-    
+    const imgBefore = document.createElement("img");
+    imgBefore.setAttribute("slot", "first");
+    imgBefore.setAttribute("src", settings.imageUrlBefore);
+    imgBefore.setAttribute("alt", "Изображение До");
+    imgBefore.style.width = "100%";
+    imgBefore.style.height = "auto";
+    imgBefore.style.display = "block";
+
     imgBefore.onerror = () => {
       if (previewError) {
         previewError.textContent = 'Не удалось загрузить изображение "ДО"';
@@ -877,20 +955,20 @@ class BeforeAfterSliderGenerator extends HTMLElement {
         slider.style.display = "none";
       }
     };
-    
+
     imgBefore.onload = () => {
       slider.style.display = "";
       if (previewError) previewError.style.display = "none";
     };
 
-    const imgAfter = document.createElement('img');
-    imgAfter.setAttribute('slot', 'second');
-    imgAfter.setAttribute('src', settings.imageUrlAfter);
-    imgAfter.setAttribute('alt', 'Изображение После');
-    imgAfter.style.width = '100%';
-    imgAfter.style.height = 'auto';
-    imgAfter.style.display = 'block';
-    
+    const imgAfter = document.createElement("img");
+    imgAfter.setAttribute("slot", "second");
+    imgAfter.setAttribute("src", settings.imageUrlAfter);
+    imgAfter.setAttribute("alt", "Изображение После");
+    imgAfter.style.width = "100%";
+    imgAfter.style.height = "auto";
+    imgAfter.style.display = "block";
+
     imgAfter.onerror = () => {
       if (previewError) {
         previewError.textContent = 'Не удалось загрузить изображение "ПОСЛЕ"';
@@ -898,7 +976,7 @@ class BeforeAfterSliderGenerator extends HTMLElement {
         slider.style.display = "none";
       }
     };
-    
+
     imgAfter.onload = () => {
       slider.style.display = "";
       if (previewError) previewError.style.display = "none";
@@ -907,7 +985,7 @@ class BeforeAfterSliderGenerator extends HTMLElement {
     // Добавляем изображения в слайдер
     slider.appendChild(imgBefore);
     slider.appendChild(imgAfter);
-    
+
     // Добавляем слайдер в превью область
     previewArea.appendChild(slider);
   }
@@ -915,7 +993,8 @@ class BeforeAfterSliderGenerator extends HTMLElement {
   collectData() {
     const imageUrlBefore = this.elements.imageUrlBefore?.value.trim() || "";
     const imageUrlAfter = this.elements.imageUrlAfter?.value.trim() || "";
-    const containerSelector = this.elements.containerSelector?.value.trim().replace(/^\./, "") || "";
+    const containerSelector =
+      this.elements.containerSelector?.value.trim().replace(/^\./, "") || "";
 
     if (!imageUrlBefore || !imageUrlAfter) {
       alert("Укажите URL для обоих изображений.");
@@ -929,11 +1008,15 @@ class BeforeAfterSliderGenerator extends HTMLElement {
 
     const validClassRegex = /^[a-zA-Z0-9_-]+$/;
     if (!validClassRegex.test(containerSelector)) {
-      alert(`Класс контейнера "${containerSelector}" содержит недопустимые символы.`);
+      alert(
+        `Класс контейнера "${containerSelector}" содержит недопустимые символы.`
+      );
       return null;
     }
 
-    const orientation = this.shadowRoot.querySelector('input[name="orientation"]:checked')?.value || "horizontal";
+    const orientation =
+      this.shadowRoot.querySelector('input[name="orientation"]:checked')
+        ?.value || "horizontal";
 
     return {
       imageUrlBefore: imageUrlBefore,
@@ -991,6 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (config.hoverMode) { slider.setAttribute('hover', 'true'); }
     if (config.handleOnlyDrag) { slider.setAttribute('handle', 'true'); }
     slider.setAttribute('tabindex', '0');
+    slider.style.outline = 'none';
 
     // Применение стилей через CSS переменные
     if (config.dividerWidth != null && config.dividerWidth >= 0) {
@@ -1137,19 +1221,166 @@ document.addEventListener('DOMContentLoaded', () => {
     return script;
   }
 
+  async minifyGeneratedCode(code) {
+    try {
+      const parts = this.parseGeneratedCode(code);
+      const minifiedJS = parts.js ? this.minifyJS(parts.js) : "";
+      const minifiedHTML = parts.html ? this.minifyHTML(parts.html) : "";
+
+      let result = "";
+      if (minifiedHTML) result += minifiedHTML;
+      if (minifiedJS) result += `<script>${minifiedJS}</script>`;
+
+      return result;
+    } catch (error) {
+      console.warn(
+        "Минификация генерируемого кода не удалась, используем оригинал:",
+        error
+      );
+      return code;
+    }
+  }
+
+  parseGeneratedCode(code) {
+    const result = { js: "", html: "" };
+
+    const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+    let match;
+    while ((match = scriptRegex.exec(code)) !== null) {
+      result.js += match[1];
+    }
+
+    result.html = code.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").trim();
+
+    return result;
+  }
+
+  minifyHTML(html) {
+    if (!html) return "";
+    return html
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/>\s+</g, "><")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  minifyJS(js) {
+    let minified = js;
+
+    minified = this.removeJSComments(minified);
+
+    minified = minified
+      .replace(/const\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "const $1=")
+      .replace(/let\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "let $1=")
+      .replace(/var\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "var $1=");
+
+    minified = minified
+      .replace(/{\s*([^}]+)\s*}/g, (match, content) => {
+        const compressed = content
+          .replace(/\s*:\s*/g, ":")
+          .replace(/\s*,\s*/g, ",");
+        return `{${compressed}}`;
+      })
+      .replace(/\[\s*([^\]]+)\s*\]/g, (match, content) => {
+        const compressed = content.replace(/\s*,\s*/g, ",");
+        return `[${compressed}]`;
+      });
+
+    minified = minified
+      .replace(/\s*([=+\-*/%<>&|!])\s*/g, "$1")
+      .replace(/\s*([(){}[\];,])\s*/g, "$1")
+      .replace(/\s+/g, " ")
+      .replace(
+        /\b(if|for|while|switch|catch|function|return|throw|new|typeof)\s+/g,
+        "$1 "
+      )
+      .replace(/\belse\s+/g, "else ")
+      .replace(/\s*\n\s*/g, "\n")
+      .replace(/\n+/g, "\n")
+      .trim();
+
+    minified = minified
+      .replace(/\btrue\b(?=\s*[,;\}\)\]])/g, "!0")
+      .replace(/\bfalse\b(?=\s*[,;\}\)\]])/g, "!1")
+      .replace(/\bundefined\b(?=\s*[,;\}\)\]])/g, "void 0");
+
+    return minified;
+  }
+
+  removeJSComments(code) {
+    let result = "";
+    let inString = false;
+    let stringChar = "";
+    let inBlockComment = false;
+    let inLineComment = false;
+
+    for (let i = 0; i < code.length; i++) {
+      const char = code[i];
+      const next = code[i + 1] || "";
+
+      if (!inBlockComment && !inLineComment) {
+        if (!inString && (char === '"' || char === "'" || char === "`")) {
+          inString = true;
+          stringChar = char;
+          result += char;
+          continue;
+        } else if (inString && char === stringChar && code[i - 1] !== "\\") {
+          inString = false;
+          result += char;
+          continue;
+        } else if (inString) {
+          result += char;
+          continue;
+        }
+      }
+
+      if (!inString) {
+        if (!inBlockComment && !inLineComment && char === "/" && next === "*") {
+          inBlockComment = true;
+          i++;
+          continue;
+        } else if (inBlockComment && char === "*" && next === "/") {
+          inBlockComment = false;
+          i++;
+          continue;
+        } else if (
+          !inBlockComment &&
+          !inLineComment &&
+          char === "/" &&
+          next === "/"
+        ) {
+          inLineComment = true;
+          i++;
+          continue;
+        } else if (inLineComment && (char === "\n" || char === "\r")) {
+          inLineComment = false;
+          result += char;
+          continue;
+        }
+      }
+
+      if (!inBlockComment && !inLineComment) {
+        result += char;
+      }
+    }
+
+    return result;
+  }
+
   async generateAndCopyCode() {
     const settings = this.collectData();
     if (settings === null) {
       return;
     }
-    
-    const code = this.generateCode(settings);
-    
+
+    const rawCode = this.generateCode(settings);
+    const code = await this.minifyGeneratedCode(rawCode);
+
     try {
       await this.copyToClipboard(code);
       this.showSuccessPopup();
     } catch (err) {
-      console.error('Не удалось скопировать код:', err);
+      console.error("Не удалось скопировать код:", err);
     }
   }
 
@@ -1194,44 +1425,101 @@ document.addEventListener('DOMContentLoaded', () => {
   unbindEvents() {
     // Отвязываем обработчик генерации
     if (this.elements.generateButton && this.eventHandlers.handleGenerate) {
-      this.elements.generateButton.removeEventListener("click", this.eventHandlers.handleGenerate);
+      this.elements.generateButton.removeEventListener(
+        "click",
+        this.eventHandlers.handleGenerate
+      );
     }
 
     // Отвязываем обработчик слайдера
-    if (this.elements.initialPosition && this.eventHandlers.handlePositionInput) {
-      this.elements.initialPosition.removeEventListener("input", this.eventHandlers.handlePositionInput);
+    if (
+      this.elements.initialPosition &&
+      this.eventHandlers.handlePositionInput
+    ) {
+      this.elements.initialPosition.removeEventListener(
+        "input",
+        this.eventHandlers.handlePositionInput
+      );
     }
 
     // Отвязываем обработчики превью
     if (this.eventHandlers.handlePreviewUpdate) {
-      this.elements.imageUrlBefore?.removeEventListener("input", this.eventHandlers.handlePreviewUpdate);
-      this.elements.imageUrlAfter?.removeEventListener("input", this.eventHandlers.handlePreviewUpdate);
-      this.elements.initialPosition?.removeEventListener("input", this.eventHandlers.handlePreviewUpdate);
-      this.elements.orientationRadios?.forEach(radio => {
-        radio.removeEventListener("change", this.eventHandlers.handlePreviewUpdate);
+      this.elements.imageUrlBefore?.removeEventListener(
+        "input",
+        this.eventHandlers.handlePreviewUpdate
+      );
+      this.elements.imageUrlAfter?.removeEventListener(
+        "input",
+        this.eventHandlers.handlePreviewUpdate
+      );
+      this.elements.initialPosition?.removeEventListener(
+        "input",
+        this.eventHandlers.handlePreviewUpdate
+      );
+      this.elements.orientationRadios?.forEach((radio) => {
+        radio.removeEventListener(
+          "change",
+          this.eventHandlers.handlePreviewUpdate
+        );
       });
-      this.elements.hoverMode?.removeEventListener("change", this.eventHandlers.handlePreviewUpdate);
-      this.elements.handleOnlyDrag?.removeEventListener("change", this.eventHandlers.handlePreviewUpdate);
-      this.elements.dividerWidth?.removeEventListener("input", this.eventHandlers.handlePreviewUpdate);
-      this.elements.dividerColor?.removeEventListener("change", this.eventHandlers.handlePreviewUpdate);
-      this.elements.handleWidth?.removeEventListener("input", this.eventHandlers.handlePreviewUpdate);
-      this.elements.handleColor?.removeEventListener("change", this.eventHandlers.handlePreviewUpdate);
-      this.elements.hideHandle?.removeEventListener("change", this.eventHandlers.handlePreviewUpdate);
-      this.elements.previewWidth?.removeEventListener("input", this.eventHandlers.handlePreviewUpdate);
-      this.elements.previewHeight?.removeEventListener("input", this.eventHandlers.handlePreviewUpdate);
+      this.elements.hoverMode?.removeEventListener(
+        "change",
+        this.eventHandlers.handlePreviewUpdate
+      );
+      this.elements.handleOnlyDrag?.removeEventListener(
+        "change",
+        this.eventHandlers.handlePreviewUpdate
+      );
+      this.elements.dividerWidth?.removeEventListener(
+        "input",
+        this.eventHandlers.handlePreviewUpdate
+      );
+      this.elements.dividerColor?.removeEventListener(
+        "change",
+        this.eventHandlers.handlePreviewUpdate
+      );
+      this.elements.handleWidth?.removeEventListener(
+        "input",
+        this.eventHandlers.handlePreviewUpdate
+      );
+      this.elements.handleColor?.removeEventListener(
+        "change",
+        this.eventHandlers.handlePreviewUpdate
+      );
+      this.elements.hideHandle?.removeEventListener(
+        "change",
+        this.eventHandlers.handlePreviewUpdate
+      );
+      this.elements.previewWidth?.removeEventListener(
+        "input",
+        this.eventHandlers.handlePreviewUpdate
+      );
+      this.elements.previewHeight?.removeEventListener(
+        "input",
+        this.eventHandlers.handlePreviewUpdate
+      );
     }
 
     // Отвязываем обработчики модалки
     if (this.eventHandlers.has("popup-accept")) {
-      this.elements.popupAcceptBtn?.removeEventListener("click", this.eventHandlers.get("popup-accept"));
+      this.elements.popupAcceptBtn?.removeEventListener(
+        "click",
+        this.eventHandlers.get("popup-accept")
+      );
     }
     if (this.eventHandlers.has("popup-close")) {
-      this.elements.popupCloseBtn?.removeEventListener("click", this.eventHandlers.get("popup-close"));
+      this.elements.popupCloseBtn?.removeEventListener(
+        "click",
+        this.eventHandlers.get("popup-close")
+      );
     }
     if (this.eventHandlers.has("popup-overlay")) {
-      this.elements.successPopup?.removeEventListener("click", this.eventHandlers.get("popup-overlay"));
+      this.elements.successPopup?.removeEventListener(
+        "click",
+        this.eventHandlers.get("popup-overlay")
+      );
     }
-    
+
     this.eventHandlers.clear();
   }
 
@@ -1242,4 +1530,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 }
 
-customElements.define('before-after-slider-generator', BeforeAfterSliderGenerator);
+customElements.define(
+  "before-after-slider-generator",
+  BeforeAfterSliderGenerator
+);
