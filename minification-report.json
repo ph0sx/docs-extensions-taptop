@@ -1,0 +1,112 @@
+{
+  "timestamp": "2025-07-19T07:01:15.197Z",
+  "results": [
+    {
+      "inputPath": "web-components/before-after-slider-generator.js",
+      "outputPath": "web-components/before-after-slider-generator.min.js",
+      "originalSize": 45622,
+      "minifiedSize": 31638,
+      "compressionRatio": 30.65,
+      "cssMinificationSavings": 3793,
+      "htmlMinificationSavings": 2152,
+      "preprocessSavings": 5945,
+      "terserSavings": 8039,
+      "success": true
+    },
+    {
+      "inputPath": "web-components/card-flip-generator.js",
+      "outputPath": "web-components/card-flip-generator.min.js",
+      "originalSize": 53542,
+      "minifiedSize": 42839,
+      "compressionRatio": 19.99,
+      "cssMinificationSavings": 3978,
+      "htmlMinificationSavings": 0,
+      "preprocessSavings": 3978,
+      "terserSavings": 6725,
+      "success": true
+    },
+    {
+      "inputPath": "web-components/cookie-generator.js",
+      "outputPath": "web-components/cookie-generator.min.js",
+      "originalSize": 13751,
+      "minifiedSize": 9861,
+      "compressionRatio": 28.29,
+      "cssMinificationSavings": 1351,
+      "htmlMinificationSavings": 502,
+      "preprocessSavings": 1853,
+      "terserSavings": 2037,
+      "success": true
+    },
+    {
+      "inputPath": "web-components/countdown-timer-generator.js",
+      "outputPath": "web-components/countdown-timer-generator.min.js",
+      "originalSize": 39442,
+      "minifiedSize": 28233,
+      "compressionRatio": 28.42,
+      "cssMinificationSavings": 2903,
+      "htmlMinificationSavings": 3077,
+      "preprocessSavings": 5980,
+      "terserSavings": 5229,
+      "success": true
+    },
+    {
+      "inputPath": "web-components/counter-generator.js",
+      "outputPath": "web-components/counter-generator.min.js",
+      "originalSize": 33173,
+      "minifiedSize": 26863,
+      "compressionRatio": 19.02,
+      "cssMinificationSavings": 1805,
+      "htmlMinificationSavings": 1631,
+      "preprocessSavings": 3436,
+      "terserSavings": 2874,
+      "success": true
+    },
+    {
+      "inputPath": "web-components/loader-generator.js",
+      "outputPath": "web-components/loader-generator.min.js",
+      "originalSize": 31888,
+      "minifiedSize": 22030,
+      "compressionRatio": 30.91,
+      "cssMinificationSavings": 2818,
+      "htmlMinificationSavings": 844,
+      "preprocessSavings": 3662,
+      "terserSavings": 6196,
+      "success": true
+    },
+    {
+      "inputPath": "web-components/smooth-scroll-generator.js",
+      "outputPath": "web-components/smooth-scroll-generator.min.js",
+      "originalSize": 22442,
+      "minifiedSize": 15413,
+      "compressionRatio": 31.32,
+      "cssMinificationSavings": 2595,
+      "htmlMinificationSavings": 971,
+      "preprocessSavings": 3566,
+      "terserSavings": 3463,
+      "success": true
+    },
+    {
+      "inputPath": "web-components/time-visibility-generator.js",
+      "outputPath": "web-components/time-visibility-generator.min.js",
+      "originalSize": 45568,
+      "minifiedSize": 34323,
+      "compressionRatio": 24.68,
+      "cssMinificationSavings": 3339,
+      "htmlMinificationSavings": 374,
+      "preprocessSavings": 3713,
+      "terserSavings": 7532,
+      "success": true
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "successful": 8,
+    "failed": 0,
+    "totalOriginalSize": 285428,
+    "totalMinifiedSize": 211200,
+    "totalCompressionRatio": 26.01,
+    "totalCSSMinificationSavings": 22582,
+    "totalHTMLMinificationSavings": 9551,
+    "totalJSMinificationSavings": 42095
+  }
+}
