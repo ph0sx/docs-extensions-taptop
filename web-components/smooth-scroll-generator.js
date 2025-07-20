@@ -576,6 +576,9 @@ class SmoothScrollGenerator extends HTMLElement {
   if (window.lenisInitialized) return;
   window.lenisInitialized = true;
   
+  // Плавная прокрутка с поддержкой якорных ссылок
+  // Любые ссылки вида <a href="#section"> будут автоматически прокручиваться плавно
+  
   // Подключение Lenis
   const script = document.createElement('script');
   script.src = 'https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js';
@@ -583,11 +586,12 @@ class SmoothScrollGenerator extends HTMLElement {
     ${lenisCSS}
     ${excludeSelectorsCode}
     
-    // Инициализация Lenis
+    // Инициализация Lenis с поддержкой якорных ссылок
     const lenis = new Lenis({
       lerp: ${settings.lerp.toFixed(3)},
       duration: ${settings.duration.toFixed(1)},
       wheelMultiplier: ${settings.wheelMultiplier.toFixed(1)},
+      anchors: true, // Автоматическая плавная прокрутка для ссылок <a href="#section">
       gestureOrientation: 'vertical',
       normalizeWheel: false,
       smoothTouch: false
@@ -654,10 +658,147 @@ class SmoothScrollGenerator extends HTMLElement {
     document.head.appendChild(style);`;
   }
 
+  async minifyGeneratedCode(code) {
+    try {
+      const parts = this.parseGeneratedCode(code);
+      const minifiedJS = parts.js ? this.minifyJS(parts.js) : "";
+      const minifiedHTML = parts.html ? this.minifyHTML(parts.html) : "";
+
+      let result = "";
+      if (minifiedHTML) result += minifiedHTML;
+      if (minifiedJS) result += `<script>${minifiedJS}</script>`;
+
+      return result;
+    } catch (error) {
+      console.warn('Минификация генерируемого кода не удалась, используем оригинал:', error);
+      return code;
+    }
+  }
+
+  parseGeneratedCode(code) {
+    const result = { js: "", html: "" };
+
+    const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+    let match;
+    while ((match = scriptRegex.exec(code)) !== null) {
+      result.js += match[1];
+    }
+
+    result.html = code
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .trim();
+
+    return result;
+  }
+
+  minifyHTML(html) {
+    if (!html) return "";
+    return html
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/>\s+</g, "><")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  minifyJS(js) {
+    let minified = js;
+
+    minified = this.removeJSComments(minified);
+
+    minified = minified
+      .replace(/const\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "const $1=")
+      .replace(/let\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "let $1=")
+      .replace(/var\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "var $1=");
+
+    minified = minified
+      .replace(/{\s*([^}]+)\s*}/g, (match, content) => {
+        const compressed = content
+          .replace(/\s*:\s*/g, ":")
+          .replace(/\s*,\s*/g, ",");
+        return `{${compressed}}`;
+      })
+      .replace(/\[\s*([^\]]+)\s*\]/g, (match, content) => {
+        const compressed = content.replace(/\s*,\s*/g, ",");
+        return `[${compressed}]`;
+      });
+
+    minified = minified
+      .replace(/\s*([=+\-*/%<>&|!])\s*/g, "$1")
+      .replace(/\s*([(){}[\];,])\s*/g, "$1")
+      .replace(/\s+/g, " ")
+      .replace(/\b(if|for|while|switch|catch|function|return|throw|new|typeof)\s+/g, "$1 ")
+      .replace(/\belse\s+/g, "else ")
+      .replace(/\s*\n\s*/g, "\n")
+      .replace(/\n+/g, "\n")
+      .trim();
+
+    minified = minified
+      .replace(/\btrue\b(?=\s*[,;\}\)\]])/g, "!0")
+      .replace(/\bfalse\b(?=\s*[,;\}\)\]])/g, "!1")
+      .replace(/\bundefined\b(?=\s*[,;\}\)\]])/g, "void 0");
+
+    return minified;
+  }
+
+  removeJSComments(code) {
+    let result = "";
+    let inString = false;
+    let stringChar = "";
+    let inBlockComment = false;
+    let inLineComment = false;
+
+    for (let i = 0; i < code.length; i++) {
+      const char = code[i];
+      const next = code[i + 1] || "";
+
+      if (!inBlockComment && !inLineComment) {
+        if (!inString && (char === '"' || char === "'" || char === "`")) {
+          inString = true;
+          stringChar = char;
+          result += char;
+          continue;
+        } else if (inString && char === stringChar && code[i - 1] !== "\\") {
+          inString = false;
+          result += char;
+          continue;
+        } else if (inString) {
+          result += char;
+          continue;
+        }
+      }
+
+      if (!inString) {
+        if (!inBlockComment && !inLineComment && char === "/" && next === "*") {
+          inBlockComment = true;
+          i++;
+          continue;
+        } else if (inBlockComment && char === "*" && next === "/") {
+          inBlockComment = false;
+          i++;
+          continue;
+        } else if (!inBlockComment && !inLineComment && char === "/" && next === "/") {
+          inLineComment = true;
+          i++;
+          continue;
+        } else if (inLineComment && (char === "\n" || char === "\r")) {
+          inLineComment = false;
+          result += char;
+          continue;
+        }
+      }
+
+      if (!inBlockComment && !inLineComment) {
+        result += char;
+      }
+    }
+
+    return result;
+  }
 
   async generateAndCopyCode() {
     const settings = this.collectData();
-    const code = this.generateCode(settings);
+    const rawCode = this.generateCode(settings);
+    const code = await this.minifyGeneratedCode(rawCode);
     
     try {
       await this.copyToClipboard(code);
