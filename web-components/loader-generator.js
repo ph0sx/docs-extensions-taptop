@@ -633,7 +633,8 @@ class LoaderGenerator extends HTMLElement {
       const data = this.collectData();
       if (!data) return;
 
-      const code = this.generateLoaderCode(data);
+      const rawCode = this.generateLoaderCode(data);
+      const code = await this.minifyGeneratedCode(rawCode);
       await this.copyToClipboard(code);
       this.showSuccessPopup();
     } catch (error) {
@@ -791,6 +792,163 @@ class LoaderGenerator extends HTMLElement {
     }, Math.max(15000, config.minDisplayTime + config.hideDelay + config.hideDuration + 2000));
   })();
 </script>`;
+  }
+
+  async minifyGeneratedCode(code) {
+    try {
+      const parts = this.parseGeneratedCode(code);
+      const minifiedCSS = parts.css ? this.minifyCSS(parts.css) : "";
+      const minifiedJS = parts.js ? this.minifyJS(parts.js) : "";
+      const minifiedHTML = parts.html ? this.minifyHTML(parts.html) : "";
+
+      let result = "";
+      if (minifiedHTML) result += minifiedHTML;
+      if (minifiedCSS) result += `<style>${minifiedCSS}</style>`;
+      if (minifiedJS) result += `<script>${minifiedJS}</script>`;
+
+      return result;
+    } catch (error) {
+      console.warn('Минификация генерируемого кода не удалась, используем оригинал:', error);
+      return code;
+    }
+  }
+
+  parseGeneratedCode(code) {
+    const result = { css: "", js: "", html: "" };
+
+    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+    let match;
+    while ((match = styleRegex.exec(code)) !== null) {
+      result.css += match[1];
+    }
+
+    const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+    while ((match = scriptRegex.exec(code)) !== null) {
+      result.js += match[1];
+    }
+
+    result.html = code
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .trim();
+
+    return result;
+  }
+
+  minifyCSS(css) {
+    return css
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\s+/g, " ")
+      .replace(/\s*([{}:;,>+~])\s*/g, "$1")
+      .replace(/;}/g, "}")
+      .replace(/\s*\(\s*/g, "(")
+      .replace(/\s*\)\s*/g, ")")
+      .replace(/#([a-f0-9])\1([a-f0-9])\2([a-f0-9])\3/gi, "#$1$2$3")
+      .trim();
+  }
+
+  minifyHTML(html) {
+    if (!html) return "";
+    return html
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/>\s+</g, "><")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  minifyJS(js) {
+    let minified = js;
+
+    minified = this.removeJSComments(minified);
+
+    minified = minified
+      .replace(/const\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "const $1=")
+      .replace(/let\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "let $1=")
+      .replace(/var\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "var $1=");
+
+    minified = minified
+      .replace(/{\s*([^}]+)\s*}/g, (match, content) => {
+        const compressed = content
+          .replace(/\s*:\s*/g, ":")
+          .replace(/\s*,\s*/g, ",");
+        return `{${compressed}}`;
+      })
+      .replace(/\[\s*([^\]]+)\s*\]/g, (match, content) => {
+        const compressed = content.replace(/\s*,\s*/g, ",");
+        return `[${compressed}]`;
+      });
+
+    minified = minified
+      .replace(/\s*([=+\-*/%<>&|!])\s*/g, "$1")
+      .replace(/\s*([(){}[\];,])\s*/g, "$1")
+      .replace(/\s+/g, " ")
+      .replace(/\b(if|for|while|switch|catch|function|return|throw|new|typeof)\s+/g, "$1 ")
+      .replace(/\belse\s+/g, "else ")
+      .replace(/\s*\n\s*/g, "\n")
+      .replace(/\n+/g, "\n")
+      .trim();
+
+    minified = minified
+      .replace(/\btrue\b(?=\s*[,;\}\)\]])/g, "!0")
+      .replace(/\bfalse\b(?=\s*[,;\}\)\]])/g, "!1")
+      .replace(/\bundefined\b(?=\s*[,;\}\)\]])/g, "void 0");
+
+    return minified;
+  }
+
+  removeJSComments(code) {
+    let result = "";
+    let inString = false;
+    let stringChar = "";
+    let inBlockComment = false;
+    let inLineComment = false;
+
+    for (let i = 0; i < code.length; i++) {
+      const char = code[i];
+      const next = code[i + 1] || "";
+
+      if (!inBlockComment && !inLineComment) {
+        if (!inString && (char === '"' || char === "'" || char === "`")) {
+          inString = true;
+          stringChar = char;
+          result += char;
+          continue;
+        } else if (inString && char === stringChar && code[i - 1] !== "\\") {
+          inString = false;
+          result += char;
+          continue;
+        } else if (inString) {
+          result += char;
+          continue;
+        }
+      }
+
+      if (!inString) {
+        if (!inBlockComment && !inLineComment && char === "/" && next === "*") {
+          inBlockComment = true;
+          i++;
+          continue;
+        } else if (inBlockComment && char === "*" && next === "/") {
+          inBlockComment = false;
+          i++;
+          continue;
+        } else if (!inBlockComment && !inLineComment && char === "/" && next === "/") {
+          inLineComment = true;
+          i++;
+          continue;
+        } else if (inLineComment && (char === "\n" || char === "\r")) {
+          inLineComment = false;
+          result += char;
+          continue;
+        }
+      }
+
+      if (!inBlockComment && !inLineComment) {
+        result += char;
+      }
+    }
+
+    return result;
   }
 
   async copyToClipboard(code) {
