@@ -118,14 +118,14 @@ class CardFlipGenerator extends HTMLElement {
       }
 
       .setting-group {
-        width: 100%;
-        min-width: 0;
-        flex-shrink: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
       }
 
       .setting-group label {
-        display: block;
-        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
         font-weight: 500;
         color: var(--text-dark);
         font-size: 14px;
@@ -212,8 +212,8 @@ class CardFlipGenerator extends HTMLElement {
       }
 
       .radio-container .radio-checkmark:after {
-        top: 6px;
-        left: 6px;
+        top: 5px;
+        left: 5px;
         width: 8px;
         height: 8px;
         border-radius: 50%;
@@ -274,11 +274,16 @@ class CardFlipGenerator extends HTMLElement {
         font-size: 14px;
       }
 
-      .helper-text {
+      .helper-text, p.helper-text {
         font-size: 13px;
         color: var(--text-light);
-        margin-top: 5px;
         line-height: 1.4;
+        margin: 0;
+        margin-top: -5px;
+      }
+
+      .helper-text:not(:last-child), p.helper-text:not(:last-child) {
+        margin-bottom: 15px;
       }
 
       .helper-text code {
@@ -466,8 +471,6 @@ class CardFlipGenerator extends HTMLElement {
                      placeholder="Например: my-flip-card" required>
               <div class="helper-text">
                 Класс, который вы присвоили основному блоку в Taptop. Без точки в начале.
-              </div>
-              <div class="helper-text" style="margin-top: 8px; color: var(--primary-color); font-weight: 500;">
                 Убедитесь, что внутри этого контейнера есть ровно два дочерних блока с классами 
                 <code>flip-front</code> и <code>flip-back</code>.
               </div>
@@ -595,21 +598,37 @@ class CardFlipGenerator extends HTMLElement {
 
   findElements() {
     const root = this.shadowRoot;
-    
-    this.elements.containerSelectorInput = root.getElementById("cf-container-selector");
-    this.elements.triggerRadios = root.querySelectorAll('input[name="cf-trigger"]');
-    this.elements.directionRadios = root.querySelectorAll('input[name="cf-direction"]');
+
+    this.elements.containerSelectorInput = root.getElementById(
+      "cf-container-selector"
+    );
+    this.elements.triggerRadios = root.querySelectorAll(
+      'input[name="cf-trigger"]'
+    );
+    this.elements.directionRadios = root.querySelectorAll(
+      'input[name="cf-direction"]'
+    );
     this.elements.speedSlider = root.getElementById("cf-speed-slider");
-    this.elements.speedSliderGroup = this.elements.speedSlider?.closest(".setting-group");
-    this.elements.speedValueDisplay = root.getElementById("cf-speed-value-display");
-    this.elements.animationStyleSelect = root.getElementById("cf-animation-style");
-    this.elements.animationStyleGroup = this.elements.animationStyleSelect?.closest(".setting-group");
+    this.elements.speedSliderGroup =
+      this.elements.speedSlider?.closest(".setting-group");
+    this.elements.speedValueDisplay = root.getElementById(
+      "cf-speed-value-display"
+    );
+    this.elements.animationStyleSelect =
+      root.getElementById("cf-animation-style");
+    this.elements.animationStyleGroup =
+      this.elements.animationStyleSelect?.closest(".setting-group");
     this.elements.borderRadiusInput = root.getElementById("cf-border-radius");
     this.elements.flipHeightSlider = root.getElementById("cf-flip-height");
-    this.elements.flipHeightGroup = this.elements.flipHeightSlider?.closest(".setting-group");
-    this.elements.flipHeightValueDisplay = root.getElementById("cf-flip-height-value-display");
+    this.elements.flipHeightGroup =
+      this.elements.flipHeightSlider?.closest(".setting-group");
+    this.elements.flipHeightValueDisplay = root.getElementById(
+      "cf-flip-height-value-display"
+    );
     this.elements.previewArea = root.getElementById("cf-preview-area");
-    this.elements.previewPlaceholder = root.getElementById("cf-preview-placeholder");
+    this.elements.previewPlaceholder = root.getElementById(
+      "cf-preview-placeholder"
+    );
     this.elements.previewError = root.getElementById("cf-preview-error");
     this.elements.generateButton = root.getElementById("generate-btn");
 
@@ -626,11 +645,19 @@ class CardFlipGenerator extends HTMLElement {
   bindEvents() {
     this.unbindEvents();
 
-    const debouncedUpdatePreview = this.debounce(this._updatePreview.bind(this), 250);
-    
+    const debouncedUpdatePreview = this.debounce(
+      this._updatePreview.bind(this),
+      250
+    );
+
     this._previewUpdateControls.forEach((el) => {
-      const event = el.tagName === "SELECT" || el.type === "radio" || el.type === "range" || el.type === "number"
-        ? "change" : "input";
+      const event =
+        el.tagName === "SELECT" ||
+        el.type === "radio" ||
+        el.type === "range" ||
+        el.type === "number"
+          ? "change"
+          : "input";
       const handler = debouncedUpdatePreview;
       el.addEventListener(event, handler);
       this.eventHandlers.set(el, { event, handler });
@@ -645,25 +672,37 @@ class CardFlipGenerator extends HTMLElement {
     if (this.elements.animationStyleSelect) {
       const handler = this._updateConditionalUI.bind(this);
       this.elements.animationStyleSelect.addEventListener("change", handler);
-      this.eventHandlers.set(this.elements.animationStyleSelect, { event: "change", handler });
+      this.eventHandlers.set(this.elements.animationStyleSelect, {
+        event: "change",
+        handler,
+      });
     }
 
     if (this.elements.speedSlider) {
       const handler = this._updateSpeedSliderDisplay.bind(this);
       this.elements.speedSlider.addEventListener("input", handler);
-      this.eventHandlers.set(this.elements.speedSlider, { event: "input", handler });
+      this.eventHandlers.set(this.elements.speedSlider, {
+        event: "input",
+        handler,
+      });
     }
 
     if (this.elements.flipHeightSlider) {
       const handler = this._updateHeightSliderDisplay.bind(this);
       this.elements.flipHeightSlider.addEventListener("input", handler);
-      this.eventHandlers.set(this.elements.flipHeightSlider, { event: "input", handler });
+      this.eventHandlers.set(this.elements.flipHeightSlider, {
+        event: "input",
+        handler,
+      });
     }
 
     if (this.elements.generateButton) {
       const handler = this.generateAndCopyCode.bind(this);
       this.elements.generateButton.addEventListener("click", handler);
-      this.eventHandlers.set(this.elements.generateButton, { event: "click", handler });
+      this.eventHandlers.set(this.elements.generateButton, {
+        event: "click",
+        handler,
+      });
     }
   }
 
@@ -678,10 +717,13 @@ class CardFlipGenerator extends HTMLElement {
 
   setInitialState() {
     if (this.elements.speedSlider) this.elements.speedSlider.value = 750;
-    if (this.elements.borderRadiusInput) this.elements.borderRadiusInput.value = 8;
-    if (this.elements.flipHeightSlider) this.elements.flipHeightSlider.value = 25;
-    if (this.elements.animationStyleSelect) this.elements.animationStyleSelect.value = "default";
-    
+    if (this.elements.borderRadiusInput)
+      this.elements.borderRadiusInput.value = 8;
+    if (this.elements.flipHeightSlider)
+      this.elements.flipHeightSlider.value = 25;
+    if (this.elements.animationStyleSelect)
+      this.elements.animationStyleSelect.value = "default";
+
     this._updateSpeedSliderDisplay();
     this._updateHeightSliderDisplay();
     this._updateConditionalUI();
@@ -699,7 +741,9 @@ class CardFlipGenerator extends HTMLElement {
   }
 
   _updateConditionalUI() {
-    const direction = this.shadowRoot.querySelector('input[name="cf-direction"]:checked')?.value;
+    const direction = this.shadowRoot.querySelector(
+      'input[name="cf-direction"]:checked'
+    )?.value;
     const style = this.elements.animationStyleSelect?.value;
 
     const showStyle = direction === "horizontal";
@@ -723,7 +767,10 @@ class CardFlipGenerator extends HTMLElement {
   }
 
   _updateHeightSliderDisplay() {
-    if (this.elements.flipHeightSlider && this.elements.flipHeightValueDisplay) {
+    if (
+      this.elements.flipHeightSlider &&
+      this.elements.flipHeightValueDisplay
+    ) {
       const value = this.elements.flipHeightSlider.value;
       this.elements.flipHeightValueDisplay.textContent = `${value}%`;
     }
@@ -734,18 +781,21 @@ class CardFlipGenerator extends HTMLElement {
     if (!previewArea) return;
 
     if (!window.customElements.get("flip-card")) {
-      if (previewPlaceholder) previewPlaceholder.textContent = "Загрузка компонента...";
-      
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://unpkg.com/@auroratide/flip-card/lib/define.js';
+      if (previewPlaceholder)
+        previewPlaceholder.textContent = "Загрузка компонента...";
+
+      const script = document.createElement("script");
+      script.type = "module";
+      script.src = "https://unpkg.com/@auroratide/flip-card/lib/define.js";
       script.onload = () => {
-        window.customElements.whenDefined('flip-card')
+        window.customElements
+          .whenDefined("flip-card")
           .then(() => this._updatePreview())
           .catch(() => {
             if (previewError) {
               previewError.style.display = "block";
-              previewError.textContent = "Не удалось загрузить компонент для превью.";
+              previewError.textContent =
+                "Не удалось загрузить компонент для превью.";
             }
           });
       };
@@ -756,12 +806,18 @@ class CardFlipGenerator extends HTMLElement {
     if (previewPlaceholder) previewPlaceholder.style.display = "none";
     if (previewError) previewError.style.display = "none";
 
-    const trigger = this.shadowRoot.querySelector('input[name="cf-trigger"]:checked')?.value || "click";
-    const direction = this.shadowRoot.querySelector('input[name="cf-direction"]:checked')?.value || "horizontal";
+    const trigger =
+      this.shadowRoot.querySelector('input[name="cf-trigger"]:checked')
+        ?.value || "click";
+    const direction =
+      this.shadowRoot.querySelector('input[name="cf-direction"]:checked')
+        ?.value || "horizontal";
     const duration = parseInt(this.elements.speedSlider?.value, 10) || 750;
-    const animationStyle = this.elements.animationStyleSelect?.value || "default";
+    const animationStyle =
+      this.elements.animationStyleSelect?.value || "default";
     const borderRadius = parseInt(this.elements.borderRadiusInput?.value, 10);
-    const flipHeightPercent = parseInt(this.elements.flipHeightSlider?.value, 10) || 25;
+    const flipHeightPercent =
+      parseInt(this.elements.flipHeightSlider?.value, 10) || 25;
 
     const flipHeightEm = (flipHeightPercent / 100) * 40;
 
@@ -777,17 +833,22 @@ class CardFlipGenerator extends HTMLElement {
     this.previewFlipCard = document.createElement("flip-card");
     const front = document.createElement("section");
     front.slot = "front";
-    front.textContent = "Лицевая сторона";
+    //front.textContent = "Лицевая сторона";
     const back = document.createElement("section");
     back.slot = "back";
-    back.textContent = "Обратная сторона";
+    //back.textContent = "Обратная сторона";
     this.previewFlipCard.append(front, back);
 
     this.previewFlipCard.style.setProperty("--flip-duration", `${duration}ms`);
-    this.previewFlipCard.style.borderRadius = `${isNaN(borderRadius) ? 8 : borderRadius}px`;
-    this.previewFlipCard.style.setProperty("--flip-height", `${flipHeightEm}em`);
+    this.previewFlipCard.style.borderRadius = `${
+      isNaN(borderRadius) ? 8 : borderRadius
+    }px`;
+    this.previewFlipCard.style.setProperty(
+      "--flip-height",
+      `${flipHeightEm}em`
+    );
     this.previewFlipCard.style.setProperty("--corner-granularity", "8");
-    
+
     previewArea.appendChild(this.previewFlipCard);
     this.previewTriggerElement = this.previewFlipCard;
 
@@ -842,12 +903,14 @@ class CardFlipGenerator extends HTMLElement {
     this._removePreviewTrigger();
 
     const card = this.previewFlipCard;
-    
+
     if (triggerType === "hover") {
       let intentToFlipToBack = false;
       let isAnimating = false;
 
-      const flippingListener = () => { isAnimating = true; };
+      const flippingListener = () => {
+        isAnimating = true;
+      };
       const flippedListener = () => {
         isAnimating = false;
         if (!intentToFlipToBack && card.hasAttribute("facedown")) {
@@ -872,8 +935,14 @@ class CardFlipGenerator extends HTMLElement {
         }
       };
 
-      this.previewTriggerElement.addEventListener("mouseenter", this._previewHoverEnter);
-      this.previewTriggerElement.addEventListener("mouseleave", this._previewHoverLeave);
+      this.previewTriggerElement.addEventListener(
+        "mouseenter",
+        this._previewHoverEnter
+      );
+      this.previewTriggerElement.addEventListener(
+        "mouseleave",
+        this._previewHoverLeave
+      );
 
       this._previewKeydownAction = (e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -882,7 +951,10 @@ class CardFlipGenerator extends HTMLElement {
         }
       };
 
-      this.previewTriggerElement.addEventListener("keydown", this._previewKeydownAction);
+      this.previewTriggerElement.addEventListener(
+        "keydown",
+        this._previewKeydownAction
+      );
     } else {
       let isClickFlipping = false;
 
@@ -898,7 +970,10 @@ class CardFlipGenerator extends HTMLElement {
       };
 
       card.addEventListener("flipped", clickFlippedListener);
-      this.previewTriggerElement.addEventListener("click", this._previewClickAction);
+      this.previewTriggerElement.addEventListener(
+        "click",
+        this._previewClickAction
+      );
 
       this._previewKeydownAction = (e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -910,26 +985,41 @@ class CardFlipGenerator extends HTMLElement {
         }
       };
 
-      this.previewTriggerElement.addEventListener("keydown", this._previewKeydownAction);
+      this.previewTriggerElement.addEventListener(
+        "keydown",
+        this._previewKeydownAction
+      );
     }
   }
 
   _removePreviewTrigger() {
     if (!this.previewTriggerElement || !this.previewFlipCard) return;
-    
+
     const card = this.previewFlipCard;
 
     if (this._previewClickAction) {
-      this.previewTriggerElement.removeEventListener("click", this._previewClickAction);
+      this.previewTriggerElement.removeEventListener(
+        "click",
+        this._previewClickAction
+      );
     }
     if (this._previewHoverEnter) {
-      this.previewTriggerElement.removeEventListener("mouseenter", this._previewHoverEnter);
+      this.previewTriggerElement.removeEventListener(
+        "mouseenter",
+        this._previewHoverEnter
+      );
     }
     if (this._previewHoverLeave) {
-      this.previewTriggerElement.removeEventListener("mouseleave", this._previewHoverLeave);
+      this.previewTriggerElement.removeEventListener(
+        "mouseleave",
+        this._previewHoverLeave
+      );
     }
     if (this._previewKeydownAction) {
-      this.previewTriggerElement.removeEventListener("keydown", this._previewKeydownAction);
+      this.previewTriggerElement.removeEventListener(
+        "keydown",
+        this._previewKeydownAction
+      );
     }
 
     this._previewClickAction = null;
@@ -942,14 +1032,20 @@ class CardFlipGenerator extends HTMLElement {
     const containerSelector = this.elements.containerSelectorInput?.value
       .trim()
       .replace(/^\./, "");
-    const trigger = this.shadowRoot.querySelector('input[name="cf-trigger"]:checked')?.value || "click";
-    const direction = this.shadowRoot.querySelector('input[name="cf-direction"]:checked')?.value || "horizontal";
+    const trigger =
+      this.shadowRoot.querySelector('input[name="cf-trigger"]:checked')
+        ?.value || "click";
+    const direction =
+      this.shadowRoot.querySelector('input[name="cf-direction"]:checked')
+        ?.value || "horizontal";
     const duration = parseInt(this.elements.speedSlider?.value, 10) || 750;
-    const animationStyle = direction === "horizontal" 
-      ? this.elements.animationStyleSelect?.value || "default"
-      : "default";
+    const animationStyle =
+      direction === "horizontal"
+        ? this.elements.animationStyleSelect?.value || "default"
+        : "default";
     const borderRadius = parseInt(this.elements.borderRadiusInput?.value, 10);
-    const flipHeightPercent = parseInt(this.elements.flipHeightSlider?.value, 10) || 25;
+    const flipHeightPercent =
+      parseInt(this.elements.flipHeightSlider?.value, 10) || 25;
 
     const rx = /^[a-zA-Z0-9_-]+$/;
     if (!containerSelector) {
@@ -957,7 +1053,9 @@ class CardFlipGenerator extends HTMLElement {
       return null;
     }
     if (!rx.test(containerSelector)) {
-      this.showErrorPopup(`Класс "${containerSelector}" содержит недопустимые символы.`);
+      this.showErrorPopup(
+        `Класс "${containerSelector}" содержит недопустимые символы.`
+      );
       return null;
     }
 
@@ -979,7 +1077,9 @@ class CardFlipGenerator extends HTMLElement {
 
   generateCode(settings) {
     if (!settings) {
-      console.error("CardFlipGenerator: Ошибка - нет настроек для генерации кода.");
+      console.error(
+        "CardFlipGenerator: Ошибка - нет настроек для генерации кода."
+      );
       return "";
     }
 
@@ -1010,7 +1110,9 @@ class CardFlipGenerator extends HTMLElement {
 
     if (containerSpecificStyles.length > 0) {
       styleRules.push(
-        `.${settings.containerSelector} {\n  ${containerSpecificStyles.join(";\n  ")};\n}`
+        `.${settings.containerSelector} {\n  ${containerSpecificStyles.join(
+          ";\n  "
+        )};\n}`
       );
     }
 
@@ -1356,24 +1458,196 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${styleBlock}\n<script type="module">\n${scriptContent}\n</script>\n`;
   }
 
-  generateAndCopyCode() {
+  async minifyGeneratedCode(code) {
+    try {
+      const parts = this.parseGeneratedCode(code);
+      const minifiedCSS = parts.css ? this.minifyCSS(parts.css) : "";
+      const minifiedJS = parts.js ? this.minifyJS(parts.js) : "";
+      const minifiedHTML = parts.html ? this.minifyHTML(parts.html) : "";
+
+      let result = "";
+      if (minifiedHTML) result += minifiedHTML;
+      if (minifiedCSS) result += `<style>${minifiedCSS}</style>`;
+      if (minifiedJS) result += `<script type="module">${minifiedJS}</script>`;
+
+      return result;
+    } catch (error) {
+      console.warn(
+        "Минификация генерируемого кода не удалась, используем оригинал:",
+        error
+      );
+      return code;
+    }
+  }
+
+  parseGeneratedCode(code) {
+    const result = { css: "", js: "", html: "" };
+
+    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+    let match;
+    while ((match = styleRegex.exec(code)) !== null) {
+      result.css += match[1];
+    }
+
+    const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+    while ((match = scriptRegex.exec(code)) !== null) {
+      result.js += match[1];
+    }
+
+    result.html = code
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .trim();
+
+    return result;
+  }
+
+  minifyCSS(css) {
+    return css
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\s+/g, " ")
+      .replace(/\s*([{}:;,>+~])\s*/g, "$1")
+      .replace(/;}/g, "}")
+      .replace(/\s*\(\s*/g, "(")
+      .replace(/\s*\)\s*/g, ")")
+      .replace(/#([a-f0-9])\1([a-f0-9])\2([a-f0-9])\3/gi, "#$1$2$3")
+      .trim();
+  }
+
+  minifyHTML(html) {
+    if (!html) return "";
+    return html
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/>\s+</g, "><")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  minifyJS(js) {
+    let minified = js;
+
+    minified = this.removeJSComments(minified);
+
+    minified = minified
+      .replace(/const\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "const $1=")
+      .replace(/let\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "let $1=")
+      .replace(/var\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\s*=\s*/g, "var $1=");
+
+    minified = minified
+      .replace(/{\s*([^}]+)\s*}/g, (match, content) => {
+        const compressed = content
+          .replace(/\s*:\s*/g, ":")
+          .replace(/\s*,\s*/g, ",");
+        return `{${compressed}}`;
+      })
+      .replace(/\[\s*([^\]]+)\s*\]/g, (match, content) => {
+        const compressed = content.replace(/\s*,\s*/g, ",");
+        return `[${compressed}]`;
+      });
+
+    minified = minified
+      .replace(/\s*([=+\-*/%<>&|!])\s*/g, "$1")
+      .replace(/\s*([(){}[\];,])\s*/g, "$1")
+      .replace(/\s+/g, " ")
+      .replace(
+        /\b(if|for|while|switch|catch|function|return|throw|new|typeof)\s+/g,
+        "$1 "
+      )
+      .replace(/\belse\s+/g, "else ")
+      .replace(/\s*\n\s*/g, "\n")
+      .replace(/\n+/g, "\n")
+      .trim();
+
+    minified = minified
+      .replace(/\btrue\b(?=\s*[,;\}\)\]])/g, "!0")
+      .replace(/\bfalse\b(?=\s*[,;\}\)\]])/g, "!1")
+      .replace(/\bundefined\b(?=\s*[,;\}\)\]])/g, "void 0");
+
+    return minified;
+  }
+
+  removeJSComments(code) {
+    let result = "";
+    let inString = false;
+    let stringChar = "";
+    let inBlockComment = false;
+    let inLineComment = false;
+
+    for (let i = 0; i < code.length; i++) {
+      const char = code[i];
+      const next = code[i + 1] || "";
+
+      if (!inBlockComment && !inLineComment) {
+        if (!inString && (char === '"' || char === "'" || char === "`")) {
+          inString = true;
+          stringChar = char;
+          result += char;
+          continue;
+        } else if (inString && char === stringChar && code[i - 1] !== "\\") {
+          inString = false;
+          result += char;
+          continue;
+        } else if (inString) {
+          result += char;
+          continue;
+        }
+      }
+
+      if (!inString) {
+        if (!inBlockComment && !inLineComment && char === "/" && next === "*") {
+          inBlockComment = true;
+          i++;
+          continue;
+        } else if (inBlockComment && char === "*" && next === "/") {
+          inBlockComment = false;
+          i++;
+          continue;
+        } else if (
+          !inBlockComment &&
+          !inLineComment &&
+          char === "/" &&
+          next === "/"
+        ) {
+          inLineComment = true;
+          i++;
+          continue;
+        } else if (inLineComment && (char === "\n" || char === "\r")) {
+          inLineComment = false;
+          result += char;
+          continue;
+        }
+      }
+
+      if (!inBlockComment && !inLineComment) {
+        result += char;
+      }
+    }
+
+    return result;
+  }
+
+  async generateAndCopyCode() {
     const settings = this.collectData();
-    
+
     if (settings === null) {
       return;
     }
 
-    const code = this.generateCode(settings);
+    const rawCode = this.generateCode(settings);
+    const code = await this.minifyGeneratedCode(rawCode);
     this.copyToClipboard(code);
   }
 
   copyToClipboard(text) {
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => {
-        this.showSuccessPopup();
-      }).catch(() => {
-        this.fallbackCopyToClipboard(text);
-      });
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          this.showSuccessPopup();
+        })
+        .catch(() => {
+          this.fallbackCopyToClipboard(text);
+        });
     } else {
       this.fallbackCopyToClipboard(text);
     }
@@ -1388,12 +1662,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
+
     try {
-      document.execCommand('copy');
+      document.execCommand("copy");
       this.showSuccessPopup();
     } catch (err) {
-      console.error('Ошибка копирования:', err);
+      console.error("Ошибка копирования:", err);
     } finally {
       document.body.removeChild(textArea);
     }
