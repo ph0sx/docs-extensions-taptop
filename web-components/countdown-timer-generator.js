@@ -76,6 +76,51 @@ class CountdownTimerGenerator extends HTMLElement {
         box-sizing: border-box;
       }
 
+      :host {
+        /* Typography */
+        --ttg-font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --ttg-font-weight-medium: 400;
+        --ttg-letter-spacing: -0.02em;
+        
+        /* Text sizes */
+        --ttg-text-size-m: 16px;
+        --ttg-text-line-height-m: 24px;
+        --ttg-text-size-s: 14px;
+        --ttg-text-line-height-s: 20px;
+        --ttg-text-size-xs: 12px;
+        --ttg-text-line-height-xs: 16px;
+        
+        /* Text colors */
+        --ttg-color-text-black: #333333;
+        --ttg-color-text-gray-900: #666666;
+        --ttg-color-text-gray-700: #888888;
+        --ttg-color-text-gray-500: #A9A9A9;
+        --ttg-color-text-gray-300: #D5D5D5;
+        --ttg-color-text-white: #FFFFFF;
+        --ttg-color-text-blue-base: #3290FF;
+        --ttg-color-text-critical: #FF2B71;
+        
+        /* Background colors */
+        --ttg-color-bg-black: #333333;
+        --ttg-color-bg-gray-900: #666666;
+        --ttg-color-bg-gray-700: #888888;
+        --ttg-color-bg-gray-500: #A9A9A9;
+        --ttg-color-bg-gray-300: #D5D5D5;
+        --ttg-color-bg-gray-100: #F5F5F5;
+        --ttg-color-bg-white: #FFFFFF;
+        --ttg-color-bg-blue-base: #3290FF;
+        --ttg-color-bg-blue-dark: #137BEC;
+        --ttg-color-bg-blue-darker: #0A60C2;
+        --ttg-color-bg-blue-light: #073DFE;
+        --ttg-color-bg-blue-lighter: #E9F3FF;
+        
+        /* Stroke colors */
+        --ttg-color-stroke-black: #333333;
+        --ttg-color-stroke-gray-300: #D5D5D5;
+        --ttg-color-stroke-blue-base: #3290FF;
+        --ttg-color-stroke-critical: #FF2B71;
+      }
+
       .countdown-timer-generator {
         --primary-color: #4483f5;
         --primary-light: rgba(68, 131, 245, 0.15);
@@ -196,30 +241,38 @@ class CountdownTimerGenerator extends HTMLElement {
       }
 
       .generate-button {
+        width: 100%;
+        padding: 14px 24px 14px 20px;
+        gap: 10px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        background: var(--ttg-color-bg-blue-base);
+        color: var(--ttg-color-text-white);
+        text-align: center;
+        font-family: var(--ttg-font-family);
+        font-size: var(--ttg-text-size-m);
+        font-weight: var(--ttg-font-weight-medium);
+        line-height: var(--ttg-text-line-height-m);
+        letter-spacing: -0.32px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        padding: 12px 24px;
-        background: var(--primary-gradient);
-        color: white;
-        border: none;
-        border-radius: var(--radius-sm);
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: var(--transition);
-        box-shadow: 0 4px 12px rgba(68, 131, 245, 0.3);
       }
 
       .generate-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(68, 131, 245, 0.4);
+        background: var(--ttg-color-bg-blue-dark);
       }
 
       .generate-button:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 8px rgba(68, 131, 245, 0.3);
+        background: var(--ttg-color-bg-blue-darker);
+        outline: none;
+      }
+
+      .generate-button:disabled {
+        background: var(--ttg-color-bg-gray-100);
+        cursor: not-allowed;
       }
 
       .checkbox-container {
