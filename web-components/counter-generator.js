@@ -146,42 +146,80 @@ class CounterGenerator extends HTMLElement {
       }
 
       .setting-group label {
+        font-family: var(--ttg-font-family);
+        font-size: var(--ttg-text-size-s);
+        font-weight: var(--ttg-font-weight-medium);
+        line-height: var(--ttg-text-line-height-s);
+        letter-spacing: var(--ttg-letter-spacing);
+        color: var(--ttg-color-text-black);
         display: flex;
         margin-bottom: 8px;
-        font-weight: 500;
-        color: var(--text-dark);
-        font-size: 14px;
       }
 
-      .text-input, .number-input, .select-styled {
+      /* TTG-адаптированные существующие инпуты */
+      .text-input, .number-input {
         width: 100%;
-        max-width: 100%;
-        padding: 8px 10px;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border-color);
+        height: 52px;
+        padding: 16px 12px 16px 16px;
+        border-radius: 10px;
+        background: var(--ttg-color-bg-gray-100);
+        border: 1px solid transparent;
+        transition: border-color 0.3s ease;
+        color: var(--ttg-color-text-gray-900);
         font-size: 14px;
-        color: var(--text-dark);
-        box-shadow: var(--shadow-sm);
-        transition: var(--transition);
+        font-weight: 400;
+        line-height: 20px;
+        letter-spacing: -0.28px;
+        outline: none;
         box-sizing: border-box;
         min-width: 0;
-        background: white;
+        max-width: 100%;
       }
 
-      .text-input:focus, .number-input:focus, .select-styled:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px var(--primary-light);
+      .text-input::placeholder, .number-input::placeholder {
+        color: var(--ttg-color-text-gray-500);
+      }
+
+      .text-input:hover, .number-input:hover {
+        border: 1px solid var(--ttg-color-stroke-gray-300);
+      }
+
+      .text-input:focus, .number-input:focus {
+        border: 1px solid var(--ttg-color-stroke-black);
+        color: var(--ttg-color-text-black);
       }
 
       .select-styled {
+        width: 100%;
+        height: 52px;
+        padding: 16px 32px 16px 16px;
+        border-radius: 10px;
+        background: var(--ttg-color-bg-gray-100);
+        border: 1px solid transparent;
+        transition: border-color 0.3s ease;
+        color: var(--ttg-color-text-gray-900);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 20px;
+        letter-spacing: -0.28px;
+        outline: none;
         cursor: pointer;
         appearance: none;
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-        background-position: right 8px center;
+        background-position: right 12px center;
         background-repeat: no-repeat;
         background-size: 16px;
-        padding-right: 32px;
+        box-sizing: border-box;
+        max-width: 100%;
+      }
+
+      .select-styled:hover {
+        border: 1px solid var(--ttg-color-stroke-gray-300);
+      }
+
+      .select-styled:focus {
+        border: 1px solid var(--ttg-color-stroke-black);
+        color: var(--ttg-color-text-black);
       }
 
       .checkbox-container {
@@ -412,10 +450,6 @@ class CounterGenerator extends HTMLElement {
 
         <div class="action-section">
           <button class="generate-button" id="generate-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M16 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M8 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
             <span>Сгенерировать код</span>
           </button>
         </div>
