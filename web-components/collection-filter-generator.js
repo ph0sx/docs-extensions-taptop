@@ -156,6 +156,9 @@ class CollectionFilterGenerator extends HTMLElement {
         box-shadow: var(--shadow-sm);
         width: 100%;
         max-width: 100%;
+        max-height: calc(100vh - 65px - 76px - 55px - 97px - 55px);
+        overflow: auto;
+        min-height: 0;
       }
 
 
