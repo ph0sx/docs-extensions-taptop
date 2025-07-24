@@ -74,6 +74,23 @@ class CountdownTimerGenerator extends HTMLElement {
 
       * {
         box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: #A9A9A9 transparent;
+      }
+
+      /* Webkit browsers (Chrome, Safari, Edge) */
+      *::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      *::-webkit-scrollbar-thumb {
+        background: var(--grey-500, #A9A9A9);
+        border-radius: 95px;
       }
 
       :host {
@@ -313,6 +330,14 @@ class CountdownTimerGenerator extends HTMLElement {
 
       .generate-button:disabled {
         background: var(--ttg-color-bg-gray-100);
+        cursor: not-allowed;
+      }
+
+      .generate-button * {
+        cursor: pointer;
+      }
+
+      .generate-button:disabled * {
         cursor: not-allowed;
       }
 
@@ -585,7 +610,8 @@ class CountdownTimerGenerator extends HTMLElement {
               <div class="setting-group">
                 <label for="timer-show-classes">CSS-классы блоков для ПОКАЗА (опционально)</label>
                 <input type="text" id="timer-show-classes" class="text-input" placeholder="Например: expired-message, subscribe-form">
-                <div class="helper-text">Классы блоков, которые нужно показать по окончании таймера. <strong>Важно!</strong> Блокам в Taptop нужно присвоить отдельный класс и через панель стилей установить <code>Отображение: Скрыть элемент <span class="icon-eye-off"></span></code>.</div>
+                <div class="helper-text">Классы блоков, которые нужно показать по окончании таймера.<br>
+    <strong>Важно!&nbsp;</strong>Блокам в Taptop нужно присвоить отдельный класс и через панель стилей установить &nbsp; <em>Отображение: Скрыть элемент<span class="icon-eye-off"></span></em>.</div>
               </div>
             </div>
           </fieldset>
@@ -679,14 +705,7 @@ class CountdownTimerGenerator extends HTMLElement {
       "timer-redirect-path"
     );
 
-    // Внешние элементы модалки
-    this.elements.successPopup = document.querySelector(".pop-up-success");
-    this.elements.popupAcceptBtn = document.querySelector(
-      "[data-popup-accept-btn]"
-    );
-    this.elements.popupCloseBtn = document.querySelector(
-      "[data-popup-close-btn]"
-    );
+    // Внешние элементы модалки будут искаться динамически в showSuccessPopup
   }
 
   bindEvents() {
@@ -704,34 +723,9 @@ class CountdownTimerGenerator extends HTMLElement {
       radio.addEventListener("change", handler);
     });
 
-    this.bindModalEvents();
+    // Модальные события будут привязываться динамически
   }
 
-  bindModalEvents() {
-    // Обработчики для попапа успеха
-    if (this.elements.popupAcceptBtn) {
-      const handler = () => this.hideSuccessPopup();
-      this.eventHandlers.set("popup-accept", handler);
-      this.elements.popupAcceptBtn.addEventListener("click", handler);
-    }
-
-    if (this.elements.popupCloseBtn) {
-      const handler = () => this.hideSuccessPopup();
-      this.eventHandlers.set("popup-close", handler);
-      this.elements.popupCloseBtn.addEventListener("click", handler);
-    }
-
-    // Обработчик клика за пределы попапа
-    if (this.elements.successPopup) {
-      const handler = (event) => {
-        if (event.target === this.elements.successPopup) {
-          this.hideSuccessPopup();
-        }
-      };
-      this.eventHandlers.set("popup-overlay", handler);
-      this.elements.successPopup.addEventListener("click", handler);
-    }
-  }
 
   setInitialState() {
     // Устанавливаем начальные значения
@@ -1094,7 +1088,10 @@ initializeTimer();
 
       return result;
     } catch (error) {
-      console.warn('Минификация генерируемого кода не удалась, используем оригинал:', error);
+      console.warn(
+        "Минификация генерируемого кода не удалась, используем оригинал:",
+        error
+      );
       return code;
     }
   }
@@ -1108,9 +1105,7 @@ initializeTimer();
       result.js += match[1];
     }
 
-    result.html = code
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-      .trim();
+    result.html = code.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").trim();
 
     return result;
   }
@@ -1150,7 +1145,10 @@ initializeTimer();
       .replace(/\s*([=+\-*/%<>&|!])\s*/g, "$1")
       .replace(/\s*([(){}[\];,])\s*/g, "$1")
       .replace(/\s+/g, " ")
-      .replace(/\b(if|for|while|switch|catch|function|return|throw|new|typeof)\s+/g, "$1 ")
+      .replace(
+        /\b(if|for|while|switch|catch|function|return|throw|new|typeof)\s+/g,
+        "$1 "
+      )
       .replace(/\belse\s+/g, "else ")
       .replace(/\s*\n\s*/g, "\n")
       .replace(/\n+/g, "\n")
@@ -1200,7 +1198,12 @@ initializeTimer();
           inBlockComment = false;
           i++;
           continue;
-        } else if (!inBlockComment && !inLineComment && char === "/" && next === "/") {
+        } else if (
+          !inBlockComment &&
+          !inLineComment &&
+          char === "/" &&
+          next === "/"
+        ) {
           inLineComment = true;
           i++;
           continue;
@@ -1249,14 +1252,105 @@ initializeTimer();
   }
 
   showSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = "flex";
+    console.log('showSuccessPopup вызван');
+    
+    // Динамический поиск элементов попапа
+    const successPopup = document.querySelector('.pop-up-success');
+    const popupAcceptBtn = document.querySelector('[data-popup-accept-btn]');
+    const popupCloseBtn = document.querySelector('[data-popup-close-btn]');
+    const popupContent = document.querySelector('.pop-up__content');
+    
+    console.log('Найдены элементы:', {
+      successPopup: !!successPopup,
+      popupAcceptBtn: !!popupAcceptBtn, 
+      popupCloseBtn: !!popupCloseBtn,
+      popupContent: !!popupContent
+    });
+    
+    if (!successPopup) {
+      console.warn('Попап не найден');
+      return;
+    }
+    
+    // Показываем попап
+    successPopup.style.display = 'flex';
+    
+    // Обработчики закрытия
+    const closeHandler = () => {
+      console.log('closeHandler вызван');
+      this.hideSuccessPopup();
+    };
+    
+    // Кнопка принять
+    if (popupAcceptBtn) {
+      console.log('Добавляем обработчик для кнопки принять');
+      const acceptHandler = closeHandler;
+      this.eventHandlers.set('popup-accept', acceptHandler);
+      popupAcceptBtn.addEventListener('click', acceptHandler);
+    }
+    
+    // Кнопка закрыть
+    if (popupCloseBtn) {
+      console.log('Добавляем обработчик для кнопки закрыть');
+      const closeHandlerForBtn = closeHandler;
+      this.eventHandlers.set('popup-close', closeHandlerForBtn);
+      popupCloseBtn.addEventListener('click', closeHandlerForBtn);
+    }
+    
+    // Клик по оверлею
+    if (successPopup && popupContent) {
+      console.log('Добавляем обработчик для оверлея');
+      const overlayHandler = (event) => {
+        console.log('Клик по попапу, цель:', event.target);
+        console.log('popupContent.contains(event.target):', popupContent.contains(event.target));
+        
+        if (!popupContent.contains(event.target)) {
+          console.log('Клик за пределами контента - закрываем');
+          closeHandler();
+        }
+      };
+      this.eventHandlers.set('popup-overlay', overlayHandler);
+      successPopup.addEventListener('click', overlayHandler);
+    } else if (successPopup) {
+      // Fallback для случаев без .pop-up__content
+      console.log('Fallback - добавляем обработчик оверлея без проверки content');
+      const overlayHandler = (event) => {
+        if (event.target === successPopup) {
+          closeHandler();
+        }
+      };
+      this.eventHandlers.set('popup-overlay', overlayHandler);
+      successPopup.addEventListener('click', overlayHandler);
     }
   }
 
   hideSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = "none";
+    console.log('hideSuccessPopup вызван');
+    
+    // Динамический поиск элементов
+    const successPopup = document.querySelector('.pop-up-success');
+    const popupAcceptBtn = document.querySelector('[data-popup-accept-btn]');
+    const popupCloseBtn = document.querySelector('[data-popup-close-btn]');
+    
+    // Скрываем попап
+    if (successPopup) {
+      successPopup.style.display = 'none';
+    }
+    
+    // Отвязываем обработчики
+    if (popupAcceptBtn && this.eventHandlers.has('popup-accept')) {
+      popupAcceptBtn.removeEventListener('click', this.eventHandlers.get('popup-accept'));
+      this.eventHandlers.delete('popup-accept');
+    }
+    
+    if (popupCloseBtn && this.eventHandlers.has('popup-close')) {
+      popupCloseBtn.removeEventListener('click', this.eventHandlers.get('popup-close'));
+      this.eventHandlers.delete('popup-close');
+    }
+    
+    if (successPopup && this.eventHandlers.has('popup-overlay')) {
+      successPopup.removeEventListener('click', this.eventHandlers.get('popup-overlay'));
+      this.eventHandlers.delete('popup-overlay');
     }
   }
 
@@ -1277,35 +1371,10 @@ initializeTimer();
       }
     });
 
-    this.unbindModalEvents();
+    // Модальные события отвязываются автоматически в hideSuccessPopup
     this.eventHandlers.clear();
   }
 
-  unbindModalEvents() {
-    if (
-      this.elements.popupAcceptBtn &&
-      this.eventHandlers.has("popup-accept")
-    ) {
-      this.elements.popupAcceptBtn.removeEventListener(
-        "click",
-        this.eventHandlers.get("popup-accept")
-      );
-    }
-
-    if (this.elements.popupCloseBtn && this.eventHandlers.has("popup-close")) {
-      this.elements.popupCloseBtn.removeEventListener(
-        "click",
-        this.eventHandlers.get("popup-close")
-      );
-    }
-
-    if (this.elements.successPopup && this.eventHandlers.has("popup-overlay")) {
-      this.elements.successPopup.removeEventListener(
-        "click",
-        this.eventHandlers.get("popup-overlay")
-      );
-    }
-  }
 
   destroy() {
     this.unbindEvents();

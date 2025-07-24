@@ -51,6 +51,23 @@ class CardFlipGenerator extends HTMLElement {
 
       * {
         box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: #A9A9A9 transparent;
+      }
+
+      /* Webkit browsers (Chrome, Safari, Edge) */
+      *::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      *::-webkit-scrollbar-thumb {
+        background: var(--grey-500, #A9A9A9);
+        border-radius: 95px;
       }
 
       :host {
@@ -543,6 +560,14 @@ class CardFlipGenerator extends HTMLElement {
         cursor: not-allowed;
       }
 
+      .generate-button * {
+        cursor: pointer;
+      }
+
+      .generate-button:disabled * {
+        cursor: not-allowed;
+      }
+
       .setting-group[style*="display: none"] {
         display: none !important;
       }
@@ -723,6 +748,8 @@ class CardFlipGenerator extends HTMLElement {
     this.elements.previewError = root.getElementById("cf-preview-error");
     this.elements.generateButton = root.getElementById("generate-btn");
 
+    // Внешние элементы модалки будут искаться динамически в showSuccessPopup
+
     this._previewUpdateControls = [
       this.elements.speedSlider,
       ...(this.elements.triggerRadios || []),
@@ -795,6 +822,8 @@ class CardFlipGenerator extends HTMLElement {
         handler,
       });
     }
+
+    // Модальные события будут привязываться динамически
   }
 
   unbindEvents() {
@@ -803,6 +832,7 @@ class CardFlipGenerator extends HTMLElement {
         element.removeEventListener(config.event, config.handler);
       }
     });
+    // Модальные события отвязываются автоматически в hideSuccessPopup
     this.eventHandlers.clear();
   }
 
@@ -1730,21 +1760,26 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   copyToClipboard(text) {
+    console.log('copyToClipboard вызван');
     if (navigator.clipboard) {
       navigator.clipboard
         .writeText(text)
         .then(() => {
+          console.log('Копирование через clipboard API успешно');
           this.showSuccessPopup();
         })
-        .catch(() => {
+        .catch((error) => {
+          console.log('Ошибка clipboard API, используем fallback:', error);
           this.fallbackCopyToClipboard(text);
         });
     } else {
+      console.log('Clipboard API недоступен, используем fallback');
       this.fallbackCopyToClipboard(text);
     }
   }
 
   fallbackCopyToClipboard(text) {
+    console.log('fallbackCopyToClipboard вызван');
     const textArea = document.createElement("textarea");
     textArea.value = text;
     textArea.style.position = "fixed";
@@ -1755,19 +1790,137 @@ document.addEventListener('DOMContentLoaded', () => {
     textArea.select();
 
     try {
-      document.execCommand("copy");
-      this.showSuccessPopup();
+      const success = document.execCommand("copy");
+      console.log('document.execCommand("copy") результат:', success);
+      if (success) {
+        console.log('Fallback копирование успешно');
+        this.showSuccessPopup();
+      } else {
+        console.warn('document.execCommand("copy") вернул false');
+        // Все равно показываем попап, так как текст мог скопироваться
+        this.showSuccessPopup();
+      }
     } catch (err) {
       console.error("Ошибка копирования:", err);
+      // Показываем попап даже при ошибке
+      this.showSuccessPopup();
     } finally {
       document.body.removeChild(textArea);
     }
   }
 
+
+
   showSuccessPopup() {
-    const modal = document.querySelector("#success-modal");
-    if (modal) {
-      modal.style.display = "block";
+    console.log('showSuccessPopup вызван');
+    
+    try {
+      // Динамический поиск элементов попапа
+      const successPopup = document.querySelector('.pop-up-success');
+      const popupAcceptBtn = document.querySelector('[data-popup-accept-btn]');
+      const popupCloseBtn = document.querySelector('[data-popup-close-btn]');
+      const popupContent = document.querySelector('.pop-up__content');
+      
+      console.log('Найдены элементы:', {
+        successPopup: !!successPopup,
+        popupAcceptBtn: !!popupAcceptBtn, 
+        popupCloseBtn: !!popupCloseBtn,
+        popupContent: !!popupContent
+      });
+      
+      if (!successPopup) {
+        console.warn('Попап не найден');
+        return;
+      }
+      
+      // Показываем попап
+      successPopup.style.display = 'flex';
+    
+    // Обработчики закрытия
+    const closeHandler = () => {
+      console.log('closeHandler вызван');
+      this.hideSuccessPopup();
+    };
+    
+    // Кнопка принять
+    if (popupAcceptBtn) {
+      console.log('Добавляем обработчик для кнопки принять');
+      const acceptHandler = closeHandler;
+      this.eventHandlers.set('popup-accept', acceptHandler);
+      popupAcceptBtn.addEventListener('click', acceptHandler);
+    }
+    
+    // Кнопка закрыть
+    if (popupCloseBtn) {
+      console.log('Добавляем обработчик для кнопки закрыть');
+      const closeHandlerForBtn = closeHandler;
+      this.eventHandlers.set('popup-close', closeHandlerForBtn);
+      popupCloseBtn.addEventListener('click', closeHandlerForBtn);
+    }
+    
+    // Клик по оверлею
+    if (successPopup && popupContent) {
+      console.log('Добавляем обработчик для оверлея');
+      const overlayHandler = (event) => {
+        console.log('Клик по попапу, цель:', event.target);
+        console.log('popupContent.contains(event.target):', popupContent.contains(event.target));
+        
+        if (!popupContent.contains(event.target)) {
+          console.log('Клик за пределами контента - закрываем');
+          closeHandler();
+        }
+      };
+      this.eventHandlers.set('popup-overlay', overlayHandler);
+      successPopup.addEventListener('click', overlayHandler);
+    } else if (successPopup) {
+      // Fallback для случаев без .pop-up__content
+      console.log('Fallback - добавляем обработчик оверлея без проверки content');
+      const overlayHandler = (event) => {
+        if (event.target === successPopup) {
+          closeHandler();
+        }
+      };
+      this.eventHandlers.set('popup-overlay', overlayHandler);
+      successPopup.addEventListener('click', overlayHandler);
+    }
+    } catch (error) {
+      console.error('Ошибка в showSuccessPopup:', error);
+      // Fallback - попробуем показать простой alert
+      alert('Код скопирован в буфер обмена!');
+    }
+  }
+
+  hideSuccessPopup() {
+    console.log('hideSuccessPopup вызван');
+    
+    try {
+      // Динамический поиск элементов
+      const successPopup = document.querySelector('.pop-up-success');
+      const popupAcceptBtn = document.querySelector('[data-popup-accept-btn]');
+      const popupCloseBtn = document.querySelector('[data-popup-close-btn]');
+      
+      // Скрываем попап
+      if (successPopup) {
+        successPopup.style.display = 'none';
+      }
+      
+      // Отвязываем обработчики
+      if (popupAcceptBtn && this.eventHandlers.has('popup-accept')) {
+        popupAcceptBtn.removeEventListener('click', this.eventHandlers.get('popup-accept'));
+        this.eventHandlers.delete('popup-accept');
+      }
+      
+      if (popupCloseBtn && this.eventHandlers.has('popup-close')) {
+        popupCloseBtn.removeEventListener('click', this.eventHandlers.get('popup-close'));
+        this.eventHandlers.delete('popup-close');
+      }
+      
+      if (successPopup && this.eventHandlers.has('popup-overlay')) {
+        successPopup.removeEventListener('click', this.eventHandlers.get('popup-overlay'));
+        this.eventHandlers.delete('popup-overlay');
+      }
+    } catch (error) {
+      console.error('Ошибка в hideSuccessPopup:', error);
     }
   }
 

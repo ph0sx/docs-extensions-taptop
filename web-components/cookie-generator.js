@@ -46,6 +46,23 @@ class CookieGenerator extends HTMLElement {
 
       * {
         box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: #A9A9A9 transparent;
+      }
+
+      /* Webkit browsers (Chrome, Safari, Edge) */
+      *::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      *::-webkit-scrollbar-thumb {
+        background: var(--grey-500, #A9A9A9);
+        border-radius: 95px;
       }
 
       .cookie-generator {
@@ -167,6 +184,14 @@ class CookieGenerator extends HTMLElement {
         transform: translateY(0);
         box-shadow: 0 2px 8px rgba(68, 131, 245, 0.3);
       }
+
+      .generate-button * {
+        cursor: pointer;
+      }
+
+      .generate-button:disabled * {
+        cursor: not-allowed;
+      }
     `;
   }
 
@@ -214,10 +239,7 @@ class CookieGenerator extends HTMLElement {
     this.elements.generateBtn = this.shadowRoot.getElementById("generate-btn");
     this.elements.codeOutput = this.shadowRoot.getElementById("code-output");
 
-    // Внешние элементы модалки 
-    this.elements.successPopup = document.querySelector('.pop-up-success');
-    this.elements.popupAcceptBtn = document.querySelector('[data-popup-accept-btn]');
-    this.elements.popupCloseBtn = document.querySelector('[data-popup-close-btn]');
+    // Внешние элементы модалки будут искаться динамически в showSuccessPopup
   }
 
   bindEvents() {
@@ -228,34 +250,9 @@ class CookieGenerator extends HTMLElement {
       this.elements.generateBtn.addEventListener('click', handler);
     }
 
-    this.bindModalEvents();
+    // Модальные события будут привязываться динамически
   }
 
-  bindModalEvents() {
-    // Обработчики для попапа успеха
-    if (this.elements.popupAcceptBtn) {
-      const handler = () => this.hideSuccessPopup();
-      this.eventHandlers.set('popup-accept', handler);
-      this.elements.popupAcceptBtn.addEventListener('click', handler);
-    }
-
-    if (this.elements.popupCloseBtn) {
-      const handler = () => this.hideSuccessPopup();
-      this.eventHandlers.set('popup-close', handler);
-      this.elements.popupCloseBtn.addEventListener('click', handler);
-    }
-
-    // Обработчик клика за пределы попапа
-    if (this.elements.successPopup) {
-      const handler = (event) => {
-        if (event.target === this.elements.successPopup) {
-          this.hideSuccessPopup();
-        }
-      };
-      this.eventHandlers.set('popup-overlay', handler);
-      this.elements.successPopup.addEventListener('click', handler);
-    }
-  }
 
   collectData() {
     return {
@@ -514,14 +511,105 @@ if (cookies.get("cookieAgreement") === undefined && ui.banner) {
   }
 
   showSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = 'flex';
+    console.log('showSuccessPopup вызван');
+    
+    // Динамический поиск элементов попапа
+    const successPopup = document.querySelector('.pop-up-success');
+    const popupAcceptBtn = document.querySelector('[data-popup-accept-btn]');
+    const popupCloseBtn = document.querySelector('[data-popup-close-btn]');
+    const popupContent = document.querySelector('.pop-up__content');
+    
+    console.log('Найдены элементы:', {
+      successPopup: !!successPopup,
+      popupAcceptBtn: !!popupAcceptBtn, 
+      popupCloseBtn: !!popupCloseBtn,
+      popupContent: !!popupContent
+    });
+    
+    if (!successPopup) {
+      console.warn('Попап не найден');
+      return;
+    }
+    
+    // Показываем попап
+    successPopup.style.display = 'flex';
+    
+    // Обработчики закрытия
+    const closeHandler = () => {
+      console.log('closeHandler вызван');
+      this.hideSuccessPopup();
+    };
+    
+    // Кнопка принять
+    if (popupAcceptBtn) {
+      console.log('Добавляем обработчик для кнопки принять');
+      const acceptHandler = closeHandler;
+      this.eventHandlers.set('popup-accept', acceptHandler);
+      popupAcceptBtn.addEventListener('click', acceptHandler);
+    }
+    
+    // Кнопка закрыть
+    if (popupCloseBtn) {
+      console.log('Добавляем обработчик для кнопки закрыть');
+      const closeHandlerForBtn = closeHandler;
+      this.eventHandlers.set('popup-close', closeHandlerForBtn);
+      popupCloseBtn.addEventListener('click', closeHandlerForBtn);
+    }
+    
+    // Клик по оверлею
+    if (successPopup && popupContent) {
+      console.log('Добавляем обработчик для оверлея');
+      const overlayHandler = (event) => {
+        console.log('Клик по попапу, цель:', event.target);
+        console.log('popupContent.contains(event.target):', popupContent.contains(event.target));
+        
+        if (!popupContent.contains(event.target)) {
+          console.log('Клик за пределами контента - закрываем');
+          closeHandler();
+        }
+      };
+      this.eventHandlers.set('popup-overlay', overlayHandler);
+      successPopup.addEventListener('click', overlayHandler);
+    } else if (successPopup) {
+      // Fallback для случаев без .pop-up__content
+      console.log('Fallback - добавляем обработчик оверлея без проверки content');
+      const overlayHandler = (event) => {
+        if (event.target === successPopup) {
+          closeHandler();
+        }
+      };
+      this.eventHandlers.set('popup-overlay', overlayHandler);
+      successPopup.addEventListener('click', overlayHandler);
     }
   }
 
   hideSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = 'none';
+    console.log('hideSuccessPopup вызван');
+    
+    // Динамический поиск элементов
+    const successPopup = document.querySelector('.pop-up-success');
+    const popupAcceptBtn = document.querySelector('[data-popup-accept-btn]');
+    const popupCloseBtn = document.querySelector('[data-popup-close-btn]');
+    
+    // Скрываем попап
+    if (successPopup) {
+      successPopup.style.display = 'none';
+    }
+    
+    // Отвязываем обработчики
+    if (popupAcceptBtn && this.eventHandlers.has('popup-accept')) {
+      popupAcceptBtn.removeEventListener('click', this.eventHandlers.get('popup-accept'));
+      this.eventHandlers.delete('popup-accept');
+    }
+    
+    if (popupCloseBtn && this.eventHandlers.has('popup-close')) {
+      popupCloseBtn.removeEventListener('click', this.eventHandlers.get('popup-close'));
+      this.eventHandlers.delete('popup-close');
+    }
+    
+    if (successPopup && this.eventHandlers.has('popup-overlay')) {
+      successPopup.removeEventListener('click', this.eventHandlers.get('popup-overlay'));
+      this.eventHandlers.delete('popup-overlay');
     }
   }
 
@@ -531,24 +619,10 @@ if (cookies.get("cookieAgreement") === undefined && ui.banner) {
       this.elements.generateBtn.removeEventListener('click', this.eventHandlers.get('generate'));
     }
 
-    this.unbindModalEvents();
+    // Модальные события отвязываются автоматически в hideSuccessPopup
     this.eventHandlers.clear();
   }
 
-  unbindModalEvents() {
-    // Отвязываем обработчики модалки
-    if (this.elements.popupAcceptBtn && this.eventHandlers.has('popup-accept')) {
-      this.elements.popupAcceptBtn.removeEventListener('click', this.eventHandlers.get('popup-accept'));
-    }
-
-    if (this.elements.popupCloseBtn && this.eventHandlers.has('popup-close')) {
-      this.elements.popupCloseBtn.removeEventListener('click', this.eventHandlers.get('popup-close'));
-    }
-
-    if (this.elements.successPopup && this.eventHandlers.has('popup-overlay')) {
-      this.elements.successPopup.removeEventListener('click', this.eventHandlers.get('popup-overlay'));
-    }
-  }
 
   destroy() {
     this.unbindEvents();

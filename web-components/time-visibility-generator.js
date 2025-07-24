@@ -106,6 +106,23 @@ class TimeVisibilityGenerator extends HTMLElement {
 
       * {
         box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: #A9A9A9 transparent;
+      }
+
+      /* Webkit browsers (Chrome, Safari, Edge) */
+      *::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      *::-webkit-scrollbar-thumb {
+        background: var(--grey-500, #A9A9A9);
+        border-radius: 95px;
       }
 
       :host {
@@ -546,6 +563,14 @@ class TimeVisibilityGenerator extends HTMLElement {
         cursor: not-allowed;
       }
 
+      .generate-button * {
+        cursor: pointer;
+      }
+
+      .generate-button:disabled * {
+        cursor: not-allowed;
+      }
+
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -739,14 +764,7 @@ class TimeVisibilityGenerator extends HTMLElement {
     this.elements.generateButton =
       this.shadowRoot.getElementById("generate-btn");
 
-    // Внешние элементы модалки
-    this.elements.successPopup = document.querySelector(".pop-up-success");
-    this.elements.popupAcceptBtn = document.querySelector(
-      "[data-popup-accept-btn]"
-    );
-    this.elements.popupCloseBtn = document.querySelector(
-      "[data-popup-close-btn]"
-    );
+    // Внешние элементы модалки будут искаться динамически в showSuccessPopup
   }
 
   bindEvents() {
@@ -778,32 +796,9 @@ class TimeVisibilityGenerator extends HTMLElement {
       this.elements.rulesContainer.addEventListener("click", clickHandler);
     }
 
-    this.bindModalEvents();
+    // Модальные события будут привязываться динамически
   }
 
-  bindModalEvents() {
-    if (this.elements.popupAcceptBtn) {
-      const handler = () => this.hideSuccessPopup();
-      this.eventHandlers.set("popup-accept", handler);
-      this.elements.popupAcceptBtn.addEventListener("click", handler);
-    }
-
-    if (this.elements.popupCloseBtn) {
-      const handler = () => this.hideSuccessPopup();
-      this.eventHandlers.set("popup-close", handler);
-      this.elements.popupCloseBtn.addEventListener("click", handler);
-    }
-
-    if (this.elements.successPopup) {
-      const handler = (event) => {
-        if (event.target === this.elements.successPopup) {
-          this.hideSuccessPopup();
-        }
-      };
-      this.eventHandlers.set("popup-overlay", handler);
-      this.elements.successPopup.addEventListener("click", handler);
-    }
-  }
 
   unbindEvents() {
     // Отвязка основных обработчиков
@@ -843,30 +838,7 @@ class TimeVisibilityGenerator extends HTMLElement {
       }
     }
 
-    // Отвязка модальных обработчиков
-    if (
-      this.elements.popupAcceptBtn &&
-      this.eventHandlers.has("popup-accept")
-    ) {
-      this.elements.popupAcceptBtn.removeEventListener(
-        "click",
-        this.eventHandlers.get("popup-accept")
-      );
-    }
-
-    if (this.elements.popupCloseBtn && this.eventHandlers.has("popup-close")) {
-      this.elements.popupCloseBtn.removeEventListener(
-        "click",
-        this.eventHandlers.get("popup-close")
-      );
-    }
-
-    if (this.elements.successPopup && this.eventHandlers.has("popup-overlay")) {
-      this.elements.successPopup.removeEventListener(
-        "click",
-        this.eventHandlers.get("popup-overlay")
-      );
-    }
+    // Модальные события отвязываются автоматически в hideSuccessPopup
 
     this.eventHandlers.clear();
   }
@@ -1335,15 +1307,26 @@ document.addEventListener('DOMContentLoaded', function() {
   async generateAndCopyCode() {
     try {
       const settings = this.collectData();
-      if (!settings) return;
+      if (!settings) {
+        console.warn("TimeVisibilityGenerator: Настройки не получены");
+        return;
+      }
 
       const rawCode = this.generateCode(settings);
-      const code = await this.minifyGeneratedCode(rawCode);
+      if (!rawCode) {
+        console.warn("TimeVisibilityGenerator: Код не сгенерирован");
+        return;
+      }
 
+      const code = await this.minifyGeneratedCode(rawCode);
+      
+      console.log("TimeVisibilityGenerator: Генерация завершена, копирую в буфер");
       await this.copyToClipboard(code);
       this.showSuccessPopup();
+      console.log("TimeVisibilityGenerator: Код успешно скопирован");
     } catch (error) {
-      console.error("Ошибка генерации кода:", error);
+      console.error("TimeVisibilityGenerator: Ошибка генерации/копирования кода:", error);
+      alert("Произошла ошибка при генерации кода. Попробуйте еще раз.");
     }
   }
 
@@ -1517,40 +1500,136 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   async copyToClipboard(text) {
-    if (navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(text);
-        return;
-      } catch (err) {
-        console.log("Ошибка clipboard API:", err);
-      }
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log("TimeVisibilityGenerator: Код скопирован в буфер обмена");
+    } catch (error) {
+      this.fallbackCopy(text);
     }
+  }
 
-    // Fallback для старых браузеров
+  fallbackCopy(text) {
     const textarea = document.createElement("textarea");
     textarea.value = text;
     textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
     textarea.style.left = "-9999px";
     document.body.appendChild(textarea);
 
     try {
-      textarea.select();
-      document.execCommand("copy");
+      if (textarea.select && document.execCommand) {
+        textarea.select();
+        if (!document.execCommand("copy")) {
+          throw new Error("Не удалось скопировать код в буфер обмена");
+        }
+        console.log("TimeVisibilityGenerator: Код скопирован в буфер обмена (fallback)");
+      } else {
+        throw new Error("Копирование не поддерживается браузером");
+      }
     } finally {
       document.body.removeChild(textarea);
     }
   }
 
   showSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = "flex";
+    console.log('showSuccessPopup вызван');
+    
+    // Динамический поиск элементов попапа
+    const successPopup = document.querySelector('.pop-up-success');
+    const popupAcceptBtn = document.querySelector('[data-popup-accept-btn]');
+    const popupCloseBtn = document.querySelector('[data-popup-close-btn]');
+    const popupContent = document.querySelector('.pop-up__content');
+    
+    console.log('Найдены элементы:', {
+      successPopup: !!successPopup,
+      popupAcceptBtn: !!popupAcceptBtn, 
+      popupCloseBtn: !!popupCloseBtn,
+      popupContent: !!popupContent
+    });
+    
+    if (!successPopup) {
+      console.warn('Попап не найден');
+      return;
+    }
+    
+    // Показываем попап
+    successPopup.style.display = 'flex';
+    
+    // Обработчики закрытия
+    const closeHandler = () => {
+      console.log('closeHandler вызван');
+      this.hideSuccessPopup();
+    };
+    
+    // Кнопка принять
+    if (popupAcceptBtn) {
+      console.log('Добавляем обработчик для кнопки принять');
+      const acceptHandler = closeHandler;
+      this.eventHandlers.set('popup-accept', acceptHandler);
+      popupAcceptBtn.addEventListener('click', acceptHandler);
+    }
+    
+    // Кнопка закрыть
+    if (popupCloseBtn) {
+      console.log('Добавляем обработчик для кнопки закрыть');
+      const closeHandlerForBtn = closeHandler;
+      this.eventHandlers.set('popup-close', closeHandlerForBtn);
+      popupCloseBtn.addEventListener('click', closeHandlerForBtn);
+    }
+    
+    // Клик по оверлею
+    if (successPopup && popupContent) {
+      console.log('Добавляем обработчик для оверлея');
+      const overlayHandler = (event) => {
+        console.log('Клик по попапу, цель:', event.target);
+        console.log('popupContent.contains(event.target):', popupContent.contains(event.target));
+        
+        if (!popupContent.contains(event.target)) {
+          console.log('Клик за пределами контента - закрываем');
+          closeHandler();
+        }
+      };
+      this.eventHandlers.set('popup-overlay', overlayHandler);
+      successPopup.addEventListener('click', overlayHandler);
+    } else if (successPopup) {
+      // Fallback для случаев без .pop-up__content
+      console.log('Fallback - добавляем обработчик оверлея без проверки content');
+      const overlayHandler = (event) => {
+        if (event.target === successPopup) {
+          closeHandler();
+        }
+      };
+      this.eventHandlers.set('popup-overlay', overlayHandler);
+      successPopup.addEventListener('click', overlayHandler);
     }
   }
 
   hideSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = "none";
+    console.log('hideSuccessPopup вызван');
+    
+    // Динамический поиск элементов
+    const successPopup = document.querySelector('.pop-up-success');
+    const popupAcceptBtn = document.querySelector('[data-popup-accept-btn]');
+    const popupCloseBtn = document.querySelector('[data-popup-close-btn]');
+    
+    // Скрываем попап
+    if (successPopup) {
+      successPopup.style.display = 'none';
+    }
+    
+    // Отвязываем обработчики
+    if (popupAcceptBtn && this.eventHandlers.has('popup-accept')) {
+      popupAcceptBtn.removeEventListener('click', this.eventHandlers.get('popup-accept'));
+      this.eventHandlers.delete('popup-accept');
+    }
+    
+    if (popupCloseBtn && this.eventHandlers.has('popup-close')) {
+      popupCloseBtn.removeEventListener('click', this.eventHandlers.get('popup-close'));
+      this.eventHandlers.delete('popup-close');
+    }
+    
+    if (successPopup && this.eventHandlers.has('popup-overlay')) {
+      successPopup.removeEventListener('click', this.eventHandlers.get('popup-overlay'));
+      this.eventHandlers.delete('popup-overlay');
     }
   }
 

@@ -47,6 +47,23 @@ class CounterGenerator extends HTMLElement {
 
       * {
         box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: #A9A9A9 transparent;
+      }
+
+      /* Webkit browsers (Chrome, Safari, Edge) */
+      *::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      *::-webkit-scrollbar-thumb {
+        background: var(--grey-500, #A9A9A9);
+        border-radius: 95px;
       }
 
       :host {
@@ -305,6 +322,14 @@ class CounterGenerator extends HTMLElement {
         cursor: not-allowed;
       }
 
+      .generate-button * {
+        cursor: pointer;
+      }
+
+      .generate-button:disabled * {
+        cursor: not-allowed;
+      }
+
       .conditional-field {
         margin-top: 10px;
         transition: all 0.3s ease;
@@ -483,14 +508,7 @@ class CounterGenerator extends HTMLElement {
     this.elements.separatorField =
       this.shadowRoot.getElementById("separator-field");
 
-    // Внешние элементы модалки
-    this.elements.successPopup = document.querySelector(".pop-up-success");
-    this.elements.popupAcceptBtn = document.querySelector(
-      "[data-popup-accept-btn]"
-    );
-    this.elements.popupCloseBtn = document.querySelector(
-      "[data-popup-close-btn]"
-    );
+    // Внешние элементы модалки будут искаться динамически в showSuccessPopup()
   }
 
   bindEvents() {
@@ -515,34 +533,10 @@ class CounterGenerator extends HTMLElement {
       this.elements.odometerEffect.addEventListener("change", handler);
     }
 
-    this.bindModalEvents();
+    // Обработчики модального окна теперь привязываются динамически в showSuccessPopup()
   }
 
-  bindModalEvents() {
-    // Обработчики для попапа успеха
-    if (this.elements.popupAcceptBtn) {
-      const handler = () => this.hideSuccessPopup();
-      this.eventHandlers.set("popup-accept", handler);
-      this.elements.popupAcceptBtn.addEventListener("click", handler);
-    }
-
-    if (this.elements.popupCloseBtn) {
-      const handler = () => this.hideSuccessPopup();
-      this.eventHandlers.set("popup-close", handler);
-      this.elements.popupCloseBtn.addEventListener("click", handler);
-    }
-
-    // Обработчик клика за пределы попапа
-    if (this.elements.successPopup) {
-      const handler = (event) => {
-        if (event.target === this.elements.successPopup) {
-          this.hideSuccessPopup();
-        }
-      };
-      this.eventHandlers.set("popup-overlay", handler);
-      this.elements.successPopup.addEventListener("click", handler);
-    }
-  }
+  // bindModalEvents() удален - обработчики теперь привязываются динамически в showSuccessPopup()
 
   toggleSeparatorField() {
     if (this.elements.useSeparator.checked) {
@@ -1145,14 +1139,84 @@ ${needsNumberFlip ?
   }
 
   showSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = "flex";
+    // 1. Найти элементы попапа динамически каждый раз при вызове
+    const successPopup = document.querySelector(".pop-up-success");
+    const popupAcceptBtn = document.querySelector("[data-popup-accept-btn]");
+    const popupCloseBtn = document.querySelector("[data-popup-close-btn]");
+    // Найдем элемент содержимого попапа для корректной проверки клика по оверлею
+    const popupContent = successPopup ? successPopup.querySelector('.pop-up__content') : null;
+
+    if (!successPopup) {
+      console.warn("CounterGenerator: Success popup element (.pop-up-success) not found.");
+      return;
     }
+
+    // 2. Определить функцию скрытия
+    const hidePopupFunction = () => {
+      successPopup.style.display = "none";
+      console.log("CounterGenerator: Popup hidden");
+    };
+
+    // 3. Привязать обработчики только если элементы найдены
+    if (popupAcceptBtn) {
+      popupAcceptBtn.removeEventListener('click', hidePopupFunction);
+      popupAcceptBtn.addEventListener("click", hidePopupFunction);
+      console.log("CounterGenerator: Accept button handler bound");
+    } else {
+      console.warn("CounterGenerator: Accept button [data-popup-accept-btn] not found");
+    }
+
+    if (popupCloseBtn) {
+      popupCloseBtn.removeEventListener('click', hidePopupFunction);
+      popupCloseBtn.addEventListener("click", hidePopupFunction);
+      console.log("CounterGenerator: Close button handler bound");
+    } else {
+      console.warn("CounterGenerator: Close button [data-popup-close-btn] not found");
+    }
+
+    // Улучшенный обработчик клика по overlay
+    const overlayClickHandler = (event) => {
+      console.log("CounterGenerator: Overlay click detected", {
+        target: event.target.className,
+        currentTarget: event.currentTarget.className,
+        popupContentExists: !!popupContent
+      });
+
+      // Проверяем, существует ли элемент содержимого попапа
+      if (popupContent) {
+        // Проверяем, что клик был НЕ по элементу содержимого попапа и не по его потомкам
+        if (!popupContent.contains(event.target)) {
+          console.log("CounterGenerator: Click outside popup content - hiding popup");
+          hidePopupFunction();
+        } else {
+          console.log("CounterGenerator: Click inside popup content - keeping popup open");
+        }
+      } else {
+        console.warn("CounterGenerator: Popup content (.pop-up__content) not found inside .pop-up-success.");
+        // Fallback к старой логике, если структура нестандартная
+        if (event.target === successPopup) {
+          console.log("CounterGenerator: Using fallback logic - hiding popup");
+          hidePopupFunction();
+        }
+      }
+    };
+
+    successPopup.removeEventListener('click', overlayClickHandler);
+    successPopup.addEventListener("click", overlayClickHandler);
+    console.log("CounterGenerator: Enhanced overlay click handler bound", {
+      popupContentFound: !!popupContent
+    });
+
+    // 4. Показать попап
+    successPopup.style.display = "flex";
+    console.log("CounterGenerator: Popup shown");
   }
 
   hideSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = "none";
+    const successPopup = document.querySelector(".pop-up-success");
+    if (successPopup) {
+      successPopup.style.display = "none";
+      console.log("CounterGenerator: Popup hidden via hideSuccessPopup");
     }
   }
 
@@ -1186,7 +1250,7 @@ ${needsNumberFlip ?
       );
     }
 
-    this.unbindModalEvents();
+    // unbindModalEvents больше не нужен - обработчики модального окна управляются в showSuccessPopup()
     this.eventHandlers.clear();
   }
 

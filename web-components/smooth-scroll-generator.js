@@ -64,6 +64,23 @@ class SmoothScrollGenerator extends HTMLElement {
 
       * {
         box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: #A9A9A9 transparent;
+      }
+
+      /* Webkit browsers (Chrome, Safari, Edge) */
+      *::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      *::-webkit-scrollbar-thumb {
+        background: var(--grey-500, #A9A9A9);
+        border-radius: 95px;
       }
 
       :host {
@@ -450,6 +467,14 @@ class SmoothScrollGenerator extends HTMLElement {
         background: var(--ttg-color-bg-gray-100);
         cursor: not-allowed;
       }
+
+      .generate-button * {
+        cursor: pointer;
+      }
+
+      .generate-button:disabled * {
+        cursor: not-allowed;
+      }
     `;
   }
 
@@ -465,7 +490,7 @@ class SmoothScrollGenerator extends HTMLElement {
                 <option value="standard">Стандартный</option>
                 <option value="smooth">Плавный</option>
               </select>
-              <div class="helper-text" id="preset-description">Рекомендованные настройки Lenis</div>
+              <div class="helper-text" id="preset-description">Рекомендованные настройки</div>
             </div>
           </fieldset>
 
@@ -521,23 +546,17 @@ class SmoothScrollGenerator extends HTMLElement {
   }
 
   findElements() {
-    const elements = {
-      presetSelect: this.shadowRoot.getElementById("preset-select"),
-      presetDescription: this.shadowRoot.getElementById("preset-description"),
-      lerpSlider: this.shadowRoot.getElementById("lerp-slider"),
-      lerpValueDisplay: this.shadowRoot.getElementById("lerp-value-display"),
-      speedSlider: this.shadowRoot.getElementById("speed-slider"),
-      speedValueDisplay: this.shadowRoot.getElementById("speed-value-display"),
-      excludeSelectors: this.shadowRoot.getElementById("exclude-selectors"),
-      generateButton: this.shadowRoot.getElementById("generate-btn")
-    };
+    // Внутренние элементы Shadow DOM
+    this.elements.presetSelect = this.shadowRoot.getElementById("preset-select");
+    this.elements.presetDescription = this.shadowRoot.getElementById("preset-description");
+    this.elements.lerpSlider = this.shadowRoot.getElementById("lerp-slider");
+    this.elements.lerpValueDisplay = this.shadowRoot.getElementById("lerp-value-display");
+    this.elements.speedSlider = this.shadowRoot.getElementById("speed-slider");
+    this.elements.speedValueDisplay = this.shadowRoot.getElementById("speed-value-display");
+    this.elements.excludeSelectors = this.shadowRoot.getElementById("exclude-selectors");
+    this.elements.generateButton = this.shadowRoot.getElementById("generate-btn");
 
-    // Поиск внешних элементов модалки
-    elements.successPopup = document.querySelector(".pop-up-success");
-    elements.popupAcceptBtn = document.querySelector("[data-popup-accept-btn]");
-    elements.popupCloseBtn = document.querySelector("[data-popup-close-btn]");
-
-    this.elements = elements;
+    // Внешние элементы модалки будут искаться динамически в showSuccessPopup()
   }
 
   bindEvents() {
@@ -545,37 +564,51 @@ class SmoothScrollGenerator extends HTMLElement {
       handleGenerate: this.generateAndCopyCode.bind(this),
       handlePresetChange: (e) => this.applyPreset(e.target.value),
       handleLerpInput: () => this.updateLerpUI(),
-      handleSpeedInput: () => this.updateSpeedUI()
+      handleSpeedInput: () => this.updateSpeedUI(),
     };
 
     this.eventHandlers = handlers;
 
-    this.elements.generateButton?.addEventListener("click", handlers.handleGenerate);
-    this.elements.presetSelect?.addEventListener("change", handlers.handlePresetChange);
-    this.elements.lerpSlider?.addEventListener("input", handlers.handleLerpInput);
-    this.elements.speedSlider?.addEventListener("input", handlers.handleSpeedInput);
-    
-    this.bindModalEvents();
+    this.elements.generateButton?.addEventListener(
+      "click",
+      handlers.handleGenerate
+    );
+    this.elements.presetSelect?.addEventListener(
+      "change",
+      handlers.handlePresetChange
+    );
+    this.elements.lerpSlider?.addEventListener(
+      "input",
+      handlers.handleLerpInput
+    );
+    this.elements.speedSlider?.addEventListener(
+      "input",
+      handlers.handleSpeedInput
+    );
+
+    // Обработчики модального окна теперь привязываются динамически в showSuccessPopup()
   }
 
   unbindEvents() {
     if (this.eventHandlers) {
-      this.elements.generateButton?.removeEventListener("click", this.eventHandlers.handleGenerate);
-      this.elements.presetSelect?.removeEventListener("change", this.eventHandlers.handlePresetChange);
-      this.elements.lerpSlider?.removeEventListener("input", this.eventHandlers.handleLerpInput);
-      this.elements.speedSlider?.removeEventListener("input", this.eventHandlers.handleSpeedInput);
-      
-      // Отвязка обработчиков модалки
-      if (this.eventHandlers.has("popup-accept")) {
-        this.elements.popupAcceptBtn?.removeEventListener("click", this.eventHandlers.get("popup-accept"));
-      }
-      if (this.eventHandlers.has("popup-close")) {
-        this.elements.popupCloseBtn?.removeEventListener("click", this.eventHandlers.get("popup-close"));
-      }
-      if (this.eventHandlers.has("popup-overlay")) {
-        this.elements.successPopup?.removeEventListener("click", this.eventHandlers.get("popup-overlay"));
-      }
-      
+      this.elements.generateButton?.removeEventListener(
+        "click",
+        this.eventHandlers.handleGenerate
+      );
+      this.elements.presetSelect?.removeEventListener(
+        "change",
+        this.eventHandlers.handlePresetChange
+      );
+      this.elements.lerpSlider?.removeEventListener(
+        "input",
+        this.eventHandlers.handleLerpInput
+      );
+      this.elements.speedSlider?.removeEventListener(
+        "input",
+        this.eventHandlers.handleSpeedInput
+      );
+
+      // unbindModalEvents больше не нужен - обработчики модального окна управляются в showSuccessPopup()
       this.eventHandlers.clear();
     }
   }
@@ -594,22 +627,17 @@ class SmoothScrollGenerator extends HTMLElement {
     this.updateSpeedUI();
   }
 
-
   applyPreset(presetName) {
     const preset = this.presets[presetName];
     if (!preset) return;
 
-    const {
-      presetDescription,
-      lerpSlider,
-      speedSlider,
-      excludeSelectors,
-    } = this.elements;
+    const { presetDescription, lerpSlider, speedSlider, excludeSelectors } =
+      this.elements;
 
     if (presetDescription) presetDescription.textContent = preset.description;
     if (lerpSlider) {
       // Обратное преобразование для инвертированной логики: lerp -> slider позиция
-      const lerpSliderValue = Math.round((0.1 - preset.lerp) / 0.05 * 99 + 1);
+      const lerpSliderValue = Math.round(((0.1 - preset.lerp) / 0.05) * 99 + 1);
       lerpSlider.value = Math.max(1, Math.min(100, lerpSliderValue));
     }
     if (speedSlider) {
@@ -628,8 +656,8 @@ class SmoothScrollGenerator extends HTMLElement {
 
     const lerpSliderValue = parseInt(lerpSlider.value, 10) || 50;
     // Инвертированная логика: слайдер 1 = lerp 0.1 (0%), слайдер 100 = lerp 0.05 (100%)
-    const lerpValue = 0.1 - (lerpSliderValue - 1) / 99 * 0.05;
-    const percentage = Math.round((lerpSliderValue - 1) / 99 * 100);
+    const lerpValue = 0.1 - ((lerpSliderValue - 1) / 99) * 0.05;
+    const percentage = Math.round(((lerpSliderValue - 1) / 99) * 100);
     lerpValueDisplay.textContent = `${percentage}%`;
   }
 
@@ -642,15 +670,14 @@ class SmoothScrollGenerator extends HTMLElement {
     speedValueDisplay.textContent = `${speedMultiplier}x`;
   }
 
-
-
   collectData() {
     const lerpSliderValue = parseInt(this.elements.lerpSlider?.value, 10) || 50;
-    const speedSliderValue = parseInt(this.elements.speedSlider?.value, 10) || 50;
-    
+    const speedSliderValue =
+      parseInt(this.elements.speedSlider?.value, 10) || 50;
+
     // Инвертированная логика: слайдер 1 = lerp 0.1 (0%), слайдер 100 = lerp 0.05 (100%)
-    const lerp = 0.1 - (lerpSliderValue - 1) / 99 * 0.05;
-    
+    const lerp = 0.1 - ((lerpSliderValue - 1) / 99) * 0.05;
+
     return {
       lerp: Math.max(0.05, Math.min(0.1, lerp)),
       duration: 1.2,
@@ -660,7 +687,9 @@ class SmoothScrollGenerator extends HTMLElement {
   }
 
   generateCode(settings = {}) {
-    const excludeSelectorsCode = this._getExcludeSelectorsCode(settings.excludeSelectors);
+    const excludeSelectorsCode = this._getExcludeSelectorsCode(
+      settings.excludeSelectors
+    );
     const lenisCSS = this._getLenisCSS();
 
     return `<script>
@@ -707,18 +736,20 @@ class SmoothScrollGenerator extends HTMLElement {
 </script>`;
   }
 
-
   _getExcludeSelectorsCode(excludeSelectors) {
     if (!excludeSelectors) {
       return "// Нет исключаемых элементов";
     }
-    const selectors = excludeSelectors.split(",").map((s) => s.trim()).filter(Boolean);
+    const selectors = excludeSelectors
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (!selectors.length) {
       return "// Нет исключаемых элементов";
     }
     return `
     // Добавление data-lenis-prevent атрибутов к исключаемым элементам
-    const excludeClasses = [${selectors.map(s => `'${s}'`).join(", ")}];
+    const excludeClasses = [${selectors.map((s) => `'${s}'`).join(", ")}];
     excludeClasses.forEach(className => {
       document.querySelectorAll('.' + className).forEach(element => {
         element.setAttribute('data-lenis-prevent', 'true');
@@ -762,7 +793,10 @@ class SmoothScrollGenerator extends HTMLElement {
 
       return result;
     } catch (error) {
-      console.warn('Минификация генерируемого кода не удалась, используем оригинал:', error);
+      console.warn(
+        "Минификация генерируемого кода не удалась, используем оригинал:",
+        error
+      );
       return code;
     }
   }
@@ -776,9 +810,7 @@ class SmoothScrollGenerator extends HTMLElement {
       result.js += match[1];
     }
 
-    result.html = code
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-      .trim();
+    result.html = code.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").trim();
 
     return result;
   }
@@ -818,7 +850,10 @@ class SmoothScrollGenerator extends HTMLElement {
       .replace(/\s*([=+\-*/%<>&|!])\s*/g, "$1")
       .replace(/\s*([(){}[\];,])\s*/g, "$1")
       .replace(/\s+/g, " ")
-      .replace(/\b(if|for|while|switch|catch|function|return|throw|new|typeof)\s+/g, "$1 ")
+      .replace(
+        /\b(if|for|while|switch|catch|function|return|throw|new|typeof)\s+/g,
+        "$1 "
+      )
       .replace(/\belse\s+/g, "else ")
       .replace(/\s*\n\s*/g, "\n")
       .replace(/\n+/g, "\n")
@@ -868,7 +903,12 @@ class SmoothScrollGenerator extends HTMLElement {
           inBlockComment = false;
           i++;
           continue;
-        } else if (!inBlockComment && !inLineComment && char === "/" && next === "/") {
+        } else if (
+          !inBlockComment &&
+          !inLineComment &&
+          char === "/" &&
+          next === "/"
+        ) {
           inLineComment = true;
           i++;
           continue;
@@ -888,81 +928,151 @@ class SmoothScrollGenerator extends HTMLElement {
   }
 
   async generateAndCopyCode() {
-    const settings = this.collectData();
-    const rawCode = this.generateCode(settings);
-    const code = await this.minifyGeneratedCode(rawCode);
-    
     try {
+      const settings = this.collectData();
+      if (!settings) {
+        console.warn("SmoothScrollGenerator: Настройки не получены");
+        return;
+      }
+
+      const rawCode = this.generateCode(settings);
+      if (!rawCode) {
+        console.warn("SmoothScrollGenerator: Код не сгенерирован");
+        return;
+      }
+
+      const code = await this.minifyGeneratedCode(rawCode);
+      
+      console.log("SmoothScrollGenerator: Генерация завершена, копирую в буфер");
       await this.copyToClipboard(code);
       this.showSuccessPopup();
+      console.log("SmoothScrollGenerator: Код успешно скопирован");
     } catch (err) {
-      console.error('Не удалось скопировать код:', err);
+      console.error("SmoothScrollGenerator: Ошибка генерации/копирования кода:", err);
+      alert("Произошла ошибка при генерации кода. Попробуйте еще раз.");
     }
   }
 
-  bindModalEvents() {
-    // Обработчики для попапа успеха
-    if (this.elements.popupAcceptBtn) {
-      const handler = () => this.hideSuccessPopup();
-      this.eventHandlers.set("popup-accept", handler);
-      this.elements.popupAcceptBtn.addEventListener("click", handler);
-    }
+  // bindModalEvents() удален - обработчики теперь привязываются динамически в showSuccessPopup()
 
-    if (this.elements.popupCloseBtn) {
-      const handler = () => this.hideSuccessPopup();
-      this.eventHandlers.set("popup-close", handler);
-      this.elements.popupCloseBtn.addEventListener("click", handler);
-    }
-
-    // Обработчик клика за пределы попапа
-    if (this.elements.successPopup) {
-      const handler = (event) => {
-        if (event.target === this.elements.successPopup) {
-          this.hideSuccessPopup();
-        }
-      };
-      this.eventHandlers.set("popup-overlay", handler);
-      this.elements.successPopup.addEventListener("click", handler);
-    }
-  }
 
   async copyToClipboard(text) {
-    if (navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(text);
-        return;
-      } catch (err) {
-        console.log("Ошибка clipboard API:", err);
-      }
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log("SmoothScrollGenerator: Код скопирован в буфер обмена");
+    } catch (error) {
+      this.fallbackCopy(text);
     }
+  }
 
-    // Fallback для старых браузеров
+  fallbackCopy(text) {
     const textarea = document.createElement("textarea");
     textarea.value = text;
     textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
     textarea.style.left = "-9999px";
     document.body.appendChild(textarea);
 
     try {
-      textarea.select();
-      document.execCommand("copy");
+      if (textarea.select && document.execCommand) {
+        textarea.select();
+        if (!document.execCommand("copy")) {
+          throw new Error("Не удалось скопировать код в буфер обмена");
+        }
+        console.log("SmoothScrollGenerator: Код скопирован в буфер обмена (fallback)");
+      } else {
+        throw new Error("Копирование не поддерживается браузером");
+      }
     } finally {
       document.body.removeChild(textarea);
     }
   }
 
   showSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = "flex";
+    // 1. Найти элементы попапа динамически каждый раз при вызове
+    const successPopup = document.querySelector(".pop-up-success");
+    const popupAcceptBtn = document.querySelector("[data-popup-accept-btn]");
+    const popupCloseBtn = document.querySelector("[data-popup-close-btn]");
+    // Найдем элемент содержимого попапа для корректной проверки клика по оверлею
+    const popupContent = successPopup ? successPopup.querySelector('.pop-up__content') : null;
+
+    if (!successPopup) {
+      console.warn("SmoothScrollGenerator: Success popup element (.pop-up-success) not found.");
+      return;
     }
+
+    // 2. Определить функцию скрытия
+    const hidePopupFunction = () => {
+      successPopup.style.display = "none";
+      console.log("SmoothScrollGenerator: Popup hidden");
+    };
+
+    // 3. Привязать обработчики только если элементы найдены
+    if (popupAcceptBtn) {
+      popupAcceptBtn.removeEventListener('click', hidePopupFunction);
+      popupAcceptBtn.addEventListener("click", hidePopupFunction);
+      console.log("SmoothScrollGenerator: Accept button handler bound");
+    } else {
+      console.warn("SmoothScrollGenerator: Accept button [data-popup-accept-btn] not found");
+    }
+
+    if (popupCloseBtn) {
+      popupCloseBtn.removeEventListener('click', hidePopupFunction);
+      popupCloseBtn.addEventListener("click", hidePopupFunction);
+      console.log("SmoothScrollGenerator: Close button handler bound");
+    } else {
+      console.warn("SmoothScrollGenerator: Close button [data-popup-close-btn] not found");
+    }
+
+    // Улучшенный обработчик клика по overlay
+    const overlayClickHandler = (event) => {
+      console.log("SmoothScrollGenerator: Overlay click detected", {
+        target: event.target.className,
+        currentTarget: event.currentTarget.className,
+        popupContentExists: !!popupContent
+      });
+
+      // Проверяем, существует ли элемент содержимого попапа
+      if (popupContent) {
+        // Проверяем, что клик был:
+        // 1. По элементу successPopup (оверлей) ИЛИ его прямым потомкам (кроме контента)
+        // 2. НЕ по элементу содержимого попапа и не по его потомкам
+        if (!popupContent.contains(event.target)) {
+          console.log("SmoothScrollGenerator: Click outside popup content - hiding popup");
+          hidePopupFunction();
+        } else {
+          console.log("SmoothScrollGenerator: Click inside popup content - keeping popup open");
+        }
+      } else {
+        console.warn("SmoothScrollGenerator: Popup content (.pop-up__content) not found inside .pop-up-success.");
+        // Fallback к старой логике, если структура нестандартная
+        if (event.target === successPopup) {
+          console.log("SmoothScrollGenerator: Using fallback logic - hiding popup");
+          hidePopupFunction();
+        }
+      }
+    };
+
+    successPopup.removeEventListener('click', overlayClickHandler);
+    successPopup.addEventListener("click", overlayClickHandler);
+    console.log("SmoothScrollGenerator: Enhanced overlay click handler bound", {
+      popupContentFound: !!popupContent
+    });
+
+    // 4. Показать попап
+    successPopup.style.display = "flex";
+    console.log("SmoothScrollGenerator: Popup shown");
   }
 
   hideSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = "none";
+    const successPopup = document.querySelector(".pop-up-success");
+    if (successPopup) {
+      successPopup.style.display = "none";
+      console.log("SmoothScrollGenerator: Popup hidden via hideSuccessPopup");
     }
   }
+
+  // unbindModalEvents() удален - обработчики модального окна управляются в showSuccessPopup()
+
 }
 
-customElements.define('smooth-scroll-generator', SmoothScrollGenerator);
+customElements.define("smooth-scroll-generator", SmoothScrollGenerator);

@@ -57,6 +57,23 @@ class LoaderGenerator extends HTMLElement {
 
       * {
         box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: #A9A9A9 transparent;
+      }
+
+      /* Webkit browsers (Chrome, Safari, Edge) */
+      *::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      *::-webkit-scrollbar-thumb {
+        background: var(--grey-500, #A9A9A9);
+        border-radius: 95px;
       }
 
       :host {
@@ -287,6 +304,14 @@ class LoaderGenerator extends HTMLElement {
         cursor: not-allowed;
       }
 
+      .generate-button * {
+        cursor: pointer;
+      }
+
+      .generate-button:disabled * {
+        cursor: not-allowed;
+      }
+
       .color-input {
         height: 40px;
         padding: 4px;
@@ -500,16 +525,13 @@ class LoaderGenerator extends HTMLElement {
     this.elements.previewArea = this.shadowRoot.getElementById("preview-area");
     this.elements.previewAnimation = this.shadowRoot.getElementById("preview-animation");
 
-    // Внешние элементы модалки
-    this.elements.successPopup = document.querySelector(".pop-up-success");
-    this.elements.popupAcceptBtn = document.querySelector("[data-popup-accept-btn]");
-    this.elements.popupCloseBtn = document.querySelector("[data-popup-close-btn]");
+    // Внешние элементы модалки будут искаться динамически в showSuccessPopup()
   }
 
   bindEvents() {
     // Обработчик для кнопки генерации
     if (this.elements.generateBtn) {
-      const handler = () => this.generateCode();
+      const handler = () => this.generateAndCopyCode();
       this.eventHandlers.set("generate", handler);
       this.elements.generateBtn.addEventListener("click", handler);
     }
@@ -537,7 +559,7 @@ class LoaderGenerator extends HTMLElement {
       this.elements.animationType.addEventListener("change", handler);
     }
 
-    this.bindModalEvents();
+    // Обработчики модального окна теперь привязываются динамически в showSuccessPopup()
   }
 
   bindModalEvents() {
@@ -578,6 +600,7 @@ class LoaderGenerator extends HTMLElement {
     this.elements.customCss.value = this.configDefaults.customCssCode;
 
     this.handleAnimationTypeChange();
+    // Обработчики модального окна теперь привязываются динамически в showSuccessPopup()
   }
 
   handleAnimationTypeChange() {
@@ -1067,14 +1090,84 @@ class LoaderGenerator extends HTMLElement {
   }
 
   showSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = "flex";
+    // 1. Найти элементы попапа динамически каждый раз при вызове
+    const successPopup = document.querySelector(".pop-up-success");
+    const popupAcceptBtn = document.querySelector("[data-popup-accept-btn]");
+    const popupCloseBtn = document.querySelector("[data-popup-close-btn]");
+    // Найдем элемент содержимого попапа для корректной проверки клика по оверлею
+    const popupContent = successPopup ? successPopup.querySelector('.pop-up__content') : null;
+
+    if (!successPopup) {
+      console.warn("LoaderGenerator: Success popup element (.pop-up-success) not found.");
+      return;
     }
+
+    // 2. Определить функцию скрытия
+    const hidePopupFunction = () => {
+      successPopup.style.display = "none";
+      console.log("LoaderGenerator: Popup hidden");
+    };
+
+    // 3. Привязать обработчики только если элементы найдены
+    if (popupAcceptBtn) {
+      popupAcceptBtn.removeEventListener('click', hidePopupFunction);
+      popupAcceptBtn.addEventListener("click", hidePopupFunction);
+      console.log("LoaderGenerator: Accept button handler bound");
+    } else {
+      console.warn("LoaderGenerator: Accept button [data-popup-accept-btn] not found");
+    }
+
+    if (popupCloseBtn) {
+      popupCloseBtn.removeEventListener('click', hidePopupFunction);
+      popupCloseBtn.addEventListener("click", hidePopupFunction);
+      console.log("LoaderGenerator: Close button handler bound");
+    } else {
+      console.warn("LoaderGenerator: Close button [data-popup-close-btn] not found");
+    }
+
+    // Улучшенный обработчик клика по overlay
+    const overlayClickHandler = (event) => {
+      console.log("LoaderGenerator: Overlay click detected", {
+        target: event.target.className,
+        currentTarget: event.currentTarget.className,
+        popupContentExists: !!popupContent
+      });
+
+      // Проверяем, существует ли элемент содержимого попапа
+      if (popupContent) {
+        // Проверяем, что клик был НЕ по элементу содержимого попапа и не по его потомкам
+        if (!popupContent.contains(event.target)) {
+          console.log("LoaderGenerator: Click outside popup content - hiding popup");
+          hidePopupFunction();
+        } else {
+          console.log("LoaderGenerator: Click inside popup content - keeping popup open");
+        }
+      } else {
+        console.warn("LoaderGenerator: Popup content (.pop-up__content) not found inside .pop-up-success.");
+        // Fallback к старой логике, если структура нестандартная
+        if (event.target === successPopup) {
+          console.log("LoaderGenerator: Using fallback logic - hiding popup");
+          hidePopupFunction();
+        }
+      }
+    };
+
+    successPopup.removeEventListener('click', overlayClickHandler);
+    successPopup.addEventListener("click", overlayClickHandler);
+    console.log("LoaderGenerator: Enhanced overlay click handler bound", {
+      popupContentFound: !!popupContent
+    });
+
+    // 4. Показать попап
+    successPopup.style.display = "flex";
+    console.log("LoaderGenerator: Popup shown");
   }
 
   hideSuccessPopup() {
-    if (this.elements.successPopup) {
-      this.elements.successPopup.style.display = "none";
+    const successPopup = document.querySelector(".pop-up-success");
+    if (successPopup) {
+      successPopup.style.display = "none";
+      console.log("LoaderGenerator: Popup hidden via hideSuccessPopup");
     }
   }
 
@@ -1098,7 +1191,7 @@ class LoaderGenerator extends HTMLElement {
       this.elements.animationType.removeEventListener("change", this.eventHandlers.get("animation-type-change"));
     }
 
-    this.unbindModalEvents();
+    // unbindModalEvents больше не нужен - обработчики модального окна управляются в showSuccessPopup()
     this.eventHandlers.clear();
   }
 
@@ -1113,6 +1206,370 @@ class LoaderGenerator extends HTMLElement {
 
     if (this.elements.successPopup && this.eventHandlers.has("popup-overlay")) {
       this.elements.successPopup.removeEventListener("click", this.eventHandlers.get("popup-overlay"));
+    }
+  }
+
+  collectData() {
+    return {
+      animationType: this.elements.animationType?.value || this.configDefaults.animationType,
+      bgColor: this.elements.bgColor?.value || this.configDefaults.bgColor,
+      animationColor: this.elements.animationColor?.value || this.configDefaults.animationColor,
+      minDisplayTime: parseInt(this.elements.minDisplayTime?.value, 10) || this.configDefaults.minDisplayTime,
+      hideDelay: parseInt(this.elements.hideDelay?.value, 10) || this.configDefaults.hideDelay,
+      hideDuration: parseInt(this.elements.hideDuration?.value, 10) || this.configDefaults.hideDuration,
+      customCssCode: this.elements.customCss?.value || this.configDefaults.customCssCode,
+    };
+  }
+
+  generateCode(settings = {}) {
+    const animationCSS = this.getAnimationCSS(settings);
+    const loaderLogic = this.getLoaderLogic(settings);
+
+    return `<!-- Loader Extension -->
+<script>
+${loaderLogic}
+</script>
+<style>
+${animationCSS}
+</style>`;
+  }
+
+  getAnimationCSS(settings) {
+    if (settings.animationType === "custom" && settings.customCssCode) {
+      return settings.customCssCode;
+    }
+
+    const baseCSS = `
+.taptop-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: ${settings.bgColor};
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity ${settings.hideDuration}ms ease-out;
+}
+
+.taptop-loader.fade-out {
+  opacity: 0;
+}`;
+
+    let animationCSS = "";
+    switch (settings.animationType) {
+      case "spinner":
+        animationCSS = `
+.taptop-loader .loader-animation {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255,255,255,0.3);
+  border-left: 4px solid ${settings.animationColor};
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}`;
+        break;
+      case "dots":
+        animationCSS = `
+.taptop-loader .loader-animation {
+  display: flex;
+  gap: 8px;
+}
+
+.taptop-loader .loader-animation div {
+  width: 12px;
+  height: 12px;
+  background-color: ${settings.animationColor};
+  border-radius: 50%;
+  animation: bounce 1.4s ease-in-out infinite both;
+}
+
+.taptop-loader .loader-animation div:nth-child(1) { animation-delay: -0.32s; }
+.taptop-loader .loader-animation div:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}`;
+        break;
+      case "bars":
+        animationCSS = `
+.taptop-loader .loader-animation {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.taptop-loader .loader-animation div {
+  width: 6px;
+  height: 30px;
+  background-color: ${settings.animationColor};
+  animation: bars 1.2s ease-in-out infinite;
+}
+
+.taptop-loader .loader-animation div:nth-child(1) { animation-delay: -0.4s; }
+.taptop-loader .loader-animation div:nth-child(2) { animation-delay: -0.2s; }
+.taptop-loader .loader-animation div:nth-child(3) { animation-delay: 0s; }
+
+@keyframes bars {
+  0%, 40%, 100% { transform: scaleY(0.4); }
+  20% { transform: scaleY(1); }
+}`;
+        break;
+    }
+
+    return baseCSS + animationCSS;
+  }
+
+  getLoaderLogic(settings) {
+    return `
+(function() {
+  if (window.taptopLoaderInitialized) return;
+  window.taptopLoaderInitialized = true;
+
+  let loaderElement;
+  let startTime = Date.now();
+  let minDisplayReached = false;
+  let pageLoaded = false;
+
+  // Создаем лоудер
+  function createLoader() {
+    loaderElement = document.createElement('div');
+    loaderElement.className = 'taptop-loader';
+    
+    const animation = document.createElement('div');
+    animation.className = 'loader-animation';
+    
+    ${this.getAnimationHTML(settings)}
+    
+    loaderElement.appendChild(animation);
+    document.body.appendChild(loaderElement);
+  }
+
+  // Скрываем лоудер
+  function hideLoader() {
+    if (!loaderElement) return;
+    
+    setTimeout(() => {
+      loaderElement.classList.add('fade-out');
+      setTimeout(() => {
+        if (loaderElement && loaderElement.parentNode) {
+          loaderElement.parentNode.removeChild(loaderElement);
+        }
+      }, ${settings.hideDuration});
+    }, ${settings.hideDelay});
+  }
+
+  // Проверяем условия для скрытия
+  function checkHideConditions() {
+    if (minDisplayReached && pageLoaded) {
+      hideLoader();
+    }
+  }
+
+  // Создаем лоудер при загрузке скрипта
+  createLoader();
+
+  // Минимальное время показа
+  setTimeout(() => {
+    minDisplayReached = true;
+    checkHideConditions();
+  }, ${settings.minDisplayTime});
+
+  // Ждем полной загрузки страницы
+  if (document.readyState === 'complete') {
+    pageLoaded = true;
+    checkHideConditions();
+  } else {
+    window.addEventListener('load', () => {
+      pageLoaded = true;
+      checkHideConditions();
+    });
+  }
+
+  // Глобальная функция для ручного скрытия (опционально)
+  window.hideLoader = hideLoader;
+})();`;
+  }
+
+  getAnimationHTML(settings) {
+    switch (settings.animationType) {
+      case "dots":
+        return "animation.innerHTML = '<div></div><div></div><div></div>';";
+      case "bars":
+        return "animation.innerHTML = '<div></div><div></div><div></div>';";
+      default:
+        return "// Spinner не требует дополнительных элементов";
+    }
+  }
+
+  async generateAndCopyCode() {
+    try {
+      const settings = this.collectData();
+      if (!settings) {
+        console.warn("LoaderGenerator: Настройки не получены");
+        return;
+      }
+
+      const rawCode = this.generateCode(settings);
+      if (!rawCode) {
+        console.warn("LoaderGenerator: Код не сгенерирован");
+        return;
+      }
+
+      const code = await this.minifyGeneratedCode(rawCode);
+      
+      console.log("LoaderGenerator: Генерация завершена, копирую в буфер");
+      await this.copyToClipboard(code);
+      this.showSuccessPopup();
+      console.log("LoaderGenerator: Код успешно скопирован");
+    } catch (error) {
+      console.error("LoaderGenerator: Ошибка генерации/копирования кода:", error);
+      alert("Произошла ошибка при генерации кода. Попробуйте еще раз.");
+    }
+  }
+
+  async copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log("LoaderGenerator: Код скопирован в буфер обмена");
+    } catch (error) {
+      this.fallbackCopy(text);
+    }
+  }
+
+  fallbackCopy(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+
+    try {
+      if (textarea.select && document.execCommand) {
+        textarea.select();
+        if (!document.execCommand("copy")) {
+          throw new Error("Не удалось скопировать код в буфер обмена");
+        }
+        console.log("LoaderGenerator: Код скопирован в буфер обмена (fallback)");
+      } else {
+        throw new Error("Копирование не поддерживается браузером");
+      }
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  }
+
+  showSuccessPopup() {
+    // 1. Найти элементы попапа динамически каждый раз при вызове
+    const successPopup = document.querySelector(".pop-up-success");
+    const popupAcceptBtn = document.querySelector("[data-popup-accept-btn]");
+    const popupCloseBtn = document.querySelector("[data-popup-close-btn]");
+    // Найдем элемент содержимого попапа для корректной проверки клика по оверлею
+    const popupContent = successPopup ? successPopup.querySelector('.pop-up__content') : null;
+
+    if (!successPopup) {
+      console.warn("LoaderGenerator: Success popup element (.pop-up-success) not found.");
+      return;
+    }
+
+    // 2. Определить функцию скрытия
+    const hidePopupFunction = () => {
+      successPopup.style.display = "none";
+      console.log("LoaderGenerator: Popup hidden");
+    };
+
+    // 3. Привязать обработчики только если элементы найдены
+    if (popupAcceptBtn) {
+      popupAcceptBtn.removeEventListener('click', hidePopupFunction);
+      popupAcceptBtn.addEventListener("click", hidePopupFunction);
+      console.log("LoaderGenerator: Accept button handler bound");
+    } else {
+      console.warn("LoaderGenerator: Accept button [data-popup-accept-btn] not found");
+    }
+
+    if (popupCloseBtn) {
+      popupCloseBtn.removeEventListener('click', hidePopupFunction);
+      popupCloseBtn.addEventListener("click", hidePopupFunction);
+      console.log("LoaderGenerator: Close button handler bound");
+    } else {
+      console.warn("LoaderGenerator: Close button [data-popup-close-btn] not found");
+    }
+
+    // Улучшенный обработчик клика по overlay
+    const overlayClickHandler = (event) => {
+      console.log("LoaderGenerator: Overlay click detected", {
+        target: event.target.className,
+        currentTarget: event.currentTarget.className,
+        popupContentExists: !!popupContent
+      });
+
+      // Проверяем, существует ли элемент содержимого попапа
+      if (popupContent) {
+        // Проверяем, что клик был НЕ по элементу содержимого попапа и не по его потомкам
+        if (!popupContent.contains(event.target)) {
+          console.log("LoaderGenerator: Click outside popup content - hiding popup");
+          hidePopupFunction();
+        } else {
+          console.log("LoaderGenerator: Click inside popup content - keeping popup open");
+        }
+      } else {
+        console.warn("LoaderGenerator: Popup content (.pop-up__content) not found inside .pop-up-success.");
+        // Fallback к старой логике, если структура нестандартная
+        if (event.target === successPopup) {
+          console.log("LoaderGenerator: Using fallback logic - hiding popup");
+          hidePopupFunction();
+        }
+      }
+    };
+
+    successPopup.removeEventListener('click', overlayClickHandler);
+    successPopup.addEventListener("click", overlayClickHandler);
+    console.log("LoaderGenerator: Enhanced overlay click handler bound", {
+      popupContentFound: !!popupContent
+    });
+
+    // 4. Показать попап
+    successPopup.style.display = "flex";
+    console.log("LoaderGenerator: Popup shown");
+  }
+
+  hideSuccessPopup() {
+    const successPopup = document.querySelector(".pop-up-success");
+    if (successPopup) {
+      successPopup.style.display = "none";
+      console.log("LoaderGenerator: Popup hidden via hideSuccessPopup");
+    }
+  }
+
+  bindModalEvents() {
+    if (this.elements.popupAcceptBtn) {
+      const handler = () => this.hideSuccessPopup();
+      this.eventHandlers.set("popup-accept", handler);
+      this.elements.popupAcceptBtn.addEventListener("click", handler);
+    }
+
+    if (this.elements.popupCloseBtn) {
+      const handler = () => this.hideSuccessPopup();
+      this.eventHandlers.set("popup-close", handler);
+      this.elements.popupCloseBtn.addEventListener("click", handler);
+    }
+
+    if (this.elements.successPopup) {
+      const handler = (event) => {
+        if (event.target === this.elements.successPopup) {
+          this.hideSuccessPopup();
+        }
+      };
+      this.eventHandlers.set("popup-overlay", handler);
+      this.elements.successPopup.addEventListener("click", handler);
     }
   }
 

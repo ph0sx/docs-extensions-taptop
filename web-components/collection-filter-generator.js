@@ -52,6 +52,23 @@ class CollectionFilterGenerator extends HTMLElement {
 
       * {
         box-sizing: border-box;
+        scrollbar-width: thin;
+        scrollbar-color: #A9A9A9 transparent;
+      }
+
+      /* Webkit browsers (Chrome, Safari, Edge) */
+      *::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      *::-webkit-scrollbar-thumb {
+        background: var(--grey-500, #A9A9A9);
+        border-radius: 95px;
       }
 
       :host {
@@ -155,42 +172,80 @@ class CollectionFilterGenerator extends HTMLElement {
       }
 
       .setting-group label {
+        font-family: var(--ttg-font-family);
+        font-size: var(--ttg-text-size-s);
+        font-weight: var(--ttg-font-weight-medium);
+        line-height: var(--ttg-text-line-height-s);
+        letter-spacing: var(--ttg-letter-spacing);
+        color: var(--ttg-color-text-black);
         display: flex;
         align-items: center;
-        font-weight: 500;
-        color: var(--text-dark);
-        font-size: 14px;
       }
 
-      .text-input, .number-input, .select-styled {
+      /* TTG-адаптированные существующие инпуты */
+      .text-input, .number-input {
         width: 100%;
-        max-width: 100%;
-        padding: 8px 10px;
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-sm);
+        height: 52px;
+        padding: 16px 12px 16px 16px;
+        border-radius: 10px;
+        background: var(--ttg-color-bg-gray-100);
+        border: 1px solid transparent;
+        transition: border-color 0.3s ease;
+        color: var(--ttg-color-text-gray-900);
         font-size: 14px;
-        color: var(--text-dark);
-        box-shadow: var(--shadow-sm);
-        transition: var(--transition);
+        font-weight: 400;
+        line-height: 20px;
+        letter-spacing: -0.28px;
+        outline: none;
         box-sizing: border-box;
         min-width: 0;
-        background: white;
+        max-width: 100%;
       }
 
-      .text-input:focus, .number-input:focus, .select-styled:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px var(--primary-light);
+      .text-input::placeholder, .number-input::placeholder {
+        color: var(--ttg-color-text-gray-500);
+      }
+
+      .text-input:hover, .number-input:hover {
+        border: 1px solid var(--ttg-color-stroke-gray-300);
+      }
+
+      .text-input:focus, .number-input:focus {
+        border: 1px solid var(--ttg-color-stroke-black);
+        color: var(--ttg-color-text-black);
       }
 
       .select-styled {
+        width: 100%;
+        height: 52px;
+        padding: 16px 32px 16px 16px;
+        border-radius: 10px;
+        background: var(--ttg-color-bg-gray-100);
+        border: 1px solid transparent;
+        transition: border-color 0.3s ease;
+        color: var(--ttg-color-text-gray-900);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 20px;
+        letter-spacing: -0.28px;
+        outline: none;
         cursor: pointer;
         appearance: none;
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-        background-position: right 8px center;
+        background-position: right 12px center;
         background-repeat: no-repeat;
         background-size: 16px;
-        padding-right: 32px;
+        box-sizing: border-box;
+        max-width: 100%;
+      }
+
+      .select-styled:hover {
+        border: 1px solid var(--ttg-color-stroke-gray-300);
+      }
+
+      .select-styled:focus {
+        border: 1px solid var(--ttg-color-stroke-black);
+        color: var(--ttg-color-text-black);
       }
 
       .helper-text {
@@ -419,6 +474,14 @@ class CollectionFilterGenerator extends HTMLElement {
 
       .generate-button:disabled {
         background: var(--ttg-color-bg-gray-100);
+        cursor: not-allowed;
+      }
+
+      .generate-button * {
+        cursor: pointer;
+      }
+
+      .generate-button:disabled * {
         cursor: not-allowed;
       }
 
@@ -970,6 +1033,8 @@ class CollectionFilterGenerator extends HTMLElement {
 
     // Генерация
     this.elements.generateBtn = this.shadowRoot.getElementById("generateBtn");
+
+    // Внешние элементы модалки будут искаться динамически в showSuccessPopup()
   }
 
   bindEvents() {
@@ -1029,6 +1094,8 @@ class CollectionFilterGenerator extends HTMLElement {
 
     // Инициализация состояния
     this.handlePaginationTypeChange();
+
+    // Обработчики модального окна теперь привязываются динамически в showSuccessPopup()
   }
 
   handlePaginationTypeChange() {
@@ -2900,18 +2967,89 @@ class CollectionFilterGenerator extends HTMLElement {
     }
   }
 
+  // bindModalEvents() удален - обработчики теперь привязываются динамически в showSuccessPopup()
+
+  // unbindModalEvents() удален - обработчики модального окна управляются в showSuccessPopup()
+
   showSuccessPopup() {
-    const popup = document.querySelector(".pop-up-success");
-    if (popup) {
-      popup.style.display = "flex";
+    // 1. Найти элементы попапа динамически каждый раз при вызове
+    const successPopup = document.querySelector(".pop-up-success");
+    const popupAcceptBtn = document.querySelector("[data-popup-accept-btn]");
+    const popupCloseBtn = document.querySelector("[data-popup-close-btn]");
+    // Найдем элемент содержимого попапа для корректной проверки клика по оверлею
+    const popupContent = successPopup ? successPopup.querySelector('.pop-up__content') : null;
 
-      const closeHandler = () => {
-        popup.style.display = "none";
-        popup.removeEventListener("click", closeHandler);
-      };
+    if (!successPopup) {
+      console.warn("CollectionFilterGenerator: Success popup element (.pop-up-success) not found.");
+      return;
+    }
 
-      popup.addEventListener("click", closeHandler);
-      this.eventHandlers.set("popup_close", closeHandler);
+    // 2. Определить функцию скрытия
+    const hidePopupFunction = () => {
+      successPopup.style.display = "none";
+      console.log("CollectionFilterGenerator: Popup hidden");
+    };
+
+    // 3. Привязать обработчики только если элементы найдены
+    if (popupAcceptBtn) {
+      popupAcceptBtn.removeEventListener('click', hidePopupFunction);
+      popupAcceptBtn.addEventListener("click", hidePopupFunction);
+      console.log("CollectionFilterGenerator: Accept button handler bound");
+    } else {
+      console.warn("CollectionFilterGenerator: Accept button [data-popup-accept-btn] not found");
+    }
+
+    if (popupCloseBtn) {
+      popupCloseBtn.removeEventListener('click', hidePopupFunction);
+      popupCloseBtn.addEventListener("click", hidePopupFunction);
+      console.log("CollectionFilterGenerator: Close button handler bound");
+    } else {
+      console.warn("CollectionFilterGenerator: Close button [data-popup-close-btn] not found");
+    }
+
+    // Улучшенный обработчик клика по overlay
+    const overlayClickHandler = (event) => {
+      console.log("CollectionFilterGenerator: Overlay click detected", {
+        target: event.target.className,
+        currentTarget: event.currentTarget.className,
+        popupContentExists: !!popupContent
+      });
+
+      // Проверяем, существует ли элемент содержимого попапа
+      if (popupContent) {
+        // Проверяем, что клик был НЕ по элементу содержимого попапа и не по его потомкам
+        if (!popupContent.contains(event.target)) {
+          console.log("CollectionFilterGenerator: Click outside popup content - hiding popup");
+          hidePopupFunction();
+        } else {
+          console.log("CollectionFilterGenerator: Click inside popup content - keeping popup open");
+        }
+      } else {
+        console.warn("CollectionFilterGenerator: Popup content (.pop-up__content) not found inside .pop-up-success.");
+        // Fallback к старой логике, если структура нестандартная
+        if (event.target === successPopup) {
+          console.log("CollectionFilterGenerator: Using fallback logic - hiding popup");
+          hidePopupFunction();
+        }
+      }
+    };
+
+    successPopup.removeEventListener('click', overlayClickHandler);
+    successPopup.addEventListener("click", overlayClickHandler);
+    console.log("CollectionFilterGenerator: Enhanced overlay click handler bound", {
+      popupContentFound: !!popupContent
+    });
+
+    // 4. Показать попап
+    successPopup.style.display = "flex";
+    console.log("CollectionFilterGenerator: Popup shown");
+  }
+
+  hideSuccessPopup() {
+    const successPopup = document.querySelector(".pop-up-success");
+    if (successPopup) {
+      successPopup.style.display = "none";
+      console.log("CollectionFilterGenerator: Popup hidden via hideSuccessPopup");
     }
   }
 
@@ -2922,6 +3060,7 @@ class CollectionFilterGenerator extends HTMLElement {
         this.elements[elementKey].removeEventListener(eventType, handler);
       }
     });
+    // unbindModalEvents больше не нужен - обработчики модального окна управляются в showSuccessPopup()
     this.eventHandlers.clear();
   }
 
