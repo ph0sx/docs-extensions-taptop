@@ -1810,6 +1810,8 @@ class CollectionFilterGenerator extends HTMLElement {
               this.sortConfig = this.config.sortConfig || { rules: [], commonSelectSelector: null, applyInstantly: true, defaultSortLabel: null };
               this.currentSortParams = null; 
               this.collectionSlug = null;
+              this.collectionIndexedUrl = null;
+              this.lastFetchedItems = [];
 
               this.elements = {
                 filterControls: {},
@@ -1859,6 +1861,11 @@ class CollectionFilterGenerator extends HTMLElement {
               this.elements.targetContainer = this.elements.widget.querySelector(".collection__list");
               if (!this.elements.targetContainer) { console.error("[CF] Контейнер .collection__list не найден."); return; }
               
+              this._linksFixObserver = new MutationObserver(() => {
+                this._ensureAnchorsHaveHref(this.lastFetchedItems || []);
+              });
+              this._linksFixObserver.observe(this.elements.targetContainer, { childList: true });
+              
               this.elements.taptopPaginationContainer = this.elements.widget.querySelector(".collection__pagination");
               if (this.elements.taptopPaginationContainer) {
                 this.elements.taptopPaginationContainer.classList.add("cf-custom-pagination-container");
@@ -1887,6 +1894,7 @@ class CollectionFilterGenerator extends HTMLElement {
                 taptopNativePaginationParts.forEach((el) => el.classList.add("is-removed"));
                 if (this.config.showLoader) this._setLoadingState(true);
                 await this.fetchAndRenderItems([], this.currentPage, false, true);
+                this._ensureAnchorsHaveHref(this.lastFetchedItems || []);
               } catch (error) {
                 console.error("[CF Init Error] Критическая ошибка во время инициализации (шаблон/схема):", error);
                 this._showErrorMessage(\`Критическая ошибка инициализации: \${error.message}.\`);
@@ -1915,6 +1923,10 @@ class CollectionFilterGenerator extends HTMLElement {
                   throw new Error("item_template не найден в ответе collectionGetItems.");
                 }
                 this.itemTemplateString = templateResponseData.result.item_template;
+                
+                if (templateResponseData.result && templateResponseData.result.indexed_url) {
+                  this.collectionIndexedUrl = templateResponseData.result.indexed_url;
+                }
                 
                 function getFirstSlugSegment(path) {
                   const segments = (path || '').split("/").filter(Boolean);
@@ -1956,9 +1968,52 @@ class CollectionFilterGenerator extends HTMLElement {
                   throw new Error("Схема полей (c_schema/settings) не найдена или некорректна в ответе collectionSearch.");
                 }
                 this.schema = { c_schema: data.result.c_schema || [], settings: data.result.settings || [] };
+                
+                if (data.result && data.result.indexed_url) {
+                  this.collectionIndexedUrl = data.result.indexed_url;
+                }
               } catch (error) {
                 console.error("[CF FetchSchema] Ошибка при загрузке схемы полей из collectionSearch:", error);
                 throw error;
+              }
+            }
+
+            _extractSlugFromItem(item) {
+              if (!item) return null;
+              try {
+                const fields = Array.isArray(item.fields) ? item.fields : [];
+                const slugField = fields.find(f => f.field_id === 'slug');
+                let slug = slugField?.url || slugField?.title || slugField?.text || null;
+                if (typeof slug === 'string') slug = slug.trim();
+                return slug || null;
+              } catch (e) {
+                return null;
+              }
+            }
+
+            _buildItemUrl(item) {
+              const base = this.collectionIndexedUrl ? (\`/\${this.collectionIndexedUrl}\`).replace(/\\/+$/,'') : null;
+              const slug = this._extractSlugFromItem(item);
+              if (!base || !slug) return null;
+              const cleanSlug = String(slug).replace(/^\\/+/, '');
+              return \`\${base}/\${cleanSlug}\`;
+            }
+
+            _ensureAnchorsHaveHref(items) {
+              try {
+                const itemEls = this.elements.targetContainer ? this.elements.targetContainer.querySelectorAll('.collection__item') : [];
+                (items || []).forEach((itm, idx) => {
+                  const el = itemEls[idx];
+                  if (!el) return;
+                  const a = el.querySelector('a.link-block');
+                  if (!a) return;
+                  if (!a.getAttribute('href')) {
+                    const url = this._buildItemUrl(itm);
+                    if (url) a.setAttribute('href', url);
+                  }
+                });
+              } catch (e) {
+                console.warn('[CF Links] ensure href failed:', e);
               }
             }
 
@@ -2431,10 +2486,12 @@ class CollectionFilterGenerator extends HTMLElement {
                 const itemsReceived = data.result?.page?.items || [];
                 
                 const finalItems = this._applyClientSideFilters(itemsReceived, clientFilters);
+                this.lastFetchedItems = Array.isArray(finalItems) ? finalItems : [];
                 
                 this.latestTotalItemsCount = totalItems;
                 this._renderResults(finalItems, append);
                 this._renderPaginationControls(this.latestTotalItemsCount);
+                this._ensureAnchorsHaveHref(this.lastFetchedItems || []);
               } catch (error) {
                 clearTimeout(this.fetchTimeout); this.fetchTimeout = null;
                 console.error("[CF] Ошибка при загрузке данных:", error);
@@ -2970,20 +3027,20 @@ class CollectionFilterGenerator extends HTMLElement {
     }
   }
 
-  // bindModalEvents() удален - обработчики теперь привязываются динамически в showSuccessPopup()
-
-  // unbindModalEvents() удален - обработчики модального окна управляются в showSuccessPopup()
-
   showSuccessPopup() {
     // 1. Найти элементы попапа динамически каждый раз при вызове
     const successPopup = document.querySelector(".pop-up-success");
     const popupAcceptBtn = document.querySelector("[data-popup-accept-btn]");
     const popupCloseBtn = document.querySelector("[data-popup-close-btn]");
     // Найдем элемент содержимого попапа для корректной проверки клика по оверлею
-    const popupContent = successPopup ? successPopup.querySelector('.pop-up__content') : null;
+    const popupContent = successPopup
+      ? successPopup.querySelector(".pop-up__content")
+      : null;
 
     if (!successPopup) {
-      console.warn("CollectionFilterGenerator: Success popup element (.pop-up-success) not found.");
+      console.warn(
+        "CollectionFilterGenerator: Success popup element (.pop-up-success) not found."
+      );
       return;
     }
 
@@ -2995,19 +3052,23 @@ class CollectionFilterGenerator extends HTMLElement {
 
     // 3. Привязать обработчики только если элементы найдены
     if (popupAcceptBtn) {
-      popupAcceptBtn.removeEventListener('click', hidePopupFunction);
+      popupAcceptBtn.removeEventListener("click", hidePopupFunction);
       popupAcceptBtn.addEventListener("click", hidePopupFunction);
       console.log("CollectionFilterGenerator: Accept button handler bound");
     } else {
-      console.warn("CollectionFilterGenerator: Accept button [data-popup-accept-btn] not found");
+      console.warn(
+        "CollectionFilterGenerator: Accept button [data-popup-accept-btn] not found"
+      );
     }
 
     if (popupCloseBtn) {
-      popupCloseBtn.removeEventListener('click', hidePopupFunction);
+      popupCloseBtn.removeEventListener("click", hidePopupFunction);
       popupCloseBtn.addEventListener("click", hidePopupFunction);
       console.log("CollectionFilterGenerator: Close button handler bound");
     } else {
-      console.warn("CollectionFilterGenerator: Close button [data-popup-close-btn] not found");
+      console.warn(
+        "CollectionFilterGenerator: Close button [data-popup-close-btn] not found"
+      );
     }
 
     // Улучшенный обработчик клика по overlay
@@ -3015,33 +3076,44 @@ class CollectionFilterGenerator extends HTMLElement {
       console.log("CollectionFilterGenerator: Overlay click detected", {
         target: event.target.className,
         currentTarget: event.currentTarget.className,
-        popupContentExists: !!popupContent
+        popupContentExists: !!popupContent,
       });
 
       // Проверяем, существует ли элемент содержимого попапа
       if (popupContent) {
         // Проверяем, что клик был НЕ по элементу содержимого попапа и не по его потомкам
         if (!popupContent.contains(event.target)) {
-          console.log("CollectionFilterGenerator: Click outside popup content - hiding popup");
+          console.log(
+            "CollectionFilterGenerator: Click outside popup content - hiding popup"
+          );
           hidePopupFunction();
         } else {
-          console.log("CollectionFilterGenerator: Click inside popup content - keeping popup open");
+          console.log(
+            "CollectionFilterGenerator: Click inside popup content - keeping popup open"
+          );
         }
       } else {
-        console.warn("CollectionFilterGenerator: Popup content (.pop-up__content) not found inside .pop-up-success.");
+        console.warn(
+          "CollectionFilterGenerator: Popup content (.pop-up__content) not found inside .pop-up-success."
+        );
         // Fallback к старой логике, если структура нестандартная
         if (event.target === successPopup) {
-          console.log("CollectionFilterGenerator: Using fallback logic - hiding popup");
+          console.log(
+            "CollectionFilterGenerator: Using fallback logic - hiding popup"
+          );
           hidePopupFunction();
         }
       }
     };
 
-    successPopup.removeEventListener('click', overlayClickHandler);
+    successPopup.removeEventListener("click", overlayClickHandler);
     successPopup.addEventListener("click", overlayClickHandler);
-    console.log("CollectionFilterGenerator: Enhanced overlay click handler bound", {
-      popupContentFound: !!popupContent
-    });
+    console.log(
+      "CollectionFilterGenerator: Enhanced overlay click handler bound",
+      {
+        popupContentFound: !!popupContent,
+      }
+    );
 
     // 4. Показать попап
     successPopup.style.display = "flex";
@@ -3052,7 +3124,9 @@ class CollectionFilterGenerator extends HTMLElement {
     const successPopup = document.querySelector(".pop-up-success");
     if (successPopup) {
       successPopup.style.display = "none";
-      console.log("CollectionFilterGenerator: Popup hidden via hideSuccessPopup");
+      console.log(
+        "CollectionFilterGenerator: Popup hidden via hideSuccessPopup"
+      );
     }
   }
 
